@@ -1,9 +1,0 @@
-
-playsmf.exe: playsmf.obj midifile.obj
-	cl /nologo /Fe.\playsmf.exe playsmf.obj midifile.obj winmm.lib
-
-midifile.obj:
-	cl /nologo /I. /c midifile.c
-
-playsmf.obj:
-	cl /nologo /I. /c playsmf.c
