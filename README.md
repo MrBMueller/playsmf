@@ -1,6 +1,6 @@
 # playsmf
 
-![console screen shot](./Img1.png)
+![console screen shot](./doc/img/Img1.png)
 
 playsmf is a small, lean and generic Windows32 commandline standard midi file (SMF) player with specific features such as:
 
