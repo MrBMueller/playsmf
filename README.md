@@ -1,5 +1,7 @@
 # playsmf
 
+[console screen shot](./Img1.png)
+
 playsmf is a small, lean and generic Windows32 commandline standard midi file (SMF) player with specific features such as:
 
 - intrinsic realtime player flow control using jump/branch commands in combination with target address labels (primarily used for loops)
