@@ -2,7 +2,7 @@
 
 ![console screen shot](./img/Img1.png)
 
-![markers and labels](./img/Img3.png)
+![markers and labels](./img/Img4.png)
 
 playsmf is a lightweight Windows32 commandline standard midi file (SMF) player with specific features such as:
 
