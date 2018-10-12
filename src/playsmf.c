@@ -508,10 +508,10 @@ for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { 
 CloseHandle(signalling_object); saveMidiEventsToFile(args, MidiFile_getResolution(midi_file), Tempo, RecEvents, RecEvent, ExitVal, Label0);
 free(Thrus); free(TrkInfo); free(Mutes); free(PendingEventsO); free(Labels); free(MidiEvents); free(args); MidiFile_free(midi_file);
 
-if       ((ExitVal & 3) < 3)   { return(1); } //error
- else if ( ExitVal & 4     )   { return(2); } //CTRL+C
- else if (Label0 == ExitLabel) { return(4); } //exit
- else if (Label0 == LastLabel) { return(8); } //last
+if       ((ExitVal & 3) < 3)   { return(0x02); } //error
+ else if ( ExitVal & 4     )   { return(0x04); } //CTRL+C
+ else if (Label0 == ExitLabel) { return(0x08); } //exit
+ else if (Label0 == LastLabel) { return(0x10); } //last
 
 return(0); } //regular
 
