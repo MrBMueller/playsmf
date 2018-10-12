@@ -505,9 +505,14 @@ for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h)
 
 for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInReset(Port2In[i].h); midiInUnprepareHeader(Port2In[i].h, &midi_message_header0, sizeof(MIDIHDR)); midiInClose(Port2In[i].h); }} if (ExitVal < 3) { Sleep(TimeOut); } //goto start;
 
-ExitVal = (Label0 == ExitLabel)<<2 | (ExitVal < 3)<<1;
-
 CloseHandle(signalling_object); saveMidiEventsToFile(args, MidiFile_getResolution(midi_file), Tempo, RecEvents, RecEvent, ExitVal, Label0);
-free(Thrus); free(TrkInfo); free(Mutes); free(PendingEventsO); free(Labels); free(MidiEvents); free(args); MidiFile_free(midi_file); return(ExitVal); }
+free(Thrus); free(TrkInfo); free(Mutes); free(PendingEventsO); free(Labels); free(MidiEvents); free(args); MidiFile_free(midi_file);
+
+if       ((ExitVal & 3) < 3)   { return(1); } //error
+ else if ( ExitVal & 4     )   { return(2); } //CTRL+C
+ else if (Label0 == ExitLabel) { return(4); } //exit
+ else if (Label0 == LastLabel) { return(8); } //last
+
+return(0); } //regular
 
 //============================================================================//
