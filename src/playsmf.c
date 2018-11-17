@@ -355,7 +355,7 @@ strcpy(midi_i_caps.szPname, ""); midiInGetDevCaps(k, &midi_i_caps, sizeof(midi_i
 midi_message_header0.lpData = data_buffer; midi_message_header0.dwBufferLength = sizeof(data_buffer); midi_message_header0.dwFlags = 0;
 midiInPrepareHeader(Port2In[k].h, &midi_message_header0, sizeof(MIDIHDR)); midiInAddBuffer(Port2In[k].h, &midi_message_header0, sizeof(MIDIHDR)); InPortOrder[k] = (args[i]>>8)&0xff; }}
 
-i = j = tick = 0; FirstLabel = LastLabel = NULL; Tempo = Tempo0 = 0x0107a120; TimeSig = TimeSig0 = 0x04020088; KeySig = KeySig0 = 0x00010000;
+i = j = tick = 0; FirstLabel = LastLabel = NULL; Tempo = Tempo0 = 0x0107a120; TimeSig = TimeSig0 = 0x04021888; KeySig = KeySig0 = 0x00010000;
 for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_file_event = MidiFileEvent_getNextEventInFile(midi_file_event)) {
  if (MidiFileEvent_getTick(midi_file_event) != tick) { j = i; tick = MidiFileEvent_getTick(midi_file_event); }
  if ((i > j) && (!MidiEvents[i-1].MsgCtl && !MidiEvents[i-1].Rec)) { i--; } else { MidiEvents[i].FlwCtl = 0; MidiEvents[i].JumpEvent = (struct MidiEvent*)-1; }
