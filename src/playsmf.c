@@ -361,7 +361,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
  if ((i > j) && (!MidiEvents[i-1].MsgCtl && !MidiEvents[i-1].Rec)) { i--; } else { MidiEvents[i].FlwCtl = 0; MidiEvents[i].JumpEvent = (struct MidiEvent*)-1; }
  MidiEvents[i].NextEvent  = &MidiEvents[i+1];
  MidiEvents[i].event_time = (unsigned long)(MidiFile_getTimeFromTick(midi_file, MidiFileEvent_getTick(midi_file_event)) * 1000);
- MidiEvents[i].Tempo      = Tempo   & 0x00ffffff;
+ MidiEvents[i].Tempo      = Tempo & 0x00ffffff;
  MidiEvents[i].TimeSigN   = TimeSig >> 24;
  MidiEvents[i].TimeSigD   = TimeSig >> 16;
  MidiEvents[i].Label      = EntryLabel; if (LastLabel) { MidiEvents[i].Label = LastLabel; }
@@ -419,7 +419,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
 MidiEvents[i].event_time = 0; if (i) { MidiEvents[i].event_time = MidiEvents[i-1].event_time; if (!MidiEvents[i-1].FlwCtl && !MidiEvents[i-1].MsgCtl && !MidiEvents[i-1].Rec && ((unsigned long)MidiEvents[i-1].JumpEvent == -1)) { i--; }}
 MidiEvents[i].Label = ExitLabel; MidiEvents[i].EventData = 0; ExitLabel->Event = &MidiEvents[i]; MidiEvent = EntryLabel->Event = &MidiEvents[0]; EntryLabel->Ret = 1; k = 0;
 
-MidiEvents[i].Tempo    = Tempo   & 0x00ffffff;
+MidiEvents[i].Tempo    = Tempo & 0x00ffffff;
 MidiEvents[i].TimeSigN = TimeSig >> 24;
 MidiEvents[i].TimeSigD = TimeSig >> 16;
 
