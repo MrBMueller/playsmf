@@ -156,7 +156,7 @@ static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent->event_time = tim
 
 static void saveMidiEventsToFile(signed long *args, unsigned short PPQ, unsigned long Tempo, unsigned long TimeSig, unsigned long KeySig, struct RecEvent *RecEvents, struct RecEvent *RecEvent, unsigned char ExitVal, struct Label *Label0) {
 SYSTEMTIME    current_time;
-unsigned char filename[1024], tempo[] = {(Tempo>>16)&0xff, (Tempo>>8)&0xff, (Tempo>>0)&0xff}, timeSig[] = {(TimeSig>>24)&0xff, (TimeSig>>16)&0xff, (TimeSig>>8)&0xff, (TimeSig>>0)&0xff}, keySig[] = {(KeySig>>8)&0xff, (KeySig>>0)&0xff};
+unsigned char filename[1024], tempo[] = {(Tempo>>16)&0xff, (Tempo>>8)&0xff, (Tempo>>0)&0xff}, timeSig[] = {(TimeSig>>24)&0xff, (TimeSig>>16)&0xff, (TimeSig>>8)&0xff, (TimeSig>>0)&0x7f}, keySig[] = {(KeySig>>8)&0xff, (KeySig>>0)&0xff};
 unsigned long PPQc = PPQ*1000;
 float         c = (float)PPQc/(float)(Tempo&0xffffff);
 
