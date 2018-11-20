@@ -9,16 +9,16 @@
 #define KW3 "Solo"
 
 #define MyMacro1 \
- if       ((Label0->Event == MidiEvents) || (Label0->Event == LastLabel->Event))                                                      { Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA = MuteB = EntryMute; i = -2;                      c = Mute0[-1]; }\
-  else if ((Mute == EntryMute) && ((MidiEvent->Label->Event == EntryLabel->Event) || (MidiEvent->Label->Event == FirstLabel->Event))) { Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA = MuteB = FirstMute; i =  0;                      c = Mute0[-1]; }\
-  else                                                                                                                                {                                                                     i = (Mute-Mutes)/(TrkNum+1); c = Mute[ -1]; }\
+ if       (Label0->Event == MidiEvents || Label0->Event == LastLabel->Event)                                                    { Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA = MuteB = EntryMute; i = -2;                      c = Mute0[-1]; }\
+  else if (Mute == EntryMute && (MidiEvent->Label->Event == EntryLabel->Event || MidiEvent->Label->Event == FirstLabel->Event)) { Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA = MuteB = FirstMute; i =  0;                      c = Mute0[-1]; }\
+  else                                                                                                                          {                                                                     i = (Mute-Mutes)/(TrkNum+1); c = Mute[ -1]; }\
  printf("%4.2f -> %4x %3d %3d %2d %02x %2d %d => %6.2f (%6.2f %d/%d) -> %6.2f (%6.2f %d/%d)\n", (float)(RecEvent->event_time-LastTime)*1000*(1<<MidiEvent->TimeSigD)/((MidiEvent->Tempo<<2)*MidiEvent->TimeSigN), V0, (V0&0xfff)<=0xff?V0&0x7f:-1, V1, (signed char)Label0->Ret, IRQ, i, c,\
   (float)MidiEvent->event_time*1000*(1<<MidiEvent->TimeSigD)/((MidiEvent->Tempo<<2)*MidiEvent->TimeSigN), (float)60000000/MidiEvent->Tempo/Speed0, MidiEvent->TimeSigN, 1<<MidiEvent->TimeSigD, (float)Label0->Event->event_time*1000*(1<<Label0->Event->TimeSigD)/((Label0->Event->Tempo<<2)*Label0->Event->TimeSigN), (float)60000000/Label0->Event->Tempo/Speed0, Label0->Event->TimeSigN, 1<<Label0->Event->TimeSigD);\
  LastTime = RecEvent->event_time;
 
 #define MyMacro0 \
  if (V0 < LabelNum && Labels[V0].Event) {\
-  if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if ((Label0 != Label2) || (MidiEvent->Label->Ret)) { Label3 = Label2 = Label1 = Label0;                                        IRQ = 0x10; MyMacro1 }}\
+  if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvent->Label->Ret) { Label3 = Label2 = Label1 = Label0;                                            IRQ = 0x10; MyMacro1 }}\
                     else { Label1 = Label2; if (Label0->Ret&2) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1 }}\
    else if (Label0->Ret) { Label1 = Label2; if (Label0->Ret&2) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1  }\
    else                  { Label3 = Label2 = Label1 = Label0 = &Labels[V0]; }}
@@ -98,7 +98,7 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
   if (LatestPendingI) { LatestPendingI->Next = PendingI; } PendingI->Prev = LatestPendingI; (LatestPendingI = PendingI)->Next = NULL;
   PressedNotes[PendingI->Note] = V0; c = i = v = 0;
   while (PendingI) { c = c<<4 | PendingI->Note+1; v += PendingI->Vel; PendingI = PendingI->Prev; } if (c <= 0xcccc && Chords[c].Type >= 0x000) { RootKey = PressedNotes[Chords[c].Root]; PendingI = LatestPendingI;
-  while (PendingI) { if (PendingI->Key < RootKey) { i++; }                PendingI = PendingI->Prev; } V0 = Var | Chords[c].Type | i%Chords[c].Num<<4 | Chords[c].Root; V1 = v / Chords[c].Num; }} break;
+  while (PendingI) { if (PendingI->Key < RootKey) { i++; }            PendingI = PendingI->Prev; } V0 = Var | Chords[c].Type | i%Chords[c].Num<<4 | Chords[c].Root; V1 = v / Chords[c].Num; }} break;
   case  2: if ((i = Key1->Val | Label0->Idx & 0xfff) < LabelNum && !Labels[i].Ret) { if (Key1->Val == Var0) { Var0 = Var1; } else { Var1 = Var0; Var0 = Key1->Val; }} else { Var1 = Var0 = Key1->Val; }
            V0 = (Var = Var0) | Label2->Idx & 0xfff; if (MidiEvent->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label1 = &Labels[i]; V0 = -1; } break;
   case  4: Mute[Key1->Val] ^= 0x08;                                                                                              V0 |= Var; break;
@@ -129,7 +129,7 @@ case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: RecEvent->event_time = ti
 } return; //switch dwParam1 // MIM_DATA fallthru
 
 case MIM_LONGDATA: V0 = timeGetTime(); i = -1;
- while (++i < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { RecEvent->event_time = V0; RecEvent->EventData = ((*(((MIDIHDR*)dwParam1)->lpData+i)&0xff)<<8) | 0xf0; RecEvent = RecEvent->NextEvent; }
+ while (++i < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { RecEvent->event_time = V0; RecEvent->EventData = (*(((MIDIHDR*)dwParam1)->lpData+i)&0xff)<<8 | 0xf0; RecEvent = RecEvent->NextEvent; }
  if (((MIDIHDR*)dwParam1)->dwBytesRecorded) { midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } return; // MIM_LONGDATA
 case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
@@ -138,7 +138,7 @@ case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 //----------------------------------------------------------------------------//
 
 static void CALLBACK MidiInProc1(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { midiInGetID(hMidiIn, &i1); switch (wMsg) {
-case MIM_DATA: if (((i1 = InPortOrder[i1]+(dwParam1&0xf)) < TrkNum) && (ThruE1 = TrkInfo[i1]) && (ThruE1->Out & 0x1)) { midiOutShortMsg(ThruE1->midi_out, dwParam1 & 0xfffffff0 | ThruE1->Ch); } return;
+case MIM_DATA: if ((i1 = InPortOrder[i1]+(dwParam1&0xf)) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Out & 0x1) { midiOutShortMsg(ThruE1->midi_out, dwParam1 & 0xfffffff0 | ThruE1->Ch); } return;
 case MIM_LONGDATA: i1 = -1; while (++i1 < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { printf("%02x ", (*(((MIDIHDR*)dwParam1)->lpData+i1)&0xff)); } if (i1) { printf("\n"); midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } return; // MIM_LONGDATA
 case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
