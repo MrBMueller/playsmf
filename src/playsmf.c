@@ -137,9 +137,9 @@ case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
 //----------------------------------------------------------------------------//
 
-static void CALLBACK MidiInProc1(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { midiInGetID(hMidiIn, &i1); switch (wMsg) {
-case MIM_DATA: if ((i1 = InPortOrder[i1]+(dwParam1&0xf)) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Out & 0x1) { midiOutShortMsg(ThruE1->midi_out, dwParam1 & 0xfffffff0 | ThruE1->Ch); } return;
-case MIM_LONGDATA: i1 = -1; while (++i1 < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { printf("%02x ", (*(((MIDIHDR*)dwParam1)->lpData+i1)&0xff)); } if (i1) { printf("\n"); midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } return; // MIM_LONGDATA
+static void CALLBACK MidiInProc1(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { midiInGetID(hMidiIn, &i1); i1 = InPortOrder[i1]; switch (wMsg) {
+case MIM_DATA: if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Out & 0x1) { midiOutShortMsg(ThruE1->midi_out, dwParam1 & 0xfffffff0 | ThruE1->Ch); } return;
+case MIM_LONGDATA: printf("%02x ", i1); i1 = -1; while (++i1 < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { printf("%02x ", (*(((MIDIHDR*)dwParam1)->lpData+i1)&0xff)); } if (i1) { printf("\n"); midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } return; // MIM_LONGDATA
 case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
 } printf("%08x %08x %08x %08x %08x\n", hMidiIn, wMsg, dwInstance, dwParam1, dwParam2); } //switch wMsg // CALLBACK fallthru
@@ -349,11 +349,11 @@ strcpy(midi_i_caps.szPname, ""); midiInGetDevCaps(k, &midi_i_caps, sizeof(midi_i
 midi_message_header0.lpData = data_buffer; midi_message_header0.dwBufferLength = sizeof(data_buffer); midi_message_header0.dwFlags = 0;
 midiInPrepareHeader(Port2In[k].h, &midi_message_header0, sizeof(MIDIHDR)); midiInAddBuffer(Port2In[k].h, &midi_message_header0, sizeof(MIDIHDR));
 
-for (i=12; i<_msize(args)/sizeof(signed long); i++) { if ((((args[i]>>16) == 2) && (!Port2In[k = args[i]&0xff].h) || ((args[i]>>16) == 4) && (!Port2In[k = midiInGetNumDevs()-1-args[i]&0xff].h)) && (k < midiInGetNumDevs())) {
+for (i=12; i<_msize(args)/sizeof(signed long); i++) { if ((((args[i]>>16) == 2) && (!Port2In[k = args[i]&0xff].h) || ((args[i]>>16) == 4) && (!Port2In[k = midiInGetNumDevs()-1-args[i]&0xff].h)) && (k < midiInGetNumDevs())) { InPortOrder[k] = (args[i]>>8)&0xff;
 Port2In[k].s = midiInOpen(&Port2In[k].h, k, (unsigned long)MidiInProc1, (unsigned long)NULL, CALLBACK_FUNCTION | MIDI_IO_STATUS);
 strcpy(midi_i_caps.szPname, ""); midiInGetDevCaps(k, &midi_i_caps, sizeof(midi_i_caps)); printf("i%2d %x '%s'\n", k, Port2In[k].s, midi_i_caps.szPname);
 midi_message_header0.lpData = data_buffer; midi_message_header0.dwBufferLength = sizeof(data_buffer); midi_message_header0.dwFlags = 0;
-midiInPrepareHeader(Port2In[k].h, &midi_message_header0, sizeof(MIDIHDR)); midiInAddBuffer(Port2In[k].h, &midi_message_header0, sizeof(MIDIHDR)); InPortOrder[k] = (args[i]>>8)&0xff; }}
+midiInPrepareHeader(Port2In[k].h, &midi_message_header0, sizeof(MIDIHDR)); midiInAddBuffer(Port2In[k].h, &midi_message_header0, sizeof(MIDIHDR)); }}
 
 i = j = tick = 0; FirstLabel = LastLabel = NULL; Tempo = Tempo0 = 0x0107a120; TimeSig = TimeSig0 = 0x04021888; KeySig = KeySig0 = 0x00010000;
 for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_file_event = MidiFileEvent_getNextEventInFile(midi_file_event)) {
