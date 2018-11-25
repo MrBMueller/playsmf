@@ -1010,6 +1010,7 @@ MidiFile_t MidiFile_load(char *filename)
 	io = MidiFileIO_newFromFile(in);
 	midi_file = load_midi_file(io);
 	MidiFileIO_free(io);
+	fclose(in);
 	return midi_file;
 }
 
