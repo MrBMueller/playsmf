@@ -104,7 +104,7 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
   case  4: Mute[Key1->Val] ^= 0x08;                                                                                              V0 |= Var; break;
   case  8: if (!(Mute2 = (unsigned char*)Key1->Val)[-1]) { if (Mute2 == MuteA) { MuteA = MuteB; } else { MuteB = MuteA; MuteA = Mute2; } Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA; }
             else                                         { Mute1 = Mute3 = Mute2; if (!Mute[-1]) { Mute0 = Mute11 = Mute; }}     V0 |= Var; break;
-  case 16: Label3 = Label2 = Label1 = Label0 = MidiEvents->Label; IRQ = 0x20;                                                    V0 |= Var; break;
+  case 16: IRQ = 0x20;                                                                                                           V0 |= Var; break;
   default:                                                                                                                       V0 |= Var; }
   MyMacro0 RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
 
@@ -417,21 +417,24 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
  }
 
 MidiEvents[i].event_time = 0; if (i) { MidiEvents[i].event_time = MidiEvents[i-1].event_time; if (!MidiEvents[i-1].FlwCtl && !MidiEvents[i-1].MsgCtl && !MidiEvents[i-1].Rec && ((unsigned long)MidiEvents[i-1].JumpEvent == -1)) { i--; }}
-MidiEvents[i].Label = ExitLabel; MidiEvents[i].EventData = 0; ExitLabel->Event = &MidiEvents[i]; MidiEvent = EntryLabel->Event = &MidiEvents[0]; EntryLabel->Ret = 1; k = 0;
+MidiEvents[i].Label = ExitLabel; MidiEvents[i].EventData = 0; ExitLabel->Event = &MidiEvents[i]; MidiEvent = EntryLabel->Event = &MidiEvents[0]; k = 0;
 
 MidiEvents[i].Tempo    = Tempo & 0x00ffffff;
 MidiEvents[i].TimeSigN = TimeSig >> 24;
 MidiEvents[i].TimeSigD = TimeSig >> 16;
 
 while (--i >= 0) { MidiEvents[i].TrkInfo = &TrkInfo[MidiEvents[i].Track]; MidiEvents[i].Ch = (MidiEvents[i].Out >> 4) & 0xf;
- if (MidiEvents[i].FlwCtl & 2) { k = 0;
-  if (((unsigned long)MidiEvents[i].JumpEvent < LabelNum) && (Labels[(unsigned long)MidiEvents[i].JumpEvent].Event)) { MidiEvents[i].JumpEvent = Labels[(unsigned long)MidiEvents[i].JumpEvent].Event; }
-   else if ((l = (unsigned long)MidiEvents[i].JumpEvent*-1) >= 4) { l -= 4; j = i; while (l && j) { if (MidiEvents[j].Label->Event != MidiEvents[j-1].Label->Event) { l--; } j--; } if (l) { MidiEvents[i].FlwCtl &= -3; } MidiEvents[i].JumpEvent = MidiEvents[j].Label->Event; }
+ if (MidiEvents[i].FlwCtl & 2) {
+  if (((unsigned long)MidiEvents[i].JumpEvent < LabelNum) && (Labels[(unsigned long)MidiEvents[i].JumpEvent].Event)) { if (!(k & 0x100)) { k = 0; } MidiEvents[i].JumpEvent = Labels[(unsigned long)MidiEvents[i].JumpEvent].Event; }
+   else if ((l = (unsigned long)MidiEvents[i].JumpEvent*-1) >= 4) { l -= 4; j = i; while (l && j) { if (MidiEvents[j].Label->Event != MidiEvents[j-1].Label->Event) { l--; } j--; } if (l) { MidiEvents[i].FlwCtl &= -3; } if (!(k & 0x100)) { k = 0; } MidiEvents[i].JumpEvent = MidiEvents[j].Label->Event; }
    else { MidiEvents[i].FlwCtl = 4; k = (unsigned long)MidiEvents[i].JumpEvent; }
-  } else if ((unsigned long)MidiEvents[i].JumpEvent != -1) { Labels[(unsigned long)MidiEvents[i].JumpEvent].Ret = k; }
+  } else if ((unsigned long)MidiEvents[i].JumpEvent != -1) { k &= ~0x100; }
+ MidiEvents[i].Label->Ret = k;
  if (MidiEvents[i].FlwCtl & 0x10) { MidiEvents[i].FlwCtl = 2; }
  if (MidiEvents[i].FlwCtl & 0x08) { MidiEvents[i].FlwCtl = 5; }
  }
+
+EntryLabel->Ret = -1;
 
 for (i=0; i<LabelNum; i++) { j = (i>>8)&0xf; k = (i>>4)&0x3; l = i&0xf;
  if ((j >= 1) && (j <= 4) && (l >= 1) && (l <= 0xb) && (!Labels[i].Event) && (Labels[i&(-1^0xf)].Event)) { Labels[i].Event = Labels[i&(-1^0xf)].Event; }
