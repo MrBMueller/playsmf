@@ -104,7 +104,7 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
   case  4: Mute[Key1->Val] ^= 0x08;                                                                                              V0 |= Var; break;
   case  8: if (!(Mute2 = (unsigned char*)Key1->Val)[-1]) { if (Mute2 == MuteA) { MuteA = MuteB; } else { MuteB = MuteA; MuteA = Mute2; } Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA; }
             else                                         { Mute1 = Mute3 = Mute2; if (!Mute[-1]) { Mute0 = Mute11 = Mute; }}     V0 |= Var; break;
-  case 16: IRQ = 0x20;                                                                                                           V0 |= Var; break;
+  case 16: Label3 = Label2 = Label1 = Label0 = MidiEvents->Label; IRQ = 0x20;                                                    V0 |= Var; break;
   default:                                                                                                                       V0 |= Var; }
   MyMacro0 RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
 
