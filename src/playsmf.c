@@ -8,10 +8,16 @@
 #define KW2 "Mute"
 #define KW3 "Solo"
 
+#define SetEntryLabel Var = Var1 = Var0 = (Label3 = Label2 = Label1 = Label0 = EntryLabel)->Idx&-4096;
+#define SetExitLabel  Var = Var1 = Var0 = (Label3 = Label2 = Label1 = Label0 = ExitLabel )->Idx&-4096;
+
+#define SetEntryMute Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA = MuteB = EntryMute;
+#define SetFirstMute Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA = MuteB = FirstMute;
+
 #define MyMacro1 \
- if       (Label0->Event == MidiEvents || Label0->Event == LastLabel->Event)                                                    { Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA = MuteB = EntryMute; i = -2;                      c = Mute0[-1]; }\
-  else if (Mute == EntryMute && (MidiEvent->Label->Event == EntryLabel->Event || MidiEvent->Label->Event == FirstLabel->Event)) { Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA = MuteB = FirstMute; i =  0;                      c = Mute0[-1]; }\
-  else                                                                                                                          {                                                                     i = (Mute-Mutes)/(TrkNum+1); c = Mute[ -1]; }\
+ if       (Label0->Event == MidiEvents || Label0->Event == LastLabel->Event)                                                    { SetEntryMute i = -2;                      c = Mute0[-1]; }\
+  else if (Mute == EntryMute && (MidiEvent->Label->Event == EntryLabel->Event || MidiEvent->Label->Event == FirstLabel->Event)) { SetFirstMute i =  0;                      c = Mute0[-1]; }\
+  else                                                                                                                          {              i = (Mute-Mutes)/(TrkNum+1); c = Mute[ -1]; }\
  printf("%4.2f -> %4x %3d %3d %2d %02x %2d %d => %6.2f (%6.2f %d/%d) -> %6.2f (%6.2f %d/%d)\n", (float)(RecEvent->event_time-LastTime)*1000*(1<<MidiEvent->TimeSigD)/((MidiEvent->Tempo<<2)*MidiEvent->TimeSigN), V0, (V0&0xfff)<=0xff?V0&0x7f:-1, V1, (signed char)Label0->Ret, IRQ, i, c,\
   (float)MidiEvent->event_time*1000*(1<<MidiEvent->TimeSigD)/((MidiEvent->Tempo<<2)*MidiEvent->TimeSigN), (float)60000000/MidiEvent->Tempo/Speed0, MidiEvent->TimeSigN, 1<<MidiEvent->TimeSigD, (float)Label0->Event->event_time*1000*(1<<Label0->Event->TimeSigD)/((Label0->Event->Tempo<<2)*Label0->Event->TimeSigN), (float)60000000/Label0->Event->Tempo/Speed0, Label0->Event->TimeSigN, 1<<Label0->Event->TimeSigD);\
  LastTime = RecEvent->event_time;
@@ -104,7 +110,7 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
   case  4: Mute[Key1->Val] ^= 0x08;                                                                                              V0 |= Var; break;
   case  8: if (!(Mute2 = (unsigned char*)Key1->Val)[-1]) { if (Mute2 == MuteA) { MuteA = MuteB; } else { MuteB = MuteA; MuteA = Mute2; } Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA; }
             else                                         { Mute1 = Mute3 = Mute2; if (!Mute[-1]) { Mute0 = Mute11 = Mute; }}     V0 |= Var; break;
-  case 16: Label3 = Label2 = Label1 = Label0 = EntryLabel; IRQ = 0x20;                                                           V0 |= Var; break;
+  case 16: SetEntryLabel IRQ = 0x20;                                                                                             V0 |= Var; break;
   default:                                                                                                                       V0 |= Var; }
   MyMacro0 RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
 
@@ -150,7 +156,7 @@ static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long
 
 //----------------------------------------------------------------------------//
 
-static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent->event_time = timeGetTime(); V1 = -1; if (dwCtrlType) { Label3 = Label2 = Label1 = Label0 = EntryLabel; } else { Label3 = Label2 = Label1 = Label0 = ExitLabel; ExitVal |= 4; } V0 = Label0->Idx; IRQ = 0x08; MyMacro1 PulseEvent(signalling_object); return(TRUE); }
+static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent->event_time = timeGetTime(); V1 = -1; if (dwCtrlType) { SetEntryLabel } else { SetExitLabel ExitVal |= 4; } V0 = Label0->Idx; IRQ = 0x08; MyMacro1 PulseEvent(signalling_object); return(TRUE); }
 
 //----------------------------------------------------------------------------//
 
@@ -462,9 +468,9 @@ for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h)
  midiOutShortMsg(Port2Out[i].h, 0x000079b0 | j); //reset all controller (GM)
  }}}
 
-for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } Var = Var1 = Var0 = (Label3 = Label2 = Label1 = Label0 = EntryLabel)->Idx&-4096;
+for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } SetEntryLabel
 
-FirstMute = EntryMute = &Mutes[(MutesNum-2)*(TrkNum+1)+1]; if (MutesNum > 2) { FirstMute = &Mutes[(0)*(TrkNum+1)+1]; } Mute = Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA = MuteB = EntryMute;
+FirstMute = EntryMute = &Mutes[(MutesNum-2)*(TrkNum+1)+1]; if (MutesNum > 2) { FirstMute = &Mutes[(0)*(TrkNum+1)+1]; } Mute = SetEntryMute
 
 Key0 = Key1 = &Keys[0x0][0x00]; ExitVal = IRQ = start_time = 0; Dead = 1; Speed = Speed0 = 1; PedalLeft = PedalMid = 0;
 
