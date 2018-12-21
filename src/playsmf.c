@@ -456,7 +456,7 @@ for (i=0; i<LabelNum ; i++) { if ((!Labels[i].Event) && (Labels[i&0xfff].Event))
 for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { unsigned char a = 0;
  for (j=0; j<LabelNum; j++) { if (Labels[i].Event == Labels[j].Event) { a |= Labels[j].Ret; }}
  for (j=0; j<LabelNum; j++) { if (Labels[i].Event == Labels[j].Event) { Labels[j].Ret = a;  }}
- if (i <= 0x7f) { for (j=0; j<=0xf; j++) { if (Keys[j][i].Zone & 16) { Keys[j][i].Zone &= ~16; }}}
+ if (i <= 0x7f) { for (j=0; j<=0xf; j++) { Keys[j][i].Zone &= ~16; }}
  }}
 
 if (!FirstLabel) { FirstLabel = EntryLabel; } if (!LastLabel) { LastLabel = ExitLabel; }
