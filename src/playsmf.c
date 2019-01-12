@@ -55,7 +55,7 @@ struct PNoteI    { struct PNoteI    *Prev;
 
 struct PNoteO    { struct PNoteO    *Prev;
                    struct PNoteO    *Next;
-                   unsigned long     EventOffMsg;
+                   unsigned long     EventOffMsg, Cnt;
                    struct MidiEvent *Event; };
 
 struct Label     {   signed long     Idx;
@@ -337,8 +337,8 @@ start:
 for (i=0; i<(sizeof(Port2In       )/sizeof(struct MidiIn     )); i++) { Port2In[i].s  = -1; Port2In[i].h  = NULL; }
 for (i=0; i<(sizeof(Port2Out      )/sizeof(struct MidiOut    )); i++) { Port2Out[i].s = -1; Port2Out[i].h = NULL; }
 for (i=0; i<(_msize(TrkInfo       )/sizeof(struct MidiEvent* )); i++) { TrkInfo[i] = (struct MidiEvent*)(args[3] << 8); }
-for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI     )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel   =    0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = i%12;                                      } LatestPendingI = NULL;
-for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO     )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Event = NULL; PendingEventsO[i].EventOffMsg = 0x400080 ^ (i>>11)/TrkNum*0x400030 | (i&0x7f)<<8 | (i>>7)&0xf; } LatestPendingO = NULL;
+for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI     )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel = 0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = i%12;                                      } LatestPendingI = NULL;
+for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO     )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Cnt = 0; PendingEventsO[i].EventOffMsg = 0x400080 ^ (i>>11)/TrkNum*0x400030 | (i&0x7f)<<8 | (i>>7)&0xf; } LatestPendingO = NULL;
 for (i=0; i<(_msize(Mutes         )/sizeof(unsigned char     )); i++) { Mutes[i] = 0; }
 for (i=1; i<(sizeof(RecEvents     )/sizeof(struct RecEvent   )); i++) { RecEvents[i-1].NextEvent = &RecEvents[i]; RecEvents[i-1].EventData = 0; } RecEvents[i-1].NextEvent = &RecEvents[0]; RecEvents[i-1].EventData = 0; RecEvent = &RecEvents[0];
 for (i=0; i<(_msize(Thrus         )/sizeof(struct MidiEvent**)); i++) { Thrus[i] = NULL; }
@@ -484,22 +484,22 @@ while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*
 
  switch (MidiEvent->FlwCtl | IRQ) {
   case 0x09: case 0x0b: case 0x0c: case 0x0d: case 0x11: case 0x13: case 0x14:
-   while (LatestPendingO) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->EventOffMsg); LatestPendingO->Event = NULL; LatestPendingO = LatestPendingO->Prev; }
+   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->EventOffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
    MidiEvent = Label0->Event;  IRQ = start_time = 0; Mute = Mute0 = Mute2; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x02: case 0x03: case 0x05: case 0x0a: case 0x12:
-   while (LatestPendingO) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->EventOffMsg); LatestPendingO->Event = NULL; LatestPendingO = LatestPendingO->Prev; }
+   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->EventOffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
    MidiEvent = MidiEvent->JumpEvent; start_time = 0; Mute = Mute0 = Mute1; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x04:
-   while (LatestPendingO) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->EventOffMsg); LatestPendingO->Event = NULL; LatestPendingO = LatestPendingO->Prev; }
+   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->EventOffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
    MidiEvent = Label1->Event;        start_time = 0; Mute = Mute0 = Mute3; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x22: case 0x23: case 0x24: case 0x25: IRQ = 0; case 0x01: case 0x15: Mute = Mute0; }
 
  switch (MidiEvent->MsgCtl | Mute[MidiEvent->Track]) {
-  case 0x4:           if (!(PendingO = MidiEvent->EventIdx)->Event) { midiOutShortMsg(MidiEvent->midi_out, MidiEvent->EventData); PendingO->Event = MidiEvent;
-                      if (LatestPendingO) { LatestPendingO->Next = PendingO; } PendingO->Prev = LatestPendingO; (LatestPendingO = PendingO)->Next = NULL; } break;
-  case 0x3: case 0xb: if ( (PendingO = MidiEvent->EventIdx)->Event) { midiOutShortMsg(MidiEvent->midi_out, MidiEvent->EventData); PendingO->Event = NULL;
+  case 0x4:           midiOutShortMsg(MidiEvent->midi_out, MidiEvent->EventData); if (!(PendingO = MidiEvent->EventIdx)->Cnt) { PendingO->Event = MidiEvent;
+                      if (LatestPendingO) { LatestPendingO->Next = PendingO; } PendingO->Prev = LatestPendingO; (LatestPendingO = PendingO)->Next = NULL; } PendingO->Cnt++; break;
+  case 0x3: case 0xb: if ((PendingO = MidiEvent->EventIdx)->Cnt) { midiOutShortMsg(MidiEvent->midi_out, MidiEvent->EventData); PendingO->Cnt--; if (!PendingO->Cnt) {
                       if (PendingO->Prev) { PendingO->Prev->Next = PendingO->Next; }
-                      if (PendingO->Next) { PendingO->Next->Prev = PendingO->Prev; } else { LatestPendingO = PendingO->Prev; }} break;
+                      if (PendingO->Next) { PendingO->Next->Prev = PendingO->Prev; } else { LatestPendingO = PendingO->Prev; }}} break;
   case 0x2:           midiOutShortMsg(MidiEvent->midi_out, MidiEvent->EventData); break;
   case 0x1:           midi_message_header.lpData         = MidiEvent->data_buffer;
                       midi_message_header.dwBufferLength = MidiEvent->data_length;
@@ -514,8 +514,8 @@ while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*
  }
 ExitVal |= 1; Exit2: ExitVal |= 2; Exit0: printf(" done. (%x)\n", ExitVal); for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStop(Port2In[i].h); }} SetConsoleCtrlHandler(HandlerRoutine, FALSE); if (args[2] >= 0) { timeEndPeriod(args[2]); }
 
-while (LatestPendingO) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->EventOffMsg); LatestPendingO->Event = NULL; LatestPendingO = LatestPendingO->Prev; }
-while (LatestPendingI) {                                                                                                              LatestPendingI = LatestPendingI->Prev; }
+while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->EventOffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
+while (LatestPendingI) {                                                                                                                                       LatestPendingI = LatestPendingI->Prev; }
 
 for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { for (j=0; j<=0xf; j++) {
  midiOutShortMsg(Port2Out[i].h, 0x00007bb0 | j); //all notes off (GM)
