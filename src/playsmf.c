@@ -32,7 +32,7 @@
 struct MidiEvent { unsigned long     event_time;
                    unsigned long     Track;
                    unsigned short    Out;
-                   unsigned long     EventData;
+                   unsigned long     EventData, OffMsg;
                    unsigned long     data_length;
                    unsigned char    *data_buffer;
                    struct MidiEvent *NextEvent;
@@ -55,7 +55,7 @@ struct PNoteI    { struct PNoteI    *Prev;
 
 struct PNoteO    { struct PNoteO    *Prev;
                    struct PNoteO    *Next;
-                   unsigned long     EventOffMsg, Cnt;
+                   unsigned long     Cnt;
                    struct MidiEvent *Event; };
 
 struct Label     {   signed long     Idx;
@@ -337,8 +337,8 @@ start:
 for (i=0; i<(sizeof(Port2In       )/sizeof(struct MidiIn     )); i++) { Port2In[i].s  = -1; Port2In[i].h  = NULL; }
 for (i=0; i<(sizeof(Port2Out      )/sizeof(struct MidiOut    )); i++) { Port2Out[i].s = -1; Port2Out[i].h = NULL; }
 for (i=0; i<(_msize(TrkInfo       )/sizeof(struct MidiEvent* )); i++) { TrkInfo[i] = (struct MidiEvent*)(args[3] << 8); }
-for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI     )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel = 0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = i%12;                                      } LatestPendingI = NULL;
-for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO     )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Cnt = 0; PendingEventsO[i].EventOffMsg = 0x400080 ^ (i>>11)/TrkNum*0x400030 | (i&0x7f)<<8 | (i>>7)&0xf; } LatestPendingO = NULL;
+for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI     )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel = 0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = i%12; } LatestPendingI = NULL;
+for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO     )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Cnt = 0; PendingEventsO[i].Event = NULL;                           } LatestPendingO = NULL;
 for (i=0; i<(_msize(Mutes         )/sizeof(unsigned char     )); i++) { Mutes[i] = 0; }
 for (i=1; i<(sizeof(RecEvents     )/sizeof(struct RecEvent   )); i++) { RecEvents[i-1].NextEvent = &RecEvents[i]; RecEvents[i-1].EventData = 0; } RecEvents[i-1].NextEvent = &RecEvents[0]; RecEvents[i-1].EventData = 0; RecEvent = &RecEvents[0];
 for (i=0; i<(_msize(Thrus         )/sizeof(struct MidiEvent**)); i++) { Thrus[i] = NULL; }
@@ -408,12 +408,11 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   MidiEvents[i].MsgCtl    = 2;
   MidiEvents[i].EventData = (unsigned long)MidiFileVoiceEvent_getData(midi_file_event); EventIdx = MidiEvents[i].Track<<11 | (MidiEvents[i].EventData & 0x7f00)>>8 | (MidiEvents[i].EventData & 0xf)<<7;
   MidiEvents[i].Out       = (unsigned long)(TrkInfo[MidiEvents[i].Track] = (struct MidiEvent*)((unsigned long)TrkInfo[MidiEvents[i].Track] & 0xffffff0f | ((MidiEvents[i].EventData & 0xf) << 4) | 0x1));
-  if ((MidiEvents[i].EventData & 0x7f00f0) == 0x90) { MidiEvents[i].EventData = PendingEventsO[EventIdx].EventOffMsg; }
-  MidiEvents[i].MsgCtl   += ((MidiEvents[i].EventData & 0xf0) == 0x80)<<0;
-  MidiEvents[i].MsgCtl   += ((MidiEvents[i].EventData & 0xf0) == 0x90)<<1;
+  if       (((MidiEvents[i].EventData & 0xf0) == 0x80) || ((MidiEvents[i].EventData & 0x7f00f0) == 0x90)) { MidiEvents[i].MsgCtl += 1; }
+   else if ( (MidiEvents[i].EventData & 0xf0) == 0x90                                                   ) { MidiEvents[i].MsgCtl += 2; }
   if ((MidiEvents[i].EventData & 0xf0) == 0xb0) { EventIdx += 1*TrkNum*16*128;
-   //MidiEvents[i].MsgCtl += ((MidiEvents[i].EventData & 0x407ff0) == 0x0040b0)<<0;
-   //MidiEvents[i].MsgCtl += ((MidiEvents[i].EventData & 0x407ff0) == 0x4040b0)<<1;
+   //MidiEvents[i].MsgCtl += ((MidiEvents[i].EventData & 0x407ff0) == 0x0040b0)*1;
+   //MidiEvents[i].MsgCtl += ((MidiEvents[i].EventData & 0x407ff0) == 0x4040b0)*2;
    }
   MidiEvents[i].EventIdx = &PendingEventsO[EventIdx];
   if ((MidiEvents[i].EventData & (args[9]>>16)) == (args[9] & 0x7fff)) { if ((MidiEvents[i].EventData & 0xf0) != 0x80) { MidiEvents[j].FlwCtl |= 1; } MidiEvents[i].MsgCtl *= (args[9]>>15) & 1; }
@@ -438,6 +437,9 @@ while (--i >= 0) { MidiEvents[i].TrkInfo = &TrkInfo[MidiEvents[i].Track]; MidiEv
  MidiEvents[i].Label->Ret = k;
  if (MidiEvents[i].FlwCtl & 0x10) { MidiEvents[i].FlwCtl = 2; }
  if (MidiEvents[i].FlwCtl & 0x08) { MidiEvents[i].FlwCtl = 5; }
+ MidiEvents[i].OffMsg = (MidiEvents[i].EventData & ~0x007f0010) | 0x00400000; if ((MidiEvents[i].EventData & 0xf0) == 0xb0) { MidiEvents[i].OffMsg = MidiEvents[i].EventData & ~0x007f0000; }
+ if  (MidiEvents[i].MsgCtl == 3)                                     { MidiEvents[i].EventIdx->Event = &MidiEvents[i];                           }
+ if ((MidiEvents[i].MsgCtl == 4) && (MidiEvents[i].EventIdx->Event)) { MidiEvents[i].OffMsg          = MidiEvents[i].EventIdx->Event->EventData; }
  }
 
 EntryLabel->Ret = -1;
@@ -484,13 +486,13 @@ while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*
 
  switch (MidiEvent->FlwCtl | IRQ) {
   case 0x09: case 0x0b: case 0x0c: case 0x0d: case 0x11: case 0x13: case 0x14:
-   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->EventOffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
+   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
    MidiEvent = Label0->Event;  IRQ = start_time = 0; Mute = Mute0 = Mute2; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x02: case 0x03: case 0x05: case 0x0a: case 0x12:
-   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->EventOffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
+   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
    MidiEvent = MidiEvent->JumpEvent; start_time = 0; Mute = Mute0 = Mute1; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x04:
-   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->EventOffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
+   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
    MidiEvent = Label1->Event;        start_time = 0; Mute = Mute0 = Mute3; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x22: case 0x23: case 0x24: case 0x25: IRQ = 0; case 0x01: case 0x15: Mute = Mute0; }
 
@@ -514,8 +516,8 @@ while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*
  }
 ExitVal |= 1; Exit2: ExitVal |= 2; Exit0: printf(" done. (%x)\n", ExitVal); for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStop(Port2In[i].h); }} SetConsoleCtrlHandler(HandlerRoutine, FALSE); if (args[2] >= 0) { timeEndPeriod(args[2]); }
 
-while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->EventOffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
-while (LatestPendingI) {                                                                                                                                       LatestPendingI = LatestPendingI->Prev; }
+while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
+while (LatestPendingI) {                                                                                                                                         LatestPendingI = LatestPendingI->Prev; }
 
 for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { for (j=0; j<=0xf; j++) {
  midiOutShortMsg(Port2Out[i].h, 0x00007bb0 | j); //all notes off (GM)
