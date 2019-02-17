@@ -461,6 +461,11 @@ for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { unsigned char a = 0;
  if (i <= 0x7f) { for (j=0; j<=0xf; j++) { Keys[j][i].Zone &= ~16; }}
  }}
 
+for (i=0; i<LabelNum; i++) { if (Labels[i].Event && (Labels[i].Event->FlwCtl > 1)) { j = Labels[i].Event-MidiEvents; while (MidiEvents[j].EventData && (MidiEvents[j].event_time == MidiEvents[Labels[i].Event-MidiEvents].event_time)) { j++; }
+ if (j > Labels[i].Event-MidiEvents) { j--; k = MidiEvents[j].FlwCtl; MidiEvents[j].FlwCtl = MidiEvents[Labels[i].Event-MidiEvents].FlwCtl; MidiEvents[j].JumpEvent = MidiEvents[Labels[i].Event-MidiEvents].JumpEvent;
+  MidiEvents[Labels[i].Event-MidiEvents].FlwCtl = k; }
+ }}
+
 if (!FirstLabel) { FirstLabel = EntryLabel; } if (!LastLabel) { LastLabel = ExitLabel; }
 
 for (j=0; j<MutesNum; j++) { Mutes[j*(TrkNum+1)] |= (MutesRet>>j)&1; for (i=0; i<TrkNum; i++) { Mutes[j*(TrkNum+1)+1+i] ^= ((MutesInv2>>j)&1)<<3; }}
