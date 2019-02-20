@@ -489,8 +489,6 @@ SetConsoleCtrlHandler(HandlerRoutine, TRUE); for (i=0; i<(sizeof(Port2In)/sizeof
 while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*Speed, current_time = timeGetTime(); if (!start_time) { start_time = current_time-t; }
  if ((signed long)(t += start_time-current_time) > 0) { Sleep(t); }
 
- if (MidiEvent->Rec) { RecEvent->event_time = timeGetTime(); RecEvent->EventData = MidiEvent->EventData; RecEvent = RecEvent->NextEvent; } *(MidiEvent->TrkInfo) = MidiEvent;
-
  switch (MidiEvent->FlwCtl | IRQ) {
   case 0x09: case 0x0b: case 0x0c: case 0x0d: case 0x11: case 0x13: case 0x14:
    while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
@@ -502,6 +500,8 @@ while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*
    while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
    MidiEvent = Label1->Event;        start_time = 0; Mute = Mute0 = Mute3; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x22: case 0x23: case 0x24: case 0x25: IRQ = 0; case 0x01: case 0x15: Mute = Mute0; }
+
+ if (MidiEvent->Rec) { RecEvent->event_time = timeGetTime(); RecEvent->EventData = MidiEvent->EventData; RecEvent = RecEvent->NextEvent; } *(MidiEvent->TrkInfo) = MidiEvent;
 
  switch (MidiEvent->MsgCtl | Mute[MidiEvent->Track]) {
   case 0x4:           midiOutShortMsg(MidiEvent->midi_out, MidiEvent->EventData); if (!(PendingO = MidiEvent->EventIdx)->Cnt) { PendingO->Event = MidiEvent;
