@@ -14,12 +14,10 @@
 #define SetEntryMute Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA = MuteB = EntryMute;
 #define SetFirstMute Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA = MuteB = FirstMute;
 
-#define SetEntryTrks for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; }
-
 #define MyMacro1 \
- if       (Label0->Event == MidiEvents || Label0->Event == LastLabel->Event)                                                    { SetEntryTrks SetEntryMute i = -2;                      c = Mute0[-1]; }\
-  else if (Mute == EntryMute && (MidiEvent->Label->Event == EntryLabel->Event || MidiEvent->Label->Event == FirstLabel->Event)) {              SetFirstMute i =  0;                      c = Mute0[-1]; }\
-  else                                                                                                                          {                           i = (Mute-Mutes)/(TrkNum+1); c = Mute[ -1]; }\
+ if       (Label0->Event == MidiEvents || Label0->Event == LastLabel->Event)                                                    { SetEntryMute i = -2;                      c = Mute0[-1]; }\
+  else if (Mute == EntryMute && (MidiEvent->Label->Event == EntryLabel->Event || MidiEvent->Label->Event == FirstLabel->Event)) { SetFirstMute i =  0;                      c = Mute0[-1]; }\
+  else                                                                                                                          {              i = (Mute-Mutes)/(TrkNum+1); c = Mute[ -1]; }\
  printf("%4.2f -> %4x %3d %3d %2d %02x %2d %d => %6.2f (%6.2f %d/%d) -> %6.2f (%6.2f %d/%d)\n", (float)(RecEvent->event_time-LastTime)*1000*(1<<MidiEvent->TimeSigD)/((MidiEvent->Tempo<<2)*MidiEvent->TimeSigN), V0, (V0&0xfff)<=0xff?V0&0x7f:-1, V1, (signed char)Label0->Ret, IRQ, i, c,\
   (float)MidiEvent->event_time*1000*(1<<MidiEvent->TimeSigD)/((MidiEvent->Tempo<<2)*MidiEvent->TimeSigN), (float)60000000/MidiEvent->Tempo/Speed0, MidiEvent->TimeSigN, 1<<MidiEvent->TimeSigD, (float)Label0->Event->event_time*1000*(1<<Label0->Event->TimeSigD)/((Label0->Event->Tempo<<2)*Label0->Event->TimeSigN), (float)60000000/Label0->Event->Tempo/Speed0, Label0->Event->TimeSigN, 1<<Label0->Event->TimeSigD);\
  LastTime = RecEvent->event_time;
@@ -479,7 +477,7 @@ for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h)
  midiOutShortMsg(Port2Out[i].h, 0x000079b0 | j); //reset all controller (GM)
  }}}
 
-SetEntryLabel SetEntryTrks
+for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } SetEntryLabel
 
 FirstMute = EntryMute = &Mutes[(MutesNum-2)*(TrkNum+1)+1]; if (MutesNum > 2) { FirstMute = &Mutes[(0)*(TrkNum+1)+1]; } Mute = SetEntryMute
 
