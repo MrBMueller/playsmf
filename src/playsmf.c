@@ -24,9 +24,9 @@
 
 #define MyMacro0 \
  if (V0 < LabelNum && Labels[V0].Event) {\
-  if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvent->Label->Ret) { Label3 = Label2 = Label1 = Label0;                                            IRQ = 0x10; MyMacro1 }}\
-                    else { Label1 = Label2; if (Label0->Ret&2) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1 }}\
-   else if (Label0->Ret) { Label1 = Label2; if (Label0->Ret&2) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1  }\
+  if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvent->Label->Ret) { Label3 = Label2 = Label1 = Label0;                                            IRQ = 0x10; MyMacro1 if (MidiEvent->Label->Now) { PulseEvent(signalling_object); }}}\
+                    else { Label1 = Label2; if (Label0->Ret&2) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1 if (MidiEvent->Label->Now) { PulseEvent(signalling_object); }}}\
+   else if (Label0->Ret) { Label1 = Label2; if (Label0->Ret&2) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1 if (MidiEvent->Label->Now) { PulseEvent(signalling_object); } }\
    else                  { Label3 = Label2 = Label1 = Label0 = &Labels[V0]; }}
 
 struct MidiEvent { unsigned long     event_time;
@@ -60,7 +60,7 @@ struct PNoteO    { struct PNoteO    *Prev;
 
 struct Label     {   signed long     Idx;
                    struct MidiEvent *Event;
-                   unsigned char     Ret; };
+                   unsigned char     Ret, Now; };
 
 struct Chord     {   signed short    Type;
                      signed char     Root, Num; };
@@ -119,7 +119,7 @@ case 0x80: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16;             
  switch (Key0->Zone) { case 1: if ( (PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel =  0;
   if (PendingI->Prev) { PendingI->Prev->Next = PendingI->Next; }
   if (PendingI->Next) { PendingI->Next->Prev = PendingI->Prev; } else { LatestPendingI = PendingI->Prev; }
-  if (!LatestPendingI) { V0 = Label2->Idx & 0xfff; }
+  if (!LatestPendingI && !(Label0->Idx & 0x80)) { V0 = Label0->Idx & 0xfff; }
   }} V0 |= Var | 0x80;
   MyMacro0 RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
 
@@ -301,7 +301,7 @@ MidiEvents = malloc((i+1)*sizeof(struct MidiEvent)); Labels = malloc((j+1)*sizeo
 
 LabelNum = _msize(Labels)/sizeof(struct Label); TrkNum = _msize(TrkInfo)/sizeof(struct MidiEvent*);
 
-for (i=0; i<LabelNum; i++) { Labels[i].Idx = i; Labels[i].Event = NULL; Labels[i].Ret = 0; } EntryLabel = &Labels[args[10]]; ExitLabel = &Labels[args[11]];
+for (i=0; i<LabelNum; i++) { Labels[i].Idx = i; Labels[i].Event = NULL; Labels[i].Now = Labels[i].Ret = 0; } EntryLabel = &Labels[args[10]]; ExitLabel = &Labels[args[11]];
 
 for (i=0x0; i<=0xf; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]+1, K2 = Ck-MutesNum, K1 = K2-1, K0 = K1; if (LabelNum>>12) { K0 -= ((LabelNum-1)>>12)+1; } if (Mk-1 < 0) { Mk = Ck+abs(Mk-1); if (Mk > 128) { Mk = 128; }}
  for (j = K0; j < K1; j++) { Keys[i][j].Zone |= 2; Keys[i][j].Val = (K1-j-1)<<12; }
@@ -392,7 +392,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
    while (p1 = strstr(p1, KW3)) { signed long v = strtol(p1+sizeof(KW3)-1, &p1, 0); unsigned long t = 0; if (!v) { v = MutesInv1; } if (v == -1) { v = MutesInv;  } while (v) { if (v&1) { Mutes[t*(TrkNum+1)+1+MidiEvents[i].Track] ^= 0x08; } t++; v >>= 1; }}
    }
   if (MidiEvents[i].EventData == 0x000006ff) { unsigned long t=0; unsigned char *p0 = MidiEvents[i].data_buffer, *p1; p1 = p0; //marker
-   while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); t=1; MidiEvents[j].FlwCtl &= 1; if ((v&0xfff) == 0xfff) { while (Labels[v].Event) { v--; }} MidiEvents[j].JumpEvent = (struct MidiEvent*)v; Labels[v].Event = &MidiEvents[j]; LastLabel = &Labels[v]; if (!FirstLabel) { FirstLabel = LastLabel; } for (k=j; k<=i; k++) { MidiEvents[k].Label = LastLabel; }}
+   while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); t=1; MidiEvents[j].FlwCtl &= 1; if ((v&0xfff) == 0xfff) { while (Labels[v].Event) { v--; }} MidiEvents[j].JumpEvent = (struct MidiEvent*)v; if (p0 == strstr(p0, "i")) { Labels[v].Now = 1; } Labels[v].Event = &MidiEvents[j]; LastLabel = &Labels[v]; if (!FirstLabel) { FirstLabel = LastLabel; } for (k=j; k<=i; k++) { MidiEvents[k].Label = LastLabel; }}
    while (p1 = strstr(p1, KW1)) { signed long v = strtol(p1+sizeof(KW1)-1, &p1, 0); t=1; MidiEvents[j].FlwCtl |= 3;                                                             MidiEvents[j].JumpEvent = (struct MidiEvent*)v; if (p1 == strstr(p1, ">")) { MidiEvents[j].FlwCtl |= 8; } if (p1 == strstr(p1, "v")) { MidiEvents[j].FlwCtl |= 0x10; }}
    if (i <= j) { i += t; }
    }
@@ -440,6 +440,7 @@ while (--i >= 0) { MidiEvents[i].TrkInfo = &TrkInfo[MidiEvents[i].Track]; MidiEv
  MidiEvents[i].OffMsg = (MidiEvents[i].EventData & ~0x007f0010) | 0x00400000; if ((MidiEvents[i].EventData & 0xf0) == 0xb0) { MidiEvents[i].OffMsg = MidiEvents[i].EventData & ~0x007f0000; }
  if  (MidiEvents[i].MsgCtl == 3)                                     { MidiEvents[i].EventIdx->Event = &MidiEvents[i];                           }
  if ((MidiEvents[i].MsgCtl == 4) && (MidiEvents[i].EventIdx->Event)) { MidiEvents[i].OffMsg          = MidiEvents[i].EventIdx->Event->EventData; }
+ if (MidiEvents[i].Label->Now && !MidiEvents[i].FlwCtl) { MidiEvents[i].FlwCtl = 1; }
  }
 
 EntryLabel->Ret = -1;
@@ -455,17 +456,15 @@ for (i=0; i<LabelNum; i++) { j = (i>>8)&0xf; k = (i>>4)&0x3; l = i&0xf;
 
 for (i=0; i<LabelNum ; i++) { if ((!Labels[i].Event) && (Labels[i&0xfff].Event)) { Labels[i].Event = Labels[i&0xfff].Event; }}
 
-for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { unsigned char a = 0;
- for (j=0; j<LabelNum; j++) { if (Labels[i].Event == Labels[j].Event) { a |= Labels[j].Ret; }}
- for (j=0; j<LabelNum; j++) { if (Labels[i].Event == Labels[j].Event) { Labels[j].Ret = a;  }}
+for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { unsigned char a = 0, b = 0;
+ for (j=0; j<LabelNum; j++) { if (Labels[i].Event == Labels[j].Event) { a |= Labels[j].Ret; b |= Labels[j].Now; }}
+ for (j=0; j<LabelNum; j++) { if (Labels[i].Event == Labels[j].Event) { Labels[j].Ret = a;  Labels[j].Now = b;  }}
  if (i <= 0x7f) { for (j=0; j<=0xf; j++) { Keys[j][i].Zone &= ~16; }}
  }}
 
-for (i=0; i<LabelNum; i++) { if (Labels[i].Event && (Labels[i].Event->FlwCtl > 1)) { j = Labels[i].Event-MidiEvents;
- while (MidiEvents[j].EventData && (MidiEvents[j].event_time == MidiEvents[Labels[i].Event-MidiEvents].event_time) && (MidiEvents[j].MsgCtl < 3)) { j++; }
- if (!MidiEvents[j].EventData || (MidiEvents[j].event_time > MidiEvents[Labels[i].Event-MidiEvents].event_time)) { j--; }
- if (j > Labels[i].Event-MidiEvents) { k = MidiEvents[j].FlwCtl; MidiEvents[j].FlwCtl = MidiEvents[Labels[i].Event-MidiEvents].FlwCtl; MidiEvents[j].JumpEvent = MidiEvents[Labels[i].Event-MidiEvents].JumpEvent;
-  MidiEvents[Labels[i].Event-MidiEvents].FlwCtl = k; }
+for (i=0; i<LabelNum; i++) { if (Labels[i].Event && (Labels[i].Event->FlwCtl > 1)) { j = Labels[i].Event-MidiEvents; k = 0;
+ while (MidiEvents[j+k+1].EventData && (MidiEvents[j+k+1].event_time == MidiEvents[j].event_time)) { k++; }
+ l = MidiEvents[j+k].FlwCtl; MidiEvents[j+k].FlwCtl = MidiEvents[j].FlwCtl; MidiEvents[j].FlwCtl = l; MidiEvents[j+k].JumpEvent = MidiEvents[j].JumpEvent;
  }}
 
 if (!FirstLabel) { FirstLabel = EntryLabel; } if (!LastLabel) { LastLabel = ExitLabel; }
@@ -487,7 +486,7 @@ if (args[2] >= 0) { timeBeginPeriod(args[2]); } LastTime = WatchDogTimeOut = tim
 
 SetConsoleCtrlHandler(HandlerRoutine, TRUE); for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStart(Port2In[i].h); }} printf("%d playing ...", ExitLabel->Event-MidiEvent);
 while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*Speed, current_time = timeGetTime(); if (!start_time) { start_time = current_time-t; }
- if ((signed long)(t += start_time-current_time) > 0) { Sleep(t); }
+ if ((signed long)(t += start_time-current_time) > 0) { WaitForSingleObject(signalling_object, t); }
 
  switch (MidiEvent->FlwCtl | IRQ) {
   case 0x09: case 0x0b: case 0x0c: case 0x0d: case 0x11: case 0x13: case 0x14:
