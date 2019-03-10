@@ -24,9 +24,9 @@
 
 #define MyMacro0 \
  if (V0 < LabelNum && Labels[V0].Event) {\
-  if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvent->Label->Ret) { Label3 = Label2 = Label1 = Label0;                                            IRQ = 0x10; MyMacro1 if (MidiEvent->Label->Now) { PulseEvent(signalling_object); }}}\
-                    else { Label1 = Label2; if (Label0->Ret&2) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1 if (MidiEvent->Label->Now) { PulseEvent(signalling_object); }}}\
-   else if (Label0->Ret) { Label1 = Label2; if (Label0->Ret&2) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1 if (MidiEvent->Label->Now) { PulseEvent(signalling_object); } }\
+  if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvent->Label->Ret) { Label3 = Label2 = Label1 = Label0;                                            IRQ = 0x10; MyMacro1 if (MidiEvent->Label->Now) { SetEvent(signalling_object0); }}}\
+                    else { Label1 = Label2; if (Label0->Ret&2) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1 if (MidiEvent->Label->Now) { SetEvent(signalling_object0); }}}\
+   else if (Label0->Ret) { Label1 = Label2; if (Label0->Ret&2) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1 if (MidiEvent->Label->Now) { SetEvent(signalling_object0); } }\
    else                  { Label3 = Label2 = Label1 = Label0 = &Labels[V0]; }}
 
 struct MidiEvent { unsigned long     event_time;
@@ -79,7 +79,7 @@ struct MidiIn    { unsigned long     s;
 struct MidiOut   { unsigned long     s;
                    HMIDIOUT          h; };
 
-static HANDLE           signalling_object;
+static HANDLE           signalling_object0, signalling_object1;
 static struct Label    *Labels, *Label0, *Label1, *Label2, *Label3, *FirstLabel, *LastLabel, *EntryLabel, *ExitLabel;
 static struct Key       Keys[16][128], *Key0, *Key1;
 static struct Thru     *Thru;
@@ -152,11 +152,11 @@ case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
 //----------------------------------------------------------------------------//
 
-static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { sysex_message_pending = 0; PulseEvent(signalling_object); }
+static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { sysex_message_pending = 0; SetEvent(signalling_object1); }
 
 //----------------------------------------------------------------------------//
 
-static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent->event_time = timeGetTime(); V1 = -1; if (dwCtrlType) { SetEntryLabel } else { SetExitLabel ExitVal |= 4; } V0 = Label0->Idx; IRQ = 0x08; MyMacro1 PulseEvent(signalling_object); return(TRUE); }
+static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent->event_time = timeGetTime(); V1 = -1; if (dwCtrlType) { SetEntryLabel } else { SetExitLabel ExitVal |= 4; } V0 = Label0->Idx; IRQ = 0x08; MyMacro1 SetEvent(signalling_object0); SetEvent(signalling_object1); return(TRUE); }
 
 //----------------------------------------------------------------------------//
 
@@ -329,7 +329,7 @@ if (args[4] < 0) { args[4] += midiInGetNumDevs();  } if (args[4] < 0) { args[4] 
 
 for (i=12; i<_msize(args)/sizeof(signed long); i++) { if ((args[i]>>16) == 1) { Port2Port[(args[i]>>8)&0xff] = args[i]&0xff; } if ((args[i]>>16) == 3) { Port2Port[(args[i]>>8)&0xff] = midiOutGetNumDevs()-1-args[i]&0xff; }}
 
-timeGetDevCaps(&time_caps, sizeof(TIMECAPS)); signalling_object = CreateEvent(NULL, FALSE, FALSE, NULL);
+timeGetDevCaps(&time_caps, sizeof(TIMECAPS)); signalling_object0 = CreateEvent(NULL, FALSE, FALSE, NULL); signalling_object1 = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 printf("[%d:%d] [%d:%d] %d %d %d %d %x %x %x %x %4.2f %4.2f\n", time_caps.wPeriodMin, time_caps.wPeriodMax, midiInGetNumDevs()-1, midiOutGetNumDevs()-1, MidiFile_getResolution(midi_file), MidiFile_getFileFormat(midi_file), TrkNum, _msize(MidiEvents)/sizeof(struct MidiEvent)-1, LabelNum-1, MutesNum-1, MutesInv2, MutesRet, (float)_msize(MidiEvents)/(1024*1024), (float)_msize(Labels)/(1024*1024));
 
@@ -486,7 +486,7 @@ if (args[2] >= 0) { timeBeginPeriod(args[2]); } LastTime = WatchDogTimeOut = tim
 
 SetConsoleCtrlHandler(HandlerRoutine, TRUE); for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStart(Port2In[i].h); }} printf("%d playing ...", ExitLabel->Event-MidiEvent);
 while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*Speed, current_time = timeGetTime(); if (!start_time) { start_time = current_time-t; }
- if ((signed long)(t += start_time-current_time) > 0) { WaitForSingleObject(signalling_object, t); }
+ if ((signed long)(t += start_time-current_time) > 0) { WaitForSingleObject(signalling_object0, t); }
 
  switch (MidiEvent->FlwCtl | IRQ) {
   case 0x09: case 0x0b: case 0x0c: case 0x0d: case 0x11: case 0x13: case 0x14:
@@ -515,7 +515,7 @@ while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*
                       midiOutPrepareHeader(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR));
                       sysex_message_pending = 1;
                       midiOutLongMsg(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR));
-                      if (sysex_message_pending) { if (WaitForSingleObject(signalling_object, TimeOut)) { goto Exit2; }}
+                      if (sysex_message_pending) { if (WaitForSingleObject(signalling_object1, TimeOut)) { goto Exit2; }}
                       midiOutUnprepareHeader(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR)); }
 
  MidiEvent = MidiEvent->NextEvent; if (timeGetTime() > WatchDogTimeOut) { WatchDogTimeOut = timeGetTime()+TimeOut; if (Dead) { goto Exit0; } Dead = 1; }
@@ -532,7 +532,7 @@ for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h)
 
 for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInReset(Port2In[i].h); midiInUnprepareHeader(Port2In[i].h, &midi_message_header0, sizeof(MIDIHDR)); midiInClose(Port2In[i].h); }} if (ExitVal < 3) { Sleep(TimeOut); } //goto start;
 
-CloseHandle(signalling_object); saveMidiEventsToFile(args, MidiFile_getResolution(midi_file), Tempo0, TimeSig0, KeySig0, RecEvents, RecEvent, ExitVal, Label0);
+CloseHandle(signalling_object0); CloseHandle(signalling_object1); saveMidiEventsToFile(args, MidiFile_getResolution(midi_file), Tempo0, TimeSig0, KeySig0, RecEvents, RecEvent, ExitVal, Label0);
 free(Thrus); free(TrkInfo); free(Mutes); free(PendingEventsO); free(Labels); free(MidiEvents); free(args); MidiFile_free(midi_file);
 
 if       ((ExitVal & 3) < 3)   { return(2); } //error
