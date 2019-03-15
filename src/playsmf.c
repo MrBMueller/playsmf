@@ -156,7 +156,7 @@ static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long
 
 //----------------------------------------------------------------------------//
 
-static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent->event_time = timeGetTime(); V1 = -1; if (dwCtrlType) { SetEntryLabel } else { SetExitLabel ExitVal |= 4; } V0 = Label0->Idx; IRQ = 0x08; MyMacro1 SetEvent(signalling_object0); SetEvent(signalling_object1); return(TRUE); }
+static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent->event_time = timeGetTime(); V1 = -1; if (dwCtrlType) { V0 = EntryLabel->Idx; } else { V0 = ExitLabel->Idx; ExitVal |= 4; } V1 = -1; MyMacro0 SetEvent(signalling_object0); SetEvent(signalling_object1); return(TRUE); }
 
 //----------------------------------------------------------------------------//
 
