@@ -84,13 +84,12 @@ static struct Label    *Labels, *Label0, *Label1, *Label2, *Label3, *Label4, *Fi
 static struct Key       Keys[16][128], *Key0, *Key1;
 static struct Thru     *Thru;
 static struct PNoteI    PendingEventsI[128], *PendingI, *LatestPendingI;
-static struct PNoteO   *PendingEventsO     , *PendingO, *LatestPendingO;
 static struct Chord     Chords[0xcccc+1];
 static struct RecEvent  RecEvents[1024*1024], *RecEvent;
-static unsigned char    sysex_message_pending, PressedNotes[12], RootKey, IRQ, *Mutes, *Mute, *Mute0, *Mute1, *Mute2, *Mute3, *Mute11, *EntryMute, *FirstMute, *MuteA, *MuteB, Dead, ExitVal, PedalLeft, PedalMid, InPortOrder[256];
+static unsigned char    PressedNotes[12], RootKey, IRQ, *Mutes, *Mute, *Mute0, *Mute1, *Mute2, *Mute3, *Mute11, *EntryMute, *FirstMute, *MuteA, *MuteB, Dead, ExitVal, PedalLeft, PedalMid, InPortOrder[256];
 static unsigned long    V0, V1, c, i, i1, v, LastTime, LabelNum, TrkNum, Var, Var0, Var1;
 static struct MidiEvent *MidiEvents, *MidiEvent, **TrkInfo, ***Thrus, *ThruE, *ThruE1;
-static float            Speed, Speed0;
+static float            Speed0;
 static signed char      InOfs;
 
 //============================================================================//
@@ -152,7 +151,7 @@ case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
 //----------------------------------------------------------------------------//
 
-static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { sysex_message_pending = 0; SetEvent(signalling_object1); }
+static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { SetEvent(signalling_object1); }
 
 //----------------------------------------------------------------------------//
 
@@ -209,6 +208,8 @@ static unsigned char     Port2Port[256], data_buffer[1024];
 static MidiFileEvent_t   midi_file_event;
 static unsigned long     start_time, WatchDogTimeOut, MutesNum, tick, MutesInv, MutesRet, MutesInv1, MutesInv2, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0;
 static   signed long     i, j, k, l, *args, TimeOut;
+static struct PNoteO     *PendingEventsO, *PendingO, *LatestPendingO;
+static float             Speed;
 static unsigned char     Permutations1[ 1][1] = {{0}};
 static unsigned char     Permutations2[ 2][2] = {{0,1},{1,0}};
 static unsigned char     Permutations3[ 6][3] = {{0,1,2},{0,2,1},{1,0,2},{1,2,0},{2,0,1},{2,1,0}};
@@ -513,9 +514,7 @@ while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*
                       midi_message_header.dwBufferLength = MidiEvent->data_length;
                       midi_message_header.dwFlags        = 0;
                       midiOutPrepareHeader(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR));
-                      sysex_message_pending = 1;
-                      midiOutLongMsg(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR));
-                      if (sysex_message_pending) { if (WaitForSingleObject(signalling_object1, TimeOut)) { goto Exit2; }}
+                      midiOutLongMsg(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR)); if (WaitForSingleObject(signalling_object1, TimeOut)) { goto Exit2; }
                       midiOutUnprepareHeader(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR)); }
 
  MidiEvent = MidiEvent->NextEvent; if (timeGetTime() > WatchDogTimeOut) { WatchDogTimeOut = timeGetTime()+TimeOut; if (Dead) { goto Exit0; } Dead = 1; }
