@@ -472,6 +472,12 @@ if (!FirstLabel) { FirstLabel = EntryLabel; } if (!LastLabel) { LastLabel = Exit
 
 for (j=0; j<MutesNum; j++) { Mutes[j*(TrkNum+1)] |= (MutesRet>>j)&1; for (i=0; i<TrkNum; i++) { Mutes[j*(TrkNum+1)+1+i] ^= ((MutesInv2>>j)&1)<<3; }}
 
+if (FirstLabel==EntryLabel || FirstLabel->Event!=EntryLabel->Event) {
+for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { for (j=0; j<=0xf; j++) {
+ midiOutShortMsg(Port2Out[i].h, 0x00007bb0 | j); //all notes off (GM)
+ midiOutShortMsg(Port2Out[i].h, 0x000079b0 | j); //reset all controller (GM)
+ }}}}
+
 for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } SetEntryLabel
 
 FirstMute = EntryMute = &Mutes[(MutesNum-2)*(TrkNum+1)+1]; if (MutesNum > 2) { FirstMute = &Mutes[(0)*(TrkNum+1)+1]; } Mute = SetEntryMute
@@ -519,10 +525,11 @@ ExitVal |= 1; Exit2: ExitVal |= 2; Exit0: printf(" done. (%x)\n", ExitVal); for 
 while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
 while (LatestPendingI) {                                                                                                                                         LatestPendingI = LatestPendingI->Prev; }
 
+if (LastLabel==ExitLabel || LastLabel->Event!=ExitLabel->Event-1 || LastLabel->Event->FlwCtl|LastLabel->Event->MsgCtl|LastLabel->Event->Rec || (ExitVal&3)<3 || ExitVal&4 || Label0==ExitLabel) {
 for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { for (j=0; j<=0xf; j++) {
  midiOutShortMsg(Port2Out[i].h, 0x00007bb0 | j); //all notes off (GM)
  midiOutShortMsg(Port2Out[i].h, 0x000079b0 | j); //reset all controller (GM)
- } midiOutClose(Port2Out[i].h); }}
+ } midiOutClose(Port2Out[i].h); }}}
 
 for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInReset(Port2In[i].h); midiInUnprepareHeader(Port2In[i].h, &midi_message_header0, sizeof(MIDIHDR)); midiInClose(Port2In[i].h); }} if (ExitVal < 3) { Sleep(TimeOut); } //goto start;
 
