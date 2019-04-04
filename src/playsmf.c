@@ -144,7 +144,7 @@ case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
 static void CALLBACK MidiInProc1(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { midiInGetID(hMidiIn, &i1); i1 = InPortOrder[i1]; switch (wMsg) {
 case MIM_DATA: if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Out & 0x1) { midiOutShortMsg(ThruE1->midi_out, dwParam1 & 0xfffffff0 | ThruE1->Ch); } return;
-case MIM_LONGDATA: printf("%02x ", i1); i1 = -1; while (++i1 < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { printf("%02x ", (*(((MIDIHDR*)dwParam1)->lpData+i1)&0xff)); } if (i1) { printf("\n"); midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } return; // MIM_LONGDATA
+case MIM_LONGDATA: if (((MIDIHDR*)dwParam1)->dwBytesRecorded) { printf("%02x ", i1); } i1 = -1; while (++i1 < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { printf("%02x ", (*(((MIDIHDR*)dwParam1)->lpData+i1)&0xff)); } if (i1) { printf("\n"); midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } return; // MIM_LONGDATA
 case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
 } printf("%08x %08x %08x %08x %08x\n", hMidiIn, wMsg, dwInstance, dwParam1, dwParam2); } //switch wMsg // CALLBACK fallthru
@@ -525,7 +525,7 @@ ExitVal |= 1; Exit2: ExitVal |= 2; Exit0: printf(" done. (%x)\n", ExitVal); for 
 while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
 while (LatestPendingI) {                                                                                                                                         LatestPendingI = LatestPendingI->Prev; }
 
-if (LastLabel==ExitLabel || LastLabel->Event!=ExitLabel->Event-1 || LastLabel->Event->FlwCtl|LastLabel->Event->MsgCtl|LastLabel->Event->Rec || (ExitVal&3)<3 || ExitVal&4 || Label0==ExitLabel) {
+if (LastLabel==ExitLabel || LastLabel->Event!=ExitLabel->Event-1 || LastLabel->Event->FlwCtl|LastLabel->Event->MsgCtl|LastLabel->Event->Rec || (ExitVal&3)<3 || Label0==ExitLabel) {
 for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { for (j=0; j<=0xf; j++) {
  midiOutShortMsg(Port2Out[i].h, 0x00007bb0 | j); //all notes off (GM)
  midiOutShortMsg(Port2Out[i].h, 0x000079b0 | j); //reset all controller (GM)
