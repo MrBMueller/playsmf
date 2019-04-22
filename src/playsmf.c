@@ -312,7 +312,7 @@ for (i=0x0; i<=0xf; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]
  for (j = args[10]+1; j <= args[10]+1; j++) { Keys[i][j].Zone |= 16; }
 
  k = 12;
- while (((k+6) < _msize(args)/sizeof(signed long)) && (abs(args[k]) < 0x10000)) { signed long K0 = args[k++], K1 = args[k++]+1, T = args[k++], Delay = args[k++], K = args[k++], V1 = args[k++], V0 = args[k++];
+ while (((k+6) < _msize(args)/sizeof(signed long)) && (abs(args[k+6]) < 0x10000)) { signed long K0 = args[k++], K1 = args[k++]+1, T = args[k++], Delay = args[k++], K = args[k++], V1 = args[k++], V0 = args[k++];
   signed char v0o = V0&0xff, v1o = V1&0xff; float v0s = 1.0, v1s = 1.0; if (V0 > 255) { v0s = ((V0>>8)-1)*.25; } if (V1 > 255) { v1s = ((V1>>8)-1)*.25; }
   if (K0 <= -2) { K0 = Ck; } if (K0 == -1) { K0 = Mk; } if (K1-1 < 0) { K1 = K0+abs(K1-1); if (K1 > 128) { K1 = 128; }} Ck = K0; Mk = K1;
   if ((T < TrkNum) && ((C < 0) || (i == C))) { if (C < -1) { T = (T+i+abs(C+2))%TrkNum; }
@@ -472,11 +472,9 @@ if (!FirstLabel) { FirstLabel = EntryLabel; } if (!LastLabel) { LastLabel = Exit
 
 for (j=0; j<MutesNum; j++) { Mutes[j*(TrkNum+1)] |= (MutesRet>>j)&1; for (i=0; i<TrkNum; i++) { Mutes[j*(TrkNum+1)+1+i] ^= ((MutesInv2>>j)&1)<<3; }}
 
-if (FirstLabel==EntryLabel || FirstLabel->Event!=EntryLabel->Event) {
 for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { for (j=0; j<=0xf; j++) {
- midiOutShortMsg(Port2Out[i].h, 0x00007bb0 | j); //all notes off (GM)
- midiOutShortMsg(Port2Out[i].h, 0x000079b0 | j); //reset all controller (GM)
- }}}}
+ for (k=12; k<_msize(args)/sizeof(signed long); k++) { if (((args[k]>>24) == 1) || ((args[k]>>24) == 3)) { midiOutShortMsg(Port2Out[i].h, args[k]&0x7f7fff | j); }}
+ }}}
 
 for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } SetEntryLabel
 
@@ -525,11 +523,9 @@ ExitVal |= 1; Exit2: ExitVal |= 2; Exit0: printf(" done. (%x)\n", ExitVal); for 
 while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
 while (LatestPendingI) {                                                                                                                                         LatestPendingI = LatestPendingI->Prev; }
 
-if (LastLabel==ExitLabel || LastLabel->Event!=ExitLabel->Event-1 || LastLabel->Event->FlwCtl|LastLabel->Event->MsgCtl|LastLabel->Event->Rec || (ExitVal&3)<3 || Label0==ExitLabel) {
 for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { for (j=0; j<=0xf; j++) {
- midiOutShortMsg(Port2Out[i].h, 0x00007bb0 | j); //all notes off (GM)
- midiOutShortMsg(Port2Out[i].h, 0x000079b0 | j); //reset all controller (GM)
- } midiOutClose(Port2Out[i].h); }}}
+ for (k=12; k<_msize(args)/sizeof(signed long); k++) { if (((args[k]>>24) == 2) || ((args[k]>>24) == 3)) { midiOutShortMsg(Port2Out[i].h, args[k]&0x7f7fff | j); }}
+ } midiOutClose(Port2Out[i].h); }}
 
 for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInReset(Port2In[i].h); midiInUnprepareHeader(Port2In[i].h, &midi_message_header0, sizeof(MIDIHDR)); midiInClose(Port2In[i].h); }} if (ExitVal < 3) { Sleep(TimeOut); } //goto start;
 
