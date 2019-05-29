@@ -493,13 +493,13 @@ while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*
  switch (MidiEvent->FlwCtl^FlwMsk | IRQ) {
   case 0x09: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f: case 0x11: case 0x13: case 0x14: case 0x16:
    while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
-   if ((MidiEvent = Label4->Event       )->FlwCtl > 1) { FlwMsk = MidiEvent->FlwCtl^1; } IRQ = start_time = 0; Mute = Mute0 = Mute2; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
+   if ((MidiEvent = Label4->Event       )->FlwCtl > 2) { FlwMsk = MidiEvent->FlwCtl^1; } IRQ = start_time = 0; Mute = Mute0 = Mute2; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x02: case 0x03: case 0x05: case 0x06: case 0x07: case 0x0a: case 0x12: case 0x1a: case 0x1b: case 0x1d:
    while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
-   if ((MidiEvent = MidiEvent->JumpEvent)->FlwCtl > 1) { FlwMsk = MidiEvent->FlwCtl^1; }       start_time = 0; Mute = Mute0 = Mute1; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
+   if ((MidiEvent = MidiEvent->JumpEvent)->FlwCtl > 2) { FlwMsk = MidiEvent->FlwCtl^1; }       start_time = 0; Mute = Mute0 = Mute1; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x04: case 0x1c:
    while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
-   if ((MidiEvent = Label1->Event       )->FlwCtl > 1) { FlwMsk = MidiEvent->FlwCtl^1; }       start_time = 0; Mute = Mute0 = Mute3; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
+   if ((MidiEvent = Label1->Event       )->FlwCtl > 2) { FlwMsk = MidiEvent->FlwCtl^1; }       start_time = 0; Mute = Mute0 = Mute3; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x1e: case 0x1f: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27: IRQ = 0; case 0x01: case 0x15: case 0x17: case 0x19: case 0x21: Mute = Mute0; }
 
  if (MidiEvent->Rec) { RecEvent->event_time = timeGetTime(); RecEvent->EventData = MidiEvent->EventData; RecEvent = RecEvent->NextEvent; } *(MidiEvent->TrkInfo) = MidiEvent;
