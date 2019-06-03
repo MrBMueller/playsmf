@@ -18,7 +18,7 @@
  if       (Label0->Event == MidiEvents || Label0->Event == LastLabel->Event)                                                    { SetEntryMute i = -2;                      c = Mute0[-1]; }\
   else if (Mute == EntryMute && (MidiEvent->Label->Event == EntryLabel->Event || MidiEvent->Label->Event == FirstLabel->Event)) { SetFirstMute i =  0;                      c = Mute0[-1]; }\
   else                                                                                                                          {              i = (Mute-Mutes)/(TrkNum+1); c = Mute[ -1]; }\
- printf("%4.2f -> %4x %3d %2d %02x %2d %d => %6.2f (%6.2f %d/%d) -> %6.2f (%6.2f %d/%d)\n", (float)(RecEvent->event_time-LastTime)*1000*(1<<MidiEvent->TimeSigD)/((MidiEvent->Tempo<<2)*MidiEvent->TimeSigN), Label4->Idx, V1, (signed char)Label4->Ret, IRQ, i, c,\
+ printf("%4.2f -> %4x %3d %2d %02x %2d %d => %6.2f (%6.2f %d/%d) -> %6.2f (%6.2f %d/%d)\n", (float)(RecEvent->event_time-LastTime)*1000*(1<<MidiEvent->TimeSigD)/((MidiEvent->Tempo<<2)*MidiEvent->TimeSigN)/Speed0, Label4->Idx, V1, (signed char)Label4->Ret, IRQ, i, c,\
   (float)MidiEvent->event_time*1000*(1<<MidiEvent->TimeSigD)/((MidiEvent->Tempo<<2)*MidiEvent->TimeSigN), (float)60000000/MidiEvent->Tempo/Speed0, MidiEvent->TimeSigN, 1<<MidiEvent->TimeSigD, (float)Label4->Event->event_time*1000*(1<<Label4->Event->TimeSigD)/((Label4->Event->Tempo<<2)*Label4->Event->TimeSigN), (float)60000000/Label4->Event->Tempo/Speed0, Label4->Event->TimeSigN, 1<<Label4->Event->TimeSigD);\
  LastTime = RecEvent->event_time;
 
@@ -482,7 +482,7 @@ for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } SetEntryLabel
 
 FirstMute = EntryMute = &Mutes[(MutesNum-2)*(TrkNum+1)+1]; if (MutesNum > 2) { FirstMute = &Mutes[(0)*(TrkNum+1)+1]; } Mute = SetEntryMute
 
-Key0 = Key1 = &Keys[0x0][0x00]; ExitVal = IRQ = start_time = 0; Dead = 1; Speed = Speed0 = 1; PedalLeft = PedalMid = 0; FlwMsk = 0;
+Key0 = Key1 = &Keys[0x0][0x00]; PedalLeft = PedalMid = FlwMsk = IRQ = ExitVal = start_time = 0; Dead = 1; Speed = Speed0 = 1;
 
 if (args[2] >= 0) { timeBeginPeriod(args[2]); } LastTime = WatchDogTimeOut = timeGetTime(); WatchDogTimeOut += args[5]; if ((TimeOut = args[5]) < 0) { TimeOut = WatchDogTimeOut = -1; }
 
