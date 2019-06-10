@@ -328,7 +328,10 @@ for (i=0x0; i<=0xf; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]
 if (args[3] < 0) { args[3] += midiOutGetNumDevs(); } if (args[3] < 0) { args[3] = midiOutGetNumDevs(); }
 if (args[4] < 0) { args[4] += midiInGetNumDevs();  } if (args[4] < 0) { args[4] = midiInGetNumDevs();  }
 
-for (i=12; i<_msize(args)/sizeof(signed long); i++) { if ((args[i]>>16) == 1) { Port2Port[(args[i]>>8)&0xff] = args[i]&0xff; } if ((args[i]>>16) == 3) { Port2Port[(args[i]>>8)&0xff] = midiOutGetNumDevs()-1-args[i]&0xff; }}
+for (i=12; i<_msize(args)/sizeof(signed long); i++) {
+ if ((args[i]>>16) == 1) { if ((                      args[i]&0xff) < midiOutGetNumDevs()) { Port2Port[(args[i]>>8)&0xff] =                       args[i]&0xff; } else { Port2Port[(args[i]>>8)&0xff] = args[3]; }}
+ if ((args[i]>>16) == 3) { if ((midiOutGetNumDevs()-1-args[i]&0xff) < midiOutGetNumDevs()) { Port2Port[(args[i]>>8)&0xff] = midiOutGetNumDevs()-1-args[i]&0xff; } else { Port2Port[(args[i]>>8)&0xff] = args[3]; }}
+ }
 
 timeGetDevCaps(&time_caps, sizeof(TIMECAPS)); signalling_object0 = CreateEvent(NULL, FALSE, FALSE, NULL); signalling_object1 = CreateEvent(NULL, FALSE, FALSE, NULL);
 
