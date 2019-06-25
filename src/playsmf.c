@@ -18,16 +18,16 @@
  if       (Label0->Event == MidiEvents || Label0->Event == LastLabel->Event)                                                    { SetEntryMute i = -2;                      c = Mute0[-1]; }\
   else if (Mute == EntryMute && (MidiEvent->Label->Event == EntryLabel->Event || MidiEvent->Label->Event == FirstLabel->Event)) { SetFirstMute i =  0;                      c = Mute0[-1]; }\
   else                                                                                                                          {              i = (Mute-Mutes)/(TrkNum+1); c = Mute[ -1]; }\
- printf("%4.2f -> %4x %3d %2d %02x %2d %d => %6.2f (%6.2f %d/%d) -> %6.2f (%6.2f %d/%d)\n", (float)(RecEvent->event_time-LastTime)*1000*(1<<MidiEvent->TimeSigD)/((MidiEvent->Tempo<<2)*MidiEvent->TimeSigN)/Speed0, Label4->Idx, V1, (signed char)Label4->Ret, IRQ, i, c,\
+ printf("%4.2f -> %4x %3d %2d %d %d %02x %2d %d => %6.2f (%6.2f %d/%d) -> %6.2f (%6.2f %d/%d)\n", (float)(RecEvent->event_time-LastTime)*1000*(1<<MidiEvent->TimeSigD)/((MidiEvent->Tempo<<2)*MidiEvent->TimeSigN)/Speed0, Label4->Idx, V1, (signed char)Label4->Ret, (signed char)Label4->Now, (signed char)Label4->ReT, IRQ, i, c,\
   (float)MidiEvent->event_time*1000*(1<<MidiEvent->TimeSigD)/((MidiEvent->Tempo<<2)*MidiEvent->TimeSigN), (float)60000000/MidiEvent->Tempo/Speed0, MidiEvent->TimeSigN, 1<<MidiEvent->TimeSigD, (float)Label4->Event->event_time*1000*(1<<Label4->Event->TimeSigD)/((Label4->Event->Tempo<<2)*Label4->Event->TimeSigN), (float)60000000/Label4->Event->Tempo/Speed0, Label4->Event->TimeSigN, 1<<Label4->Event->TimeSigD);\
- LastTime = RecEvent->event_time;
+ LastTime = RecEvent->event_time; if (MidiEvent->Label->Now) { SetEvent(signalling_object0); }
 
 #define MyMacro0 \
  if (V0 < LabelNum && Labels[V0].Event) {\
-  if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvent->Label->Ret) { Label3 = Label2 = Label1 = Label0;                                            Label4 =                                                                                                     Label0; IRQ = 0x10; MyMacro1 if (MidiEvent->Label->Now) { SetEvent(signalling_object0); }}}\
-                    else { Label1 = Label2; if (Label0->Ret&2) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; Label4 = (i=0x1000+V0)<LabelNum && (V0^Label4->Idx)&0xf7f && Labels[i].Event && Labels[i].Ret ? &Labels[i] : Label0; IRQ = 0x08; MyMacro1 if (MidiEvent->Label->Now) { SetEvent(signalling_object0); }}}\
-   else if (Label0->Ret) { Label1 = Label2; if (Label0->Ret&2) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; Label4 =                                                                                                     Label0; IRQ = 0x08; MyMacro1 if (MidiEvent->Label->Now) { SetEvent(signalling_object0); } }\
-   else                  { Label3 = Label2 = Label1 = Label0 = &Labels[V0]; IRQ = 0x18; }}
+  if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvent->Label->Ret) { Label3 = Label2 = Label1 = Label0;                                            Label4 =                                                                                                     Label0; IRQ = 0x10; MyMacro1 }}\
+                    else { Label1 = Label2; if (Label0->Ret&2) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; Label4 = (i=0x1000+V0)<LabelNum && (V0^Label4->Idx)&0xf7f && Labels[i].Event && Labels[i].Ret ? &Labels[i] : Label0; IRQ = 0x08; MyMacro1 }}\
+   else if (Label0->Ret) { Label1 = Label2; if (Label0->Ret&2) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; Label4 =                                                                                                     Label0; IRQ = 0x08; MyMacro1  }\
+   else                  { Label3 = Label2 = Label1 = Label0 = &Labels[V0]; IRQ = 0x18^Label0->ReT; if (Label0->ReT) { MyMacro1 }}}
 
 struct MidiEvent { unsigned long     event_time;
                    unsigned long     Track;
@@ -60,7 +60,7 @@ struct PNoteO    { struct PNoteO    *Prev;
 
 struct Label     {   signed long     Idx;
                    struct MidiEvent *Event;
-                   unsigned char     Ret, Now; };
+                   unsigned char     Ret, Now, ReT; };
 
 struct Chord     {   signed short    Type;
                      signed char     Root, Num; };
@@ -302,7 +302,7 @@ MidiEvents = malloc((i+1)*sizeof(struct MidiEvent)); Labels = malloc((j+1)*sizeo
 
 LabelNum = _msize(Labels)/sizeof(struct Label); TrkNum = _msize(TrkInfo)/sizeof(struct MidiEvent*);
 
-for (i=0; i<LabelNum; i++) { Labels[i].Idx = i; Labels[i].Event = NULL; Labels[i].Now = Labels[i].Ret = 0; } EntryLabel = &Labels[args[10]]; ExitLabel = &Labels[args[11]];
+for (i=0; i<LabelNum; i++) { Labels[i].Idx = i; Labels[i].Event = NULL; Labels[i].ReT = Labels[i].Now = Labels[i].Ret = 0; } EntryLabel = &Labels[args[10]]; ExitLabel = &Labels[args[11]];
 
 for (i=0x0; i<=0xf; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]+1, K2 = Ck-MutesNum, K1 = K2-1, K0 = K1; if (LabelNum>>12) { K0 -= ((LabelNum-1)>>12)+1; } if (Mk-1 < 0) { Mk = Ck+abs(Mk-1); if (Mk > 128) { Mk = 128; }}
  for (j = K0; j < K1; j++) { Keys[i][j].Zone |= 2; Keys[i][j].Val = (K1-j-1)<<12; }
@@ -396,7 +396,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
    while (p1 = strstr(p1, KW3)) { signed long v = strtol(p1+sizeof(KW3)-1, &p1, 0); unsigned long t = 0; if (!v) { v = MutesInv1; } if (v == -1) { v = MutesInv;  } while (v) { if (v&1) { Mutes[t*(TrkNum+1)+1+MidiEvents[i].Track] ^= 0x08; } t++; v >>= 1; }}
    }
   if (MidiEvents[i].EventData == 0x000006ff) { unsigned long t=0; unsigned char *p0 = MidiEvents[i].data_buffer, *p1; p1 = p0; //marker
-   while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); t=1; MidiEvents[j].FlwCtl |= 4; if ((v&0xfff) == 0xfff) { while (Labels[v].Event) { v--; }} if (p0 == strstr(p0, "i")) { Labels[v].Now = 1; } Labels[v].Event = &MidiEvents[j]; LastLabel = &Labels[v]; if (!FirstLabel) { FirstLabel = LastLabel; } for (k=j; k<=i; k++) { MidiEvents[k].Label = LastLabel; }}
+   while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); t=1; MidiEvents[j].FlwCtl |= 4; if ((v&0xfff) == 0xfff) { while (Labels[v].Event) { v--; }} (LastLabel = &Labels[v])->Event = &MidiEvents[j]; if (!FirstLabel) { FirstLabel = LastLabel; } for (k=j; k<=i; k++) { MidiEvents[k].Label = LastLabel; } if (p0 == strstr(p0, "i")) { LastLabel->Now = 1; p0++; } if (p0 == strstr(p0, "r")) { LastLabel->ReT = 8; }}
    while (p1 = strstr(p1, KW1)) { signed long v = strtol(p1+sizeof(KW1)-1, &p1, 0); t=1; MidiEvents[j].FlwCtl |= 2; MidiEvents[j].JumpEvent = (struct MidiEvent*)v; if (p1 == strstr(p1, ">|>")) { MidiEvents[j].FlwCtl |= 0x40; } else if (p1 == strstr(p1, ">>")) { MidiEvents[j].FlwCtl |= 0x20; } else if (p1 == strstr(p1, ">")) { MidiEvents[j].FlwCtl |= 8; } else if (p1 == strstr(p1, "v")) { MidiEvents[j].FlwCtl |= 0x10; }}
    if (i <= j) { i += t; }
    }
@@ -462,9 +462,9 @@ for (i=0; i<LabelNum; i++) { j = (i>>8)&0xf; k = (i>>4)&0x3; l = i&0xf;
 
 for (i=0; i<LabelNum ; i++) { if ((!Labels[i].Event) && (Labels[i&0xfff].Event)) { Labels[i].Event = Labels[i&0xfff].Event; }}
 
-for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { unsigned char a = 0, b = 0;
- for (j=0; j<LabelNum; j++) { if (Labels[i].Event == Labels[j].Event) { a |= Labels[j].Ret; b |= Labels[j].Now; }}
- for (j=0; j<LabelNum; j++) { if (Labels[i].Event == Labels[j].Event) { Labels[j].Ret = a;  Labels[j].Now = b;  }}
+for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { unsigned char a = 0, b = 0, c = 0;
+ for (j=0; j<LabelNum; j++) { if (Labels[i].Event == Labels[j].Event) { a |= Labels[j].Ret; b |= Labels[j].Now; c |= Labels[j].ReT; }}
+ for (j=0; j<LabelNum; j++) { if (Labels[i].Event == Labels[j].Event) { Labels[j].Ret = a;  Labels[j].Now = b;  Labels[j].ReT = c;  }}
  if (i <= 0x7f) { for (j=0; j<=0xf; j++) { Keys[j][i].Zone &= ~16; }}
  }}
 
