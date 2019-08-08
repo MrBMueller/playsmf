@@ -272,7 +272,7 @@ for (i=0; i<=11; i++) {
   }
  }
 
-i = 0; j = k = -1; MutesNum = MutesInv = MutesRet = 0;
+i = l = 0; j = k = -1; MutesNum = MutesInv = MutesRet = 0;
 for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_file_event = MidiFileEvent_getNextEventInFile(midi_file_event)) {
  if (MidiFileTrack_getNumber(MidiFileEvent_getTrack(midi_file_event)) > k) { k = MidiFileTrack_getNumber(MidiFileEvent_getTrack(midi_file_event)); }
  if (MidiFileEvent_getType(midi_file_event) == MIDI_FILE_EVENT_TYPE_META) {
@@ -281,7 +281,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
    while (p1 = strstr(p1, KW3)) { signed long v = strtol(p1+sizeof(KW3)-1, &p1, 0); unsigned long t = 0; if (v == -1) { v = 0; } if (p1 == strstr(p1, "r")) { MutesRet |= v; } MutesInv |= v; while (v) { t++; v >>= 1; } if (t > MutesNum) { MutesNum = t; }}
    }
   if (MidiFileMetaEvent_getNumber(midi_file_event) == 0x06) { unsigned long t=0; unsigned char *p0 = MidiFileMetaEvent_getData(midi_file_event), *p1; p1 = p0; //marker
-   while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); t=1; if (v > j) { j = v; }}
+   while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); t=1; if (v < 0) { v = l & ~0xfff | v & 0xfff; } l = v; if (v > j) { j = v; }}
    while (p1 = strstr(p1, KW1)) {                 strtol(p1+sizeof(KW1)-1, &p1, 0); t=1; }
    i += t;
    }
@@ -396,7 +396,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
    while (p1 = strstr(p1, KW3)) { signed long v = strtol(p1+sizeof(KW3)-1, &p1, 0); unsigned long t = 0; if (!v) { v = MutesInv1; } if (v == -1) { v = MutesInv;  } while (v) { if (v&1) { Mutes[t*(TrkNum+1)+1+MidiEvents[i].Track] ^= 0x08; } t++; v >>= 1; }}
    }
   if (MidiEvents[i].EventData == 0x000006ff) { unsigned long t=0; unsigned char *p0 = MidiEvents[i].data_buffer, *p1; p1 = p0; //marker
-   while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); t=1; MidiEvents[j].FlwCtl |= 4; if ((v&0xfff) == 0xfff) { while (Labels[v].Event) { v--; }} (LastLabel = &Labels[v])->Event = &MidiEvents[j]; if (!FirstLabel) { FirstLabel = LastLabel; } for (k=j; k<=i; k++) { MidiEvents[k].Label = LastLabel; } if (p0 == strstr(p0, "i")) { LastLabel->Now = 1; p0++; } if (p0 == strstr(p0, "r")) { LastLabel->ReT = 8; }}
+   while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); t=1; MidiEvents[j].FlwCtl |= 4; if ((v&0xfff) == 0xfff || v < 0) { v = LastLabel->Idx & ~0xfff | v & 0xfff; while (Labels[v].Event) { v--; }} (LastLabel = &Labels[v])->Event = &MidiEvents[j]; if (!FirstLabel) { FirstLabel = LastLabel; } for (k=j; k<=i; k++) { MidiEvents[k].Label = LastLabel; } if (p0 == strstr(p0, "i")) { LastLabel->Now = 1; p0++; } if (p0 == strstr(p0, "r")) { LastLabel->ReT = 8; }}
    while (p1 = strstr(p1, KW1)) { signed long v = strtol(p1+sizeof(KW1)-1, &p1, 0); t=1; MidiEvents[j].FlwCtl |= 2; MidiEvents[j].JumpEvent = (struct MidiEvent*)v; if (p1 == strstr(p1, ">|>")) { MidiEvents[j].FlwCtl |= 0x40; } else if (p1 == strstr(p1, ">>")) { MidiEvents[j].FlwCtl |= 0x20; } else if (p1 == strstr(p1, ">")) { MidiEvents[j].FlwCtl |= 8; } else if (p1 == strstr(p1, "v")) { MidiEvents[j].FlwCtl |= 0x10; }}
    if (i <= j) { i += t; }
    }
