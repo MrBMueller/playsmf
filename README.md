@@ -4,7 +4,7 @@
 
 ![markers and labels](./img/Img4.png)
 
-playsmf is a lightweight Windows32 commandline standard midi file (SMF) player with specific features such as:
+playsmf is a small, but powerful Windows (32/64bit) commandline standard midi file (SMF) player. Its specifically designed for low CPU and memory consumption to leave enough system recources for other applications such as soft-synths, mixer apps, etc. The player comes with specific features such as:
 
 - intrinsic realtime player flow control using jump/branch commands in combination with target address labels (primarily used for loops)
 - realtime midi controlled jumps (interrupts) in combination with target address labels
