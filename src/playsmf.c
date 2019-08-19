@@ -211,28 +211,32 @@ static unsigned long     start_time, WatchDogTimeOut, MutesNum, tick, MutesInv, 
 static   signed long     i, j, k, l, *args, TimeOut;
 static struct PNoteO     *PendingEventsO, *PendingO, *LatestPendingO;
 static float             Speed;
-static unsigned char     Permutations1[ 1][1] = {{0}};
-static unsigned char     Permutations2[ 2][2] = {{0,1},{1,0}};
-static unsigned char     Permutations3[ 6][3] = {{0,1,2},{0,2,1},{1,0,2},{1,2,0},{2,0,1},{2,1,0}};
-static unsigned char     Permutations4[24][4] = {{0,1,2,3},{0,1,3,2},{0,2,1,3},{0,2,3,1},{0,3,1,2},{0,3,2,1},
+static unsigned char     Permutations0[ 1][1] = {{0}};
+static unsigned char     Permutations1[ 2][2] = {{0,1},{1,0}};
+static unsigned char     Permutations2[ 6][3] = {{0,1,2},{0,2,1},{1,0,2},{1,2,0},{2,0,1},{2,1,0}};
+static unsigned char     Permutations3[24][4] = {{0,1,2,3},{0,1,3,2},{0,2,1,3},{0,2,3,1},{0,3,1,2},{0,3,2,1},
                                                  {1,0,2,3},{1,0,3,2},{1,2,0,3},{1,2,3,0},{1,3,0,2},{1,3,2,0},
                                                  {2,0,1,3},{2,0,3,1},{2,1,0,3},{2,1,3,0},{2,3,0,1},{2,3,1,0},
                                                  {3,0,1,2},{3,0,2,1},{3,1,0,2},{3,1,2,0},{3,2,0,1},{3,2,1,0}};
-static unsigned char     Intervals0[] = {0      };
-static unsigned char     IntervalsA[] = {0,    0};
-static unsigned char     Intervals1[] = {0,    7};
-static unsigned char     Intervals9[] = {0, 0, 0};
-static unsigned char     IntervalsB[] = {0, 7, 0};
-static unsigned char     Intervals2[] = {0, 4, 7};
-static unsigned char     Intervals3[] = {0, 3, 7};
-static unsigned char     Intervals4[] = {0, 2, 7};
-static unsigned char     Intervals8[] = {0, 0, 0,  0};
-static unsigned char     IntervalsC[] = {0, 7, 0,  7};
-static unsigned char     Intervals5[] = {0, 4, 7, 11};
-static unsigned char     Intervals6[] = {0, 3, 7, 10};
-static unsigned char     Intervals7[] = {0, 4, 7, 10};
-static unsigned char     IntervalsD[] = {0, 4, 7, 12};
-static unsigned char     IntervalsE[] = {0, 3, 7, 12};
+
+static unsigned short    Intervals0[][2] = {{0x120, 0}};
+
+static unsigned short    Intervals1[][3] = {{0x120, 0, 0},
+                                            {0x100, 0, 7}};
+
+static unsigned short    Intervals2[][4] = {{0x120, 0, 0, 0},
+                                            {0x100, 0, 7, 0},
+                                            {0x200, 0, 4, 7},
+                                            {0x300, 0, 3, 7},
+                                            {0x400, 0, 2, 7}};
+
+static unsigned short    Intervals3[][5] = {{0x120, 0, 0, 0,  0},
+                                            {0x100, 0, 7, 0,  7},
+                                            {0x200, 0, 4, 7, 11},
+                                            {0x300, 0, 3, 7, 10},
+                                            {0x200, 0, 4, 7, 10},
+                                            {0x200, 0, 4, 7, 12},
+                                            {0x300, 0, 3, 7, 12}};
 
 MidiFile_t midi_file = MidiFile_load(argv[1]); args = malloc(argc*sizeof(signed long)); for (i=2; i<_msize(args)/sizeof(signed long); i++) { args[i] = strtol(argv[i], NULL, 0); }
 
@@ -247,30 +251,11 @@ for (i=0x0; i<=0xf; i++) {
   }
  }
 
-for (i=0; i<=11; i++) {
- for (j=0; j<=0; j++) {
-  l = 0; for (k=0; k<=0; k++) { l = (l<<4) + (i+Intervals0[Permutations1[j][k]])%12 + 1; } Chords[l].Type = 0x120; Chords[l].Root = i;
-  }
- for (j=0; j<=1; j++) {
-  l = 0; for (k=0; k<=1; k++) { l = (l<<4) + (i+IntervalsA[Permutations2[j][k]])%12 + 1; } Chords[l].Type = 0x120; Chords[l].Root = i;
-  l = 0; for (k=0; k<=1; k++) { l = (l<<4) + (i+Intervals1[Permutations2[j][k]])%12 + 1; } Chords[l].Type = 0x100; Chords[l].Root = i;
-  }
- for (j=0; j<=5; j++) {
-  l = 0; for (k=0; k<=2; k++) { l = (l<<4) + (i+Intervals9[Permutations3[j][k]])%12 + 1; } Chords[l].Type = 0x120; Chords[l].Root = i;
-  l = 0; for (k=0; k<=2; k++) { l = (l<<4) + (i+IntervalsB[Permutations3[j][k]])%12 + 1; } Chords[l].Type = 0x100; Chords[l].Root = i;
-  l = 0; for (k=0; k<=2; k++) { l = (l<<4) + (i+Intervals2[Permutations3[j][k]])%12 + 1; } Chords[l].Type = 0x200; Chords[l].Root = i;
-  l = 0; for (k=0; k<=2; k++) { l = (l<<4) + (i+Intervals3[Permutations3[j][k]])%12 + 1; } Chords[l].Type = 0x300; Chords[l].Root = i;
-  l = 0; for (k=0; k<=2; k++) { l = (l<<4) + (i+Intervals4[Permutations3[j][k]])%12 + 1; } Chords[l].Type = 0x400; Chords[l].Root = i;
-  }
- for (j=0; j<=23; j++) {
-  l = 0; for (k=0; k<=3; k++) { l = (l<<4) + (i+Intervals8[Permutations4[j][k]])%12 + 1; } Chords[l].Type = 0x120; Chords[l].Root = i;
-  l = 0; for (k=0; k<=3; k++) { l = (l<<4) + (i+IntervalsC[Permutations4[j][k]])%12 + 1; } Chords[l].Type = 0x100; Chords[l].Root = i;
-  l = 0; for (k=0; k<=3; k++) { l = (l<<4) + (i+Intervals5[Permutations4[j][k]])%12 + 1; } Chords[l].Type = 0x200; Chords[l].Root = i;
-  l = 0; for (k=0; k<=3; k++) { l = (l<<4) + (i+Intervals6[Permutations4[j][k]])%12 + 1; } Chords[l].Type = 0x300; Chords[l].Root = i;
-  l = 0; for (k=0; k<=3; k++) { l = (l<<4) + (i+Intervals7[Permutations4[j][k]])%12 + 1; } Chords[l].Type = 0x200; Chords[l].Root = i;
-  l = 0; for (k=0; k<=3; k++) { l = (l<<4) + (i+IntervalsD[Permutations4[j][k]])%12 + 1; } Chords[l].Type = 0x200; Chords[l].Root = i;
-  l = 0; for (k=0; k<=3; k++) { l = (l<<4) + (i+IntervalsE[Permutations4[j][k]])%12 + 1; } Chords[l].Type = 0x300; Chords[l].Root = i;
-  }
+for (i=0; i<=11; i++) { unsigned char m;
+ for (j=0; j<= 0; j++) { for (m=0; m<sizeof(Intervals0)/2/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=0; k++) { l = (l<<4) + (i+Intervals0[m][Permutations0[j][k]+1])%12 + 1; } Chords[l].Type = Intervals0[m][0]; Chords[l].Root = i; }}
+ for (j=0; j<= 1; j++) { for (m=0; m<sizeof(Intervals1)/3/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=1; k++) { l = (l<<4) + (i+Intervals1[m][Permutations1[j][k]+1])%12 + 1; } Chords[l].Type = Intervals1[m][0]; Chords[l].Root = i; }}
+ for (j=0; j<= 5; j++) { for (m=0; m<sizeof(Intervals2)/4/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=2; k++) { l = (l<<4) + (i+Intervals2[m][Permutations2[j][k]+1])%12 + 1; } Chords[l].Type = Intervals2[m][0]; Chords[l].Root = i; }}
+ for (j=0; j<=23; j++) { for (m=0; m<sizeof(Intervals3)/5/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=3; k++) { l = (l<<4) + (i+Intervals3[m][Permutations3[j][k]+1])%12 + 1; } Chords[l].Type = Intervals3[m][0]; Chords[l].Root = i; }}
  }
 
 i = l = 0; j = k = -1; MutesNum = MutesInv = MutesRet = 0;
