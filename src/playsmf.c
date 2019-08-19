@@ -225,18 +225,18 @@ static unsigned short    Intervals1[][3] = {{0x120, 0, 0},
                                             {0x100, 0, 7}};
 
 static unsigned short    Intervals2[][4] = {{0x120, 0, 0, 0},
-                                            {0x100, 0, 7, 0},
+                                            {0x100, 0, 0, 7}, {0x100, 0, 7, 7},
                                             {0x200, 0, 4, 7},
                                             {0x300, 0, 3, 7},
                                             {0x400, 0, 2, 7}};
 
 static unsigned short    Intervals3[][5] = {{0x120, 0, 0, 0,  0},
-                                            {0x100, 0, 7, 0,  7},
+                                            {0x100, 0, 0, 0,  7}, {0x100, 0, 0, 7,  7}, {0x100, 0, 7, 7,  7},
                                             {0x200, 0, 4, 7, 11},
                                             {0x300, 0, 3, 7, 10},
                                             {0x200, 0, 4, 7, 10},
-                                            {0x200, 0, 4, 7, 12},
-                                            {0x300, 0, 3, 7, 12}};
+                                            {0x200, 0, 4, 7,  0}, {0x200, 0, 4, 7,  4}, {0x200, 0, 4, 7,  7},
+                                            {0x300, 0, 3, 7,  0}, {0x300, 0, 3, 7,  3}, {0x300, 0, 3, 7,  7}};
 
 MidiFile_t midi_file = MidiFile_load(argv[1]); args = malloc(argc*sizeof(signed long)); for (i=2; i<_msize(args)/sizeof(signed long); i++) { args[i] = strtol(argv[i], NULL, 0); }
 
