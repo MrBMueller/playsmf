@@ -27,7 +27,7 @@
   if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvent->Label->Ret) { Label3 = Label2 = Label1 = Label0;                                            Label4 =                                                                                                     Label0; IRQ = 0x10; MyMacro1 }}\
                     else { Label1 = Label2; if (Label0->Ret&1) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; Label4 = (i=0x1000+V0)<LabelNum && (V0^Label4->Idx)&0xf7f && Labels[i].Event && Labels[i].Ret ? &Labels[i] : Label0; IRQ = 0x08; MyMacro1 }}\
    else if (Label0->Ret) { Label1 = Label2; if (Label0->Ret&1) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; Label4 =                                                                                                     Label0; IRQ = 0x08; MyMacro1  }\
-   else                  { Label4 = Label3 = Label2 = Label1 = Label0 = &Labels[V0]; IRQ = 0x18^Label0->ReT; if (Label0->ReT) { MyMacro1 }}}
+   else                  { Label4 = Label3 = Label2 = Label1 = Label0 = &Labels[V0]; if (!IRQ) { IRQ = 0x18^Label0->ReT; } if (Label0->ReT) { MyMacro1 }}}
 
 struct MidiEvent { unsigned long     event_time;
                    unsigned long     Track;
