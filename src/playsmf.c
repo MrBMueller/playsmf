@@ -311,8 +311,8 @@ for (i=0x0; i<=0xf; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]
   }
  }
 
-if (args[3] < 0) { args[3] += midiOutGetNumDevs(); } if (args[3] < 0) { args[3] = midiOutGetNumDevs(); }
-if (args[4] < 0) { args[4] += midiInGetNumDevs();  } if (args[4] < 0) { args[4] = midiInGetNumDevs();  }
+if (args[3] < 0) { args[3] += midiOutGetNumDevs(); } if (args[3] < 0 || args[3] >= midiOutGetNumDevs()) { args[3] = 0; }
+if (args[4] < 0) { args[4] += midiInGetNumDevs();  } if (args[4] < 0 || args[4] >= midiInGetNumDevs() ) { args[4] = 0; }
 
 for (i=12; i<_msize(args)/sizeof(signed long); i++) {
  if ((args[i]>>16) == 1) { Port2Port[(args[i]>>8)&0xff] =                       args[i]&0xff; if (Port2Port[(args[i]>>8)&0xff] >= midiOutGetNumDevs()) { Port2Port[(args[i]>>8)&0xff] = args[3]; }}
