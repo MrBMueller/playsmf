@@ -238,7 +238,11 @@ static unsigned short    Intervals3[][5] = {{0x120, 0, 0, 0,  0},
                                             {0x300, 0, 3, 7, 10},
                                             {0x200, 0, 4, 7, 10}};
 
-MidiFile_t midi_file = MidiFile_load(argv[1]); args = malloc(argc*sizeof(signed long)); for (i=2; i<_msize(args)/sizeof(signed long); i++) { args[i] = strtol(argv[i], NULL, 0); }
+static signed long       DefArgs[] = {0, 0, -1, 0, 0, -1, -1, 0, 0x0ff, 0x00008000, 21, 22, 36, 59};
+
+MidiFile_t midi_file = NULL; if (argc > 1) { midi_file = MidiFile_load(argv[1]); } else { printf("Usage: %s <filename.mid>\n", argv[0]); return(1); } if (!midi_file) { printf("Cant open \"%s\"\n", argv[1]); return(1); }
+
+i = j = sizeof(DefArgs)/sizeof(signed long); if (argc > i) { i = argc; } args = malloc(i*sizeof(signed long)); for (i=0; i<j; i++) { args[i] = DefArgs[i]; } for (i=2; i<argc; i++) { args[i] = strtol(argv[i], NULL, 0); }
 
 for (i=0; i<(sizeof(Chords)/sizeof(struct Chord)); i++) { Chords[i].Type = -1; Chords[i].Root = 0; Chords[i].Num = 0; j = i; while (j) { if (j&0xf) { Chords[i].Num++; } j >>= 4; }}
 for (i=1; i<(sizeof(Chords)/sizeof(struct Chord)); i++) { Chords[i].Root = 11; j = i; while (j) { if ((j&0xf) && ((j&0xf)-1 <= Chords[i].Root)) { Chords[i].Root = (j&0xf)-1; } j >>= 4; }}
