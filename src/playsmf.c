@@ -240,7 +240,7 @@ static unsigned short    Intervals3[][5] = {{0x120, 0, 0, 0,  0},
 
 static signed long       DefArgs[] = {0, 0, -1, 0, 0, -1, -1, 0, 0x0ff, 0x00008000, 21, 22, 36, 59};
 
-MidiFile_t midi_file = NULL; if (argc > 1) { midi_file = MidiFile_load(argv[1]); } else { printf("Usage: %s <filename.mid>\n", argv[0]); return(1); } if (!midi_file) { printf("Cant open \"%s\"\n", argv[1]); return(1); }
+MidiFile_t midi_file = NULL; if (argc < 2) { printf("Usage: %s <filename.mid>\n", argv[0]); return(1); } if (!(midi_file = MidiFile_load(argv[1]))) { printf("Cant open \"%s\"\n", argv[1]); return(1); }
 
 i = j = sizeof(DefArgs)/sizeof(signed long); if (argc > i) { i = argc; } args = malloc(i*sizeof(signed long)); for (i=0; i<j; i++) { args[i] = DefArgs[i]; } for (i=2; i<argc; i++) { args[i] = strtol(argv[i], NULL, 0); }
 
