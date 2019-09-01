@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <midifile.h>
 
-#define Msg0 "For further options, features, examples and other information, check the project description on github/sourceforge.\n"
+#define Msg0 "For further options, features, examples, updates and other information, check the github/sourceforge project repositories.\n"
 
 #define KW0 "Label"
 #define KW1 "Jump"
@@ -105,7 +105,7 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
  switch (Key1->Zone) { case 1: if (!(PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel = V1;
   if (LatestPendingI) { LatestPendingI->Next = PendingI; } PendingI->Prev = LatestPendingI; (LatestPendingI = PendingI)->Next = NULL;
   if (!(*PendingI->NoteI)->Vel || PendingI->Key < (*PendingI->NoteI)->Key) { *(PendingI->NoteI) = PendingI; } c = v = 0;
-  while (PendingI) { c = c<<4 | PendingI->Note; v += PendingI->Vel; PendingI = PendingI->Prev; } if (c <= 0xcccc && Chords[c].Type >= 0x000) { RootKey = PressedNotes[Chords[c].Root]->Key; PendingI = LatestPendingI; i = 0;
+  while (PendingI) { c = c<<4 | PendingI->Note; v += PendingI->Vel; PendingI = PendingI->Prev; } if (c <= 0xcccc && Chords[c].Type >= 0) { RootKey = PressedNotes[Chords[c].Root]->Key; PendingI = LatestPendingI; i = 0;
   while (PendingI) { if (PendingI->Key < RootKey) { i++; }          PendingI = PendingI->Prev; } V0 = Var | Chords[c].Type | i%Chords[c].Num<<4 | Chords[c].Root; V1 = v / Chords[c].Num; }} break;
   case  2: if ((i = Key1->Val | Label0->Idx & 0xfff) < LabelNum && !Labels[i].Ret) { if (Key1->Val == Var0) { Var0 = Var1; } else { Var1 = Var0; Var0 = Key1->Val; }} else { Var1 = Var0 = Key1->Val; }
            V0 = (Var = Var0) | Label2->Idx & 0xfff; if (MidiEvent->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label1 = &Labels[i]; V0 = -1; } break;
