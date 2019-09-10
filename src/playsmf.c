@@ -147,7 +147,10 @@ case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
 static void CALLBACK MidiInProc1(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { midiInGetID(hMidiIn, &i1); i1 = InPortOrder[i1]; switch (wMsg) {
 case MIM_DATA: if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Out & 0x1) { midiOutShortMsg(ThruE1->midi_out, dwParam1 & 0xfffffff0 | ThruE1->Ch); } return;
-case MIM_LONGDATA: if (((MIDIHDR*)dwParam1)->dwBytesRecorded) { printf("%02x ", i1); } i1 = -1; while (++i1 < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { printf("%02x ", (*(((MIDIHDR*)dwParam1)->lpData+i1)&0xff)); } if (i1) { printf("\n"); midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } return; // MIM_LONGDATA
+case MIM_LONGDATA: if (((MIDIHDR*)dwParam1)->dwBytesRecorded) {
+ i1 = ((MIDIHDR*)dwParam1)->dwBufferLength; ((MIDIHDR*)dwParam1)->dwBufferLength = ((MIDIHDR*)dwParam1)->dwBytesRecorded;
+ midiOutLongMsg(ThruE1->midi_out, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); ((MIDIHDR*)dwParam1)->dwBufferLength = i1;
+ midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } return; // MIM_LONGDATA
 case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
 } printf("%08x %08x %08x %08x %08x\n", hMidiIn, wMsg, dwInstance, dwParam1, dwParam2); } //switch wMsg // CALLBACK fallthru
@@ -460,8 +463,8 @@ for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { unsigned char a = 0, b = 0, 
  if (i <= 0x7f) { for (j=0; j<=0xf; j++) { Keys[j][i].Zone &= ~16; }}
  }}
 
-for (i=0; i<LabelNum; i++) { if (Labels[i].Event && (Labels[i].Event->FlwCtl == 4)) { j = Labels[i].Event-MidiEvents; k = 0;
- while (MidiEvents[j+k+1].EventData && (MidiEvents[j+k+1].event_time == MidiEvents[j].event_time)) { k++; }
+for (i=0; i<LabelNum; i++) { if (Labels[i].Event && (Labels[i].Event->FlwCtl == 4)) { j = Labels[i].Event-MidiEvents;
+ k = 0; while (MidiEvents[j+k+1].EventData && (MidiEvents[j+k+1].event_time == MidiEvents[j].event_time)) { k++; }
  l = MidiEvents[j+k].FlwCtl; MidiEvents[j+k].FlwCtl = MidiEvents[j].FlwCtl; MidiEvents[j].FlwCtl = l; MidiEvents[j+k].JumpEvent = MidiEvents[j].JumpEvent;
  }}
 
@@ -477,7 +480,7 @@ for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } SetEntryLabel
 
 FirstMute = EntryMute = &Mutes[(MutesNum-2)*(TrkNum+1)+1]; if (MutesNum > 2) { FirstMute = &Mutes[(0)*(TrkNum+1)+1]; } Mute = SetEntryMute
 
-Key0 = Key1 = &Keys[0x0][0x00]; PedalLeft = PedalMid = FlwMsk = IRQ = ExitVal = start_time = 0; Dead = 1; Speed = Speed0 = 1;
+Key0 = Key1 = &Keys[0x0][0x00]; PedalLeft = PedalMid = FlwMsk = IRQ = ExitVal = start_time = 0; Dead = 1; Speed = Speed0 = 1; (ThruE1 = ExitLabel->Event)->midi_out = Port2Out[args[3]].h;
 
 if (args[2] >= 0) { timeBeginPeriod(args[2]); } LastTime = WatchDogTimeOut = timeGetTime(); WatchDogTimeOut += args[5]; if ((TimeOut = args[5]) < 0) { TimeOut = WatchDogTimeOut = -1; }
 
