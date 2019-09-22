@@ -49,7 +49,7 @@ struct MidiEvent { unsigned long     event_time;
 
 struct RecEvent  { unsigned long     event_time;
                    unsigned long     EventData;
-				   struct MidiEvent *Event;
+                   struct MidiEvent *Event;
                    struct RecEvent  *NextEvent; };
 
 struct PNoteI    { struct PNoteI    *Prev;
