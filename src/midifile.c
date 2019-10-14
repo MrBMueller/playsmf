@@ -185,6 +185,9 @@ struct MidiFileIO
 	u;
 };
 
+static unsigned char LoadMidiFile = 0; //bmr
+static MidiFileEvent_t LastNewEvent, LastEvent; //bmr
+
 /*
  * Helpers
  */
@@ -582,9 +585,71 @@ static void add_event_after(MidiFileEvent_t new_event, MidiFileEvent_t previous_
 	if (new_event->tick > new_event->track->end_tick) new_event->track->end_tick = new_event->tick;
 }
 
+static void add_event_after_null(MidiFileEvent_t new_event)
+{
+	/* Add in proper sorted order.  Search backwards to optimize for appending. */
+
+	MidiFileEvent_t event;
+
+	for (event = new_event->track->last_event; (event != NULL) && (event->tick > new_event->tick); event = event->previous_event_in_track) {}
+
+	new_event->previous_event_in_track = event;
+
+	if (event == NULL)
+	{
+		new_event->next_event_in_track = new_event->track->first_event;
+		new_event->track->first_event = new_event;
+	}
+	else
+	{
+		new_event->next_event_in_track = event->next_event_in_track;
+		event->next_event_in_track = new_event;
+	}
+
+	if (new_event->next_event_in_track == NULL)
+	{
+		new_event->track->last_event = new_event;
+	}
+	else
+	{
+		new_event->next_event_in_track->previous_event_in_track = new_event;
+	}
+
+    if (LoadMidiFile) {
+	 event = new_event->track->midi_file->first_event; if (LastNewEvent && LastEvent && LastNewEvent->track->number == new_event->track->number) { event = LastEvent; } //bmr
+	 while (event && event->next_event_in_file && event->next_event_in_file->tick <= new_event->tick) { event = event->next_event_in_file; }
+	 LastNewEvent = new_event; LastEvent = event;
+     }
+	else { for (event = new_event->track->midi_file->last_event; (event != NULL) && (new_event->tick < event->tick); event = event->previous_event_in_file) {}}
+
+	new_event->previous_event_in_file = event;
+
+	if (event == NULL)
+	{
+		new_event->next_event_in_file = new_event->track->midi_file->first_event;
+		new_event->track->midi_file->first_event = new_event;
+	}
+	else
+	{
+		new_event->next_event_in_file = event->next_event_in_file;
+		event->next_event_in_file = new_event;
+	}
+
+	if (new_event->next_event_in_file == NULL)
+	{
+		new_event->track->midi_file->last_event = new_event;
+	}
+	else
+	{
+		new_event->next_event_in_file->previous_event_in_file = new_event;
+	}
+
+	if (new_event->tick > new_event->track->end_tick) new_event->track->end_tick = new_event->tick;
+}
+
 static void add_event(MidiFileEvent_t new_event)
 {
-	add_event_after(new_event, NULL);
+	add_event_after_null(new_event);
 }
 
 static void remove_event(MidiFileEvent_t event)
@@ -714,6 +779,7 @@ static MidiFile_t load_midi_file(MidiFileIO_t io)
 			long tick, previous_tick = 0;
 			unsigned char status, running_status = 0;
 			int at_end_of_track = 0;
+			LastNewEvent = LastEvent = NULL; LoadMidiFile = 1; //bmr
 
 			while ((MidiFileIO_tell(io) < chunk_start + chunk_size) && !at_end_of_track)
 			{
@@ -830,6 +896,7 @@ static MidiFile_t load_midi_file(MidiFileIO_t io)
 				}
 			}
 
+			LoadMidiFile = 0; //bmr
 			number_of_tracks_read++;
 		}
 
@@ -2187,7 +2254,7 @@ MidiFileEvent_t MidiFileTrack_createNoteOffEvent(MidiFileTrack_t track, long tic
 	new_event->u.note_off.note = note;
 	new_event->u.note_off.velocity = velocity;
 	new_event->should_be_visited = 0;
-	add_event(new_event);
+	add_event_after_null(new_event);
 
 	return new_event;
 }
@@ -2206,7 +2273,7 @@ MidiFileEvent_t MidiFileTrack_createNoteOnEvent(MidiFileTrack_t track, long tick
 	new_event->u.note_on.note = note;
 	new_event->u.note_on.velocity = velocity;
 	new_event->should_be_visited = 0;
-	add_event(new_event);
+	add_event_after_null(new_event);
 
 	return new_event;
 }
@@ -2225,7 +2292,7 @@ MidiFileEvent_t MidiFileTrack_createKeyPressureEvent(MidiFileTrack_t track, long
 	new_event->u.key_pressure.note = note;
 	new_event->u.key_pressure.amount = amount;
 	new_event->should_be_visited = 0;
-	add_event(new_event);
+	add_event_after_null(new_event);
 
 	return new_event;
 }
@@ -2244,7 +2311,7 @@ MidiFileEvent_t MidiFileTrack_createControlChangeEvent(MidiFileTrack_t track, lo
 	new_event->u.control_change.number = number;
 	new_event->u.control_change.value = value;
 	new_event->should_be_visited = 0;
-	add_event(new_event);
+	add_event_after_null(new_event);
 
 	return new_event;
 }
@@ -2262,7 +2329,7 @@ MidiFileEvent_t MidiFileTrack_createProgramChangeEvent(MidiFileTrack_t track, lo
 	new_event->u.program_change.channel = channel;
 	new_event->u.program_change.number = number;
 	new_event->should_be_visited = 0;
-	add_event(new_event);
+	add_event_after_null(new_event);
 
 	return new_event;
 }
@@ -2280,7 +2347,7 @@ MidiFileEvent_t MidiFileTrack_createChannelPressureEvent(MidiFileTrack_t track, 
 	new_event->u.channel_pressure.channel = channel;
 	new_event->u.channel_pressure.amount = amount;
 	new_event->should_be_visited = 0;
-	add_event(new_event);
+	add_event_after_null(new_event);
 
 	return new_event;
 }
@@ -2298,7 +2365,7 @@ MidiFileEvent_t MidiFileTrack_createPitchWheelEvent(MidiFileTrack_t track, long 
 	new_event->u.pitch_wheel.channel = channel;
 	new_event->u.pitch_wheel.value = value;
 	new_event->should_be_visited = 0;
-	add_event(new_event);
+	add_event_after_null(new_event);
 
 	return new_event;
 }
@@ -2317,7 +2384,7 @@ MidiFileEvent_t MidiFileTrack_createSysexEvent(MidiFileTrack_t track, long tick,
 	new_event->u.sysex.data_buffer = malloc(data_length);
 	memcpy(new_event->u.sysex.data_buffer, data_buffer, data_length);
 	new_event->should_be_visited = 0;
-	add_event(new_event);
+	add_event_after_null(new_event);
 
 	return new_event;
 }
@@ -2338,7 +2405,7 @@ MidiFileEvent_t MidiFileTrack_createMetaEvent(MidiFileTrack_t track, long tick, 
 	memcpy(new_event->u.meta.data_buffer, data_buffer, data_length);
 	new_event->u.meta.data_buffer[data_length] = '\0';
 	new_event->should_be_visited = 0;
-	add_event(new_event);
+	add_event_after_null(new_event);
 
 	return new_event;
 }
