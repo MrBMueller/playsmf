@@ -93,7 +93,7 @@ static struct Key       Keys[16][128], *Key0, *Key1;
 static struct Thru     *Thru;
 static struct PNoteI    PendingEventsI[128], *PendingI, *LatestPendingI, *PressedNotes[12];
 static struct Chord     Chords[0xcccc+1];
-static struct RecEvent  RecEvents[1024*1024], *RecEvent;
+static struct RecEvent  *RecEvents, *RecEvent;
 static unsigned char    RootKey, IRQ, *Mutes, *Mute, *Mute0, *Mute1, *Mute2, *Mute3, *Mute11, *EntryMute, *FirstMute, *MuteA, *MuteB, Dead, ExitVal, PedalLeft, PedalMid, InPortOrder[256];
 static unsigned long    V0, V1, c, i, i1, v, LastTime, LabelNum, TrkNum, Var, Var0, Var1;
 static struct MidiEvent *MidiEvents, *MidiEvent, **TrkInfo, ***Thrus, *ThruE, *ThruE1;
@@ -329,7 +329,7 @@ if (args[10] > j) { j = args[10]; } if (args[11] > j) { j = args[11]; } MutesNum
 
 MidiEvents = malloc((i+1)*sizeof(struct MidiEvent)); Labels = malloc((j+1)*sizeof(struct Label)); PendingEventsO = malloc(1*(k+1)*16*128*sizeof(struct PNoteO)); Mutes = malloc(MutesNum*(k+2)*sizeof(unsigned char)); TrkInfo = malloc((k+1)*sizeof(struct MidiEvent*)); Thrus = malloc((k+2)*sizeof(struct MidiEvent**));
 
-LabelNum = _msize(Labels)/sizeof(struct Label); TrkNum = _msize(TrkInfo)/sizeof(struct MidiEvent*);
+RecEvents = malloc((args[8]==0x0ff?1:1024*1024)*sizeof(struct RecEvent)); LabelNum = _msize(Labels)/sizeof(struct Label); TrkNum = _msize(TrkInfo)/sizeof(struct MidiEvent*);
 
 for (i=0; i<LabelNum; i++) { Labels[i].Idx = i; Labels[i].Event = NULL; Labels[i].ReT = Labels[i].Now = Labels[i].Ret = 0; } EntryLabel = &Labels[args[10]]; ExitLabel = &Labels[args[11]];
 
@@ -373,7 +373,7 @@ for (i=0; i<(_msize(TrkInfo       )/sizeof(struct MidiEvent* )); i++) { TrkInfo[
 for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI     )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel = 0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = (i%12)+1; PendingEventsI[i].NoteI = &PressedNotes[i%12]; } LatestPendingI = NULL;
 for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO     )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Cnt = 0; PendingEventsO[i].Event = NULL;                                                                              } LatestPendingO = NULL;
 for (i=0; i<(_msize(Mutes         )/sizeof(unsigned char     )); i++) { Mutes[i] = 0; }
-for (i=0; i<(sizeof(RecEvents     )/sizeof(struct RecEvent   )); i++) { RecEvents[i].NextEvent = &RecEvents[i+1]; RecEvents[i].EventData = 0; RecEvents[i].Event = NULL; } RecEvent = RecEvents[i-1].NextEvent = &RecEvents[0];
+for (i=0; i<(_msize(RecEvents     )/sizeof(struct RecEvent   )); i++) { RecEvents[i].NextEvent = &RecEvents[i+1]; RecEvents[i].EventData = 0; RecEvents[i].Event = NULL; } RecEvent = RecEvents[i-1].NextEvent = &RecEvents[0];
 for (i=0; i<(_msize(Thrus         )/sizeof(struct MidiEvent**)); i++) { Thrus[i] = NULL; }
 for (i=0; i<(sizeof(PressedNotes  )/sizeof(struct PNoteI*    )); i++) { PressedNotes[i] = &PendingEventsI[0]; }
 for (i=0; i<(_msize(MidiEvents    )/sizeof(struct MidiEvent  )); i++) { MidiEvents[i].NextEvent = &MidiEvents[i+1]; MidiEvents[i].FlwCtl = MidiEvents[i].MsgCtl = MidiEvents[i].Rec = 0; }
@@ -556,6 +556,6 @@ if       ((ExitVal & 3) < 3                ) { i = 2; } //error
  else if (Label0->Event == ExitLabel->Event) { i = 4; } //exit
  else if (Label0->Event == LastLabel->Event) { i = 5; } //last
 
-free(Thrus); free(TrkInfo); free(Mutes); free(PendingEventsO); free(Labels); free(MidiEvents); free(args); MidiFile_free(midi_file); return(i); }
+free(RecEvents); free(Thrus); free(TrkInfo); free(Mutes); free(PendingEventsO); free(Labels); free(MidiEvents); free(args); MidiFile_free(midi_file); return(i); }
 
 //============================================================================//
