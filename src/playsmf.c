@@ -248,7 +248,7 @@ static struct MidiOut    Port2Out[ 256];
 static unsigned char     Port2Port[256], FlwMsk;
 static MidiFileEvent_t   midi_file_event;
 static unsigned long     start_time, WatchDogTimeOut, MutesNum, tick, MutesInv, MutesRet, MutesInv1, MutesInv2, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0;
-static   signed long     i, j, k, l, *args, TimeOut;
+static   signed long     i, j, k, l, *args, TimeOut, DefIDev, DefODev;
 static struct PNoteO     *PendingEventsO, *PendingO, *LatestPendingO;
 static float             Speed;
 static unsigned char     Permutations0[ 1][1] = {{0}};
@@ -354,22 +354,22 @@ for (i=0x0; i<=0xf; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]
   }
  }
 
-if (args[3] < 0) { args[3] += midiOutGetNumDevs(); } if (args[3] < 0 || args[3] >= midiOutGetNumDevs()) { args[3] = 0; }
-if (args[4] < 0) { args[4] += midiInGetNumDevs();  } if (args[4] < 0 || args[4] >= midiInGetNumDevs() ) { args[4] = 0; }
-
-for (i=12; i<_msize(args)/sizeof(signed long); i++) {
- if ((args[i]>>16) == 1) { Port2Port[(args[i]>>8)&0xff] =                       args[i]&0xff; if (Port2Port[(args[i]>>8)&0xff] >= midiOutGetNumDevs()) { Port2Port[(args[i]>>8)&0xff] = args[3]; }}
- if ((args[i]>>16) == 3) { Port2Port[(args[i]>>8)&0xff] = midiOutGetNumDevs()-1-args[i]&0xff; if (Port2Port[(args[i]>>8)&0xff] >= midiOutGetNumDevs()) { Port2Port[(args[i]>>8)&0xff] = args[3]; }}
- }
-
 timeGetDevCaps(&time_caps, sizeof(TIMECAPS)); signalling_object0 = CreateEvent(NULL, FALSE, FALSE, NULL); signalling_object1 = CreateEvent(NULL, FALSE, FALSE, NULL);
 
+start:
 printf("[%d:%d] [%d:%d] %d %d %d %d %x %x %x %x %4.2f %4.2f\n", time_caps.wPeriodMin, time_caps.wPeriodMax, midiInGetNumDevs()-1, midiOutGetNumDevs()-1, MidiFile_getResolution(midi_file), MidiFile_getFileFormat(midi_file), TrkNum, _msize(MidiEvents)/sizeof(struct MidiEvent)-1, LabelNum-1, MutesNum-1, MutesInv2, MutesRet, (float)_msize(MidiEvents)/(1024*1024), (float)_msize(Labels)/(1024*1024));
 
-start:
+DefODev = args[3]; if (DefODev < 0) { DefODev += midiOutGetNumDevs(); } if (DefODev < 0 || DefODev >= midiOutGetNumDevs()) { DefODev = 0; }
+DefIDev = args[4]; if (DefIDev < 0) { DefIDev += midiInGetNumDevs();  } if (DefIDev < 0 || DefIDev >= midiInGetNumDevs() ) { DefIDev = 0; }
+
+for (i=12; i<_msize(args)/sizeof(signed long); i++) {
+ if ((args[i]>>16) == 1) { Port2Port[(args[i]>>8)&0xff] =                       args[i]&0xff; if (Port2Port[(args[i]>>8)&0xff] >= midiOutGetNumDevs()) { Port2Port[(args[i]>>8)&0xff] = DefODev; }}
+ if ((args[i]>>16) == 3) { Port2Port[(args[i]>>8)&0xff] = midiOutGetNumDevs()-1-args[i]&0xff; if (Port2Port[(args[i]>>8)&0xff] >= midiOutGetNumDevs()) { Port2Port[(args[i]>>8)&0xff] = DefODev; }}
+ }
+
 for (i=0; i<(sizeof(Port2In       )/sizeof(struct MidiIn     )); i++) { Port2In[i].s  = -1; Port2In[i].h  = NULL; for (j=0; j<sizeof(Port2In[i].b)/sizeof(struct MidiBuf); j++) { Port2In[i].b[j].h.lpData = Port2In[i].b[j].b; Port2In[i].b[j].h.dwBufferLength = sizeof(Port2In[i].b[j].b); Port2In[i].b[j].h.dwFlags = 0; }}
 for (i=0; i<(sizeof(Port2Out      )/sizeof(struct MidiOut    )); i++) { Port2Out[i].s = -1; Port2Out[i].h = NULL; }
-for (i=0; i<(_msize(TrkInfo       )/sizeof(struct MidiEvent* )); i++) { TrkInfo[i] = (struct MidiEvent*)(args[3] << 8); }
+for (i=0; i<(_msize(TrkInfo       )/sizeof(struct MidiEvent* )); i++) { TrkInfo[i] = (struct MidiEvent*)(DefODev << 8); }
 for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI     )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel = 0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = (i%12)+1; PendingEventsI[i].NoteI = &PressedNotes[i%12]; } LatestPendingI = NULL;
 for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO     )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Cnt = 0; PendingEventsO[i].Event = NULL;                                                                              } LatestPendingO = NULL;
 for (i=0; i<(_msize(Mutes         )/sizeof(unsigned char     )); i++) { Mutes[i] = 0; }
@@ -385,7 +385,7 @@ for (i=0x0; i<=0xf; i++) {
   }
  }
 
-k = args[4];
+k = DefIDev;
 Port2In[k].s = midiInOpen(&Port2In[k].h, k, (unsigned long)MidiInProc , (unsigned long)NULL, CALLBACK_FUNCTION | MIDI_IO_STATUS);
 strcpy(midi_i_caps.szPname, ""); midiInGetDevCaps(k, &midi_i_caps, sizeof(midi_i_caps)); printf("i%2d %x '%s'\n", k, Port2In[k].s, midi_i_caps.szPname);
 for (j=0; j<sizeof(Port2In[k].b)/sizeof(struct MidiBuf); j++) { midiInPrepareHeader(Port2In[k].h, &Port2In[k].b[j].h, sizeof(MIDIHDR)); midiInAddBuffer(Port2In[k].h, &Port2In[k].b[j].h, sizeof(MIDIHDR)); }
@@ -409,7 +409,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
  if (Port2Out[MidiEvents[i].Out>>8].s == -1) { Port2Out[MidiEvents[i].Out>>8].s = midiOutOpen(&Port2Out[MidiEvents[i].Out>>8].h, MidiEvents[i].Out>>8, (unsigned long)MidiOutProc, (unsigned long)NULL, CALLBACK_FUNCTION);
   strcpy(midi_o_caps.szPname, ""); midiOutGetDevCaps(MidiEvents[i].Out>>8, &midi_o_caps, sizeof(midi_o_caps)); printf("o%2d %x '%s'\n", MidiEvents[i].Out>>8, Port2Out[MidiEvents[i].Out>>8].s, midi_o_caps.szPname);
   }
- if (!Port2Out[MidiEvents[i].Out>>8].h) { MidiEvents[i].Out = args[3] << 8; }
+ if (!Port2Out[MidiEvents[i].Out>>8].h) { MidiEvents[i].Out = DefODev << 8; }
  MidiEvents[i].midi_out = Port2Out[MidiEvents[i].Out>>8].h;
  if (MidiFileEvent_getType(midi_file_event) == MIDI_FILE_EVENT_TYPE_META) {
   MidiEvents[i].EventData   = (MidiFileMetaEvent_getNumber(midi_file_event) << 8) | 0x000000ff;
@@ -500,7 +500,7 @@ for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } SetEntryLabel
 
 FirstMute = EntryMute = &Mutes[(MutesNum-2)*(TrkNum+1)+1]; if (MutesNum > 2) { FirstMute = &Mutes[(0)*(TrkNum+1)+1]; } Mute = SetEntryMute
 
-Key0 = Key1 = &Keys[0x0][0x00]; PedalLeft = PedalMid = FlwMsk = IRQ = ExitVal = start_time = 0; Dead = 1; Speed = Speed0 = 1; (ThruE1 = ExitLabel->Event)->midi_out = Port2Out[args[3]].h;
+Key0 = Key1 = &Keys[0x0][0x00]; PedalLeft = PedalMid = FlwMsk = IRQ = ExitVal = start_time = 0; Dead = 1; Speed = Speed0 = 1; (ThruE1 = ExitLabel->Event)->midi_out = Port2Out[DefODev].h;
 
 if (args[2] >= 0) { timeBeginPeriod(args[2]); } LastTime = WatchDogTimeOut = timeGetTime(); WatchDogTimeOut += args[5]; if ((TimeOut = args[5]) < 0) { TimeOut = WatchDogTimeOut = -1; }
 
