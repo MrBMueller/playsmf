@@ -483,10 +483,10 @@ while (--i >= 0) { MidiEvents[i].TrkInfo = &TrkInfo[MidiEvents[i].Track]; MidiEv
 
 EntryLabel->Ret = -1; AlignLabels(Labels);
 
-for (i=0; i<LabelNum; i++) { if (i <= 0x7f) { for (j=0; j<=0xf; j++) { Keys[j][i].Zone &= ~16; }} if (Labels[i].Event && (Labels[i].Event->FlwCtl == 4)) { j = Labels[i].Event-MidiEvents;
+for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { if (i <= 0x7f) { for (j=0; j<=0xf; j++) { Keys[j][i].Zone &= ~16; }} if (Labels[i].Event->FlwCtl == 4) { j = Labels[i].Event-MidiEvents;
  k = 0; while (MidiEvents[j+k+1].EventData && (MidiEvents[j+k+1].event_time == MidiEvents[j].event_time)) { k++; }
  l = MidiEvents[j+k].FlwCtl; MidiEvents[j+k].FlwCtl = MidiEvents[j].FlwCtl; MidiEvents[j].FlwCtl = l; MidiEvents[j+k].JumpEvent = MidiEvents[j].JumpEvent;
- }}
+ }}}
 
 if (!FirstLabel) { FirstLabel = EntryLabel; } if (!LastLabel) { LastLabel = ExitLabel; }
 
