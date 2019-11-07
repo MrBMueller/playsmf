@@ -397,7 +397,7 @@ for (j=0; j<sizeof(Port2In[k].b)/sizeof(struct MidiBuf); j++) { midiInPrepareHea
 i = j = tempo_event_tick = tick = 0; tempo_event_time = 0; FirstLabel = LastLabel = NULL; Tempo = Tempo0 = 0x0107a120; TimeSig = TimeSig0 = 0x04021888; KeySig = KeySig0 = 0x00010000;
 for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_file_event = MidiFileEvent_getNextEventInFile(midi_file_event)) {
  if (MidiFileEvent_getTick(midi_file_event) != tick) { j = i; tick = MidiFileEvent_getTick(midi_file_event); } while ((i > j) && !MidiEvents[i-1].MsgCtl) { i--; }
- MidiEvents[i].event_time = (unsigned long)((tempo_event_time + ((float)(tick - tempo_event_tick) / MidiFile_getResolution(midi_file) / (float)(1000000.0 / (Tempo & 0x00ffffff)))) * 1000);
+ MidiEvents[i].event_time = (unsigned long)(tempo_event_time + (float)(tick - tempo_event_tick) * (float)(Tempo & 0x00ffffff) / (MidiFile_getResolution(midi_file)*1000));
  MidiEvents[i].Tempo      = Tempo & 0x00ffffff;
  MidiEvents[i].TimeSigN   = TimeSig >> 24;
  MidiEvents[i].TimeSigD   = TimeSig >> 16;
@@ -414,7 +414,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   MidiEvents[i].data_length = MidiFileMetaEvent_getDataLength(midi_file_event);
   MidiEvents[i].data_buffer = MidiFileMetaEvent_getData(midi_file_event);
   if ((MidiEvents[i].EventData & (args[9]>>16)) == (args[9] & 0x7fff)) { MidiEvents[j].FlwCtl |= 1; }
-  if (MidiEvents[i].EventData == 0x000051ff) { tempo_event_time += ((float)(tick - tempo_event_tick) / MidiFile_getResolution(midi_file) / (float)(1000000.0 / (Tempo & 0x00ffffff))); tempo_event_tick = tick;
+  if (MidiEvents[i].EventData == 0x000051ff) { tempo_event_time += (float)(tick - tempo_event_tick) * (float)(Tempo & 0x00ffffff) / (MidiFile_getResolution(midi_file)*1000); tempo_event_tick = tick;
                                                Tempo   =                                      (MidiEvents[i].data_buffer[0]<<16) | (MidiEvents[i].data_buffer[1]<<8) | (MidiEvents[i].data_buffer[2]<<0); if (Tempo0   & 0x01000000) { Tempo0   = Tempo;   }}
   if (MidiEvents[i].EventData == 0x000058ff) { TimeSig = (MidiEvents[i].data_buffer[0]<<24) | (MidiEvents[i].data_buffer[1]<<16) | (MidiEvents[i].data_buffer[2]<<8) | (MidiEvents[i].data_buffer[3]<<0); if (TimeSig0 & 0x00000080) { TimeSig0 = TimeSig; }}
   if (MidiEvents[i].EventData == 0x000059ff) { KeySig  =                                                                           (MidiEvents[i].data_buffer[0]<<8) | (MidiEvents[i].data_buffer[1]<<0); if (KeySig0  & 0x00010000) { KeySig0  = KeySig;  }}
