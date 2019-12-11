@@ -102,6 +102,10 @@ static signed char      InOfs;
 
 //============================================================================//
 
+static void CallMyMacro0() { MyMacro0 }
+
+//----------------------------------------------------------------------------//
+
 static void CALLBACK MidiInProc(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { Dead = 0; switch (wMsg) { case MIM_DATA: switch (dwParam1 & 0xf0) {
 
 case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { return; } Key1 = &Keys[dwParam1 & 0xf][V0]; i = -1;
@@ -139,6 +143,11 @@ case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: RecEvent->event_time = ti
                               default:     while (ThruE = Key1->Thrus[++i].Pending) {                          midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch);  }        }
  RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
 
+default: switch (dwParam1 & 0xff) { case 0xfa: printf("start\n"); V0 = EntryLabel->Idx; CallMyMacro0(); return;
+                                    case 0xfb: printf("cont\n" ); SetEntryLabel IRQ = 0x20;             return;
+                                    case 0xfc: printf("stop\n" ); V0 = FirstLabel->Idx; CallMyMacro0(); return;
+                                    case 0xff: printf("reset\n"); V0 = EntryLabel->Idx; CallMyMacro0(); return; }
+
 } return; //switch dwParam1 // MIM_DATA fallthru
 
 case MIM_LONGDATA: V0 = timeGetTime(); i = -1;
@@ -166,7 +175,7 @@ static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long
 
 //----------------------------------------------------------------------------//
 
-static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent->event_time = timeGetTime(); V1 = -1; if (dwCtrlType) { V0 = EntryLabel->Idx; } else { V0 = ExitLabel->Idx; ExitVal |= 4; } V1 = -1; MyMacro0 SetEvent(signalling_object0); SetEvent(signalling_object1); return(TRUE); }
+static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent->event_time = timeGetTime(); V1 = -1; if (dwCtrlType) { V0 = EntryLabel->Idx; } else { V0 = ExitLabel->Idx; ExitVal |= 4; } V1 = -1; CallMyMacro0(); SetEvent(signalling_object0); SetEvent(signalling_object1); return(TRUE); }
 
 //----------------------------------------------------------------------------//
 
