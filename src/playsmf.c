@@ -217,6 +217,7 @@ MidiFile_t midi_file = MidiFile_new(1, MIDI_FILE_DIVISION_TYPE_PPQ, PPQ);
 
 MidiFileTrack_t track0 = MidiFile_createTrack(midi_file), track1 = MidiFile_createTrack(midi_file);
 
+MidiFileTrack_createMetaEvent(track0, 0, 0x02, strlen(GetCommandLineA()), GetCommandLineA());
 MidiFileTrack_createMetaEvent(track0, 0, 0x51, 3, tempo);
 if (!(TimeSig & 0x00000080)) { MidiFileTrack_createMetaEvent(track0, 0, 0x58, 4, timeSig); }
 if (!(KeySig  & 0x00010000)) { MidiFileTrack_createMetaEvent(track0, 0, 0x59, 2, keySig ); }
