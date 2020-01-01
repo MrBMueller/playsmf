@@ -143,7 +143,7 @@ case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: RecEvent->event_time = ti
                               default:     while (ThruE = Key1->Thrus[++i].Pending) {                          midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch);  }        }
  RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
 
-default: switch (dwParam1 & 0xff) { case 0xfa: printf("start\n"); V0 = EntryLabel->Idx; CallMyMacro0(); return;
+default: switch (dwParam1 & 0xff) { case 0xfa: printf("start\n");                                       return;
                                     case 0xfb: printf("cont\n" ); SetEntryLabel IRQ = 0x20;             return;
                                     case 0xfc: printf("stop\n" ); V0 = FirstLabel->Idx; CallMyMacro0(); return;
                                     case 0xff: printf("reset\n"); V0 = EntryLabel->Idx; CallMyMacro0(); return; }
