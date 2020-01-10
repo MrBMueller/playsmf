@@ -143,10 +143,7 @@ case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: RecEvent->event_time = ti
                               default:     while (ThruE = Key1->Thrus[++i].Pending) {                          midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch);  }        }
  RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
 
-default: switch (dwParam1 & 0xff) { case 0xfa: printf("start\n");                                       return;
-                                    case 0xfb: printf("cont\n" ); SetEntryLabel IRQ = 0x20;             return;
-                                    case 0xfc: printf("stop\n" ); V0 = FirstLabel->Idx; CallMyMacro0(); return;
-                                    case 0xff: printf("reset\n"); V0 = EntryLabel->Idx; CallMyMacro0(); return; }
+default: switch (dwParam1 & 0xff) { case 0xf8: case 0xfe: return; default: printf("0%x\n", dwParam1); }
 
 } return; //switch dwParam1 // MIM_DATA fallthru
 
@@ -160,7 +157,7 @@ case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 //----------------------------------------------------------------------------//
 
 static void CALLBACK MidiInProc1(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { midiInGetID(hMidiIn, &i1); i1 = InPortOrder[i1]; switch (wMsg) {
-case MIM_DATA: if ((dwParam1&0xff) < 0xf0) { if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Out & 0x1) { midiOutShortMsg(ThruE1->midi_out, dwParam1 & 0xfffffff0 | ThruE1->Ch); }} else { printf("%x\n", dwParam1); } return;
+case MIM_DATA: if ((dwParam1&0xff) < 0xf0) { if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Out & 0x1) { midiOutShortMsg(ThruE1->midi_out, dwParam1 & 0xfffffff0 | ThruE1->Ch); }} else { printf("1%x\n", dwParam1); } return;
 case MIM_LONGDATA: if (((MIDIHDR*)dwParam1)->dwBytesRecorded) {
  i1 = ((MIDIHDR*)dwParam1)->dwBufferLength; ((MIDIHDR*)dwParam1)->dwBufferLength = ((MIDIHDR*)dwParam1)->dwBytesRecorded;
  midiOutLongMsg(ThruE1->midi_out, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); ((MIDIHDR*)dwParam1)->dwBufferLength = i1;
