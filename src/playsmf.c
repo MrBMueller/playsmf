@@ -441,6 +441,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   MidiEvents[i].EventData   = 0x000000f0;
   MidiEvents[i].data_length = MidiFileSysexEvent_getDataLength(midi_file_event);
   MidiEvents[i].data_buffer = MidiFileSysexEvent_getData(midi_file_event);
+  if ((MidiEvents[i].data_length > 0) && (MidiEvents[i].data_buffer[0] != 0xf0)) { MidiEvents[i].EventData |= 0x100; }
   if ((MidiEvents[i].EventData & (args[9]>>16)) == (args[9] & 0x7fff)) { MidiEvents[j].FlwCtl |= 1; MidiEvents[i].MsgCtl *= (args[9]>>15) & 1; }
   }
   else { unsigned long EventIdx;
