@@ -233,9 +233,9 @@ if (!RecEvent->EventData && !RecEvent->Event) { unsigned long i = -1, data_lengt
    case 0xe0: MidiFileTrack_createPitchWheelEvent(     track1, t, RecEvents[i].EventData&0xf, (RecEvents[i].EventData>>9)&0x3f80 | (RecEvents[i].EventData>> 8)&0x7f); break;
    default: if (RecEvents[i].Event) {
    switch (RecEvents[i].EventData & 0xff) {
-    case 0xf0: MidiFileTrack_createSysexEvent(track1, t,                            RecEvents[i].Event->data_length  , RecEvents[i].Event->data_buffer  ); break;
-    case 0xf7: MidiFileTrack_createSysexEvent(track1, t,                            RecEvents[i].Event->data_length+1, RecEvents[i].Event->data_buffer-1); break;
-    case 0xff: MidiFileTrack_createMetaEvent( track1, t, RecEvents[i].EventData>>8, RecEvents[i].Event->data_length  , RecEvents[i].Event->data_buffer  ); } break; }
+    case 0xf0: MidiFileTrack_createSysexEvent(track0, t,                            RecEvents[i].Event->data_length  , RecEvents[i].Event->data_buffer  ); break;
+    case 0xf7: MidiFileTrack_createSysexEvent(track0, t,                            RecEvents[i].Event->data_length+1, RecEvents[i].Event->data_buffer-1); break;
+    case 0xff: MidiFileTrack_createMetaEvent( track0, t, RecEvents[i].EventData>>8, RecEvents[i].Event->data_length  , RecEvents[i].Event->data_buffer  ); } break; }
    switch (RecEvents[i].EventData & 0xff) {
     case 0xf0: if ((RecEvents[i].EventData>>8) == 0xf0) { if (data_length) { MidiFileTrack_createSysexEvent(track1, t0, data_length, data_buffer); } data_length = 0; }
                if (!data_length) { t0 = t; } if (data_length < sizeof(data_buffer)) { data_buffer[data_length++] = RecEvents[i].EventData>>8; }
