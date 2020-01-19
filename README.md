@@ -1,6 +1,6 @@
 # playsmf
 
-![console screen shot](./img/Img1.png)
+![console screen shot](./img/Img0.png)
 
 ![markers and labels](./img/Img4.png)
 
