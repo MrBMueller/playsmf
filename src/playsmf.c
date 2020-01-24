@@ -110,8 +110,8 @@ static void CALLBACK MidiInProc(HMIDIIN hMidiIn, unsigned long wMsg, unsigned lo
 
 case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { return; } Key1 = &Keys[dwParam1 & 0xf][V0]; i = -1;
  while ((Thru = &Key1->Thrus[++i])->Trk) { if (*Thru->Trk && (*Thru->Trk)->Out & 0x1) { ThruE = Thru->Pending = *Thru->Trk; if (Thru->Delay) { Sleep(Thru->Delay); }
-  midiOutShortMsg(ThruE->midi_out, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); }} if ((PendingI = &PendingEventsI[V0])->Vel) { return; }
- switch (Key1->Zone) { case 1: PendingI->Vel = V1;
+  midiOutShortMsg(ThruE->midi_out, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); }}
+ switch ((PendingI = &PendingEventsI[V0])->Vel?0:Key1->Zone) { case 1: PendingI->Vel = V1;
   if (LatestPendingI) { LatestPendingI->Next = PendingI; } PendingI->Prev = LatestPendingI; (LatestPendingI = PendingI)->Next = NULL;
   if (!(*PendingI->NoteI)->Vel || PendingI->Key < (*PendingI->NoteI)->Key) { *(PendingI->NoteI) = PendingI; } c = v = 0;
   while (PendingI) { c = c<<4 | PendingI->Note; v += PendingI->Vel; PendingI = PendingI->Prev; } if (c <= 0xcccc && Chords[c].Type >= 0) { RootKey = PressedNotes[Chords[c].Root]->Key; PendingI = LatestPendingI; i = 0;
@@ -121,12 +121,12 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
   case  4: Mute[Key1->Val] ^= 0x08;                                                                                          V0 |= Var; PendingI->Vel = V1; break;
   case  8: if (!(Mute2 = (unsigned char*)Key1->Val)[-1]) { if (Mute2 == MuteA) { MuteA = MuteB; } else { MuteB = MuteA; MuteA = Mute2; } Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA; }
             else                                         { Mute1 = Mute3 = Mute2; if (!Mute[-1]) { Mute0 = Mute11 = Mute; }} V0 |= Var; PendingI->Vel = V1; break;
-  case 16: SetEntryLabel IRQ = 0x20; default: V0 |= Var; PendingI->Vel = V1; }
+  case 16: SetEntryLabel IRQ = 0x20; default: V0 |= Var; }
   MyMacro0 RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
 
 case 0x80: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16;                            L0x80:   if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { return; } Key0 = &Keys[dwParam1 & 0xf][V0]; i = -1;
- while (ThruE = (Thru = &Key0->Thrus[++i])->Pending) { midiOutShortMsg(ThruE->midi_out, Thru->v0[V1]<<16 | Thru->k<<8 | 0x80 | ThruE->Ch); } if (!(PendingI = &PendingEventsI[V0])->Vel) { return; }
- switch (Key0->Zone) { case 1:
+ while (ThruE = (Thru = &Key0->Thrus[++i])->Pending) { midiOutShortMsg(ThruE->midi_out, Thru->v0[V1]<<16 | Thru->k<<8 | 0x80 | ThruE->Ch); }
+ switch ((PendingI = &PendingEventsI[V0])->Vel?Key0->Zone:0) { case 1:
   if (PendingI->Prev) { PendingI->Prev->Next = PendingI->Next; }
   if (PendingI->Next) { PendingI->Next->Prev = PendingI->Prev; } else { LatestPendingI = PendingI->Prev; }
   if (!LatestPendingI && !(Label0->Idx & 0x80)) { V0 = Label0->Idx & 0xfff; }
