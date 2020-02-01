@@ -100,27 +100,26 @@ Defines a midi-thru zone with the following mantadory attributes/parameters:
  - 'active' zones/tracks are all zones (tracks) belonging to the latest pressed key
  - incoming channel messages including controller, pitch-bend, program-change, etc. are generally routed to active zones/tracks only. this allows to change selectively patches, volumes, pannings, etc. for active zones only while playing
  - exceptions are foot/pedal controller such as soft, sostenuto and sustain which are generally sent across all defined zones/tracks simultaneously
- - tracks can get dynamically re-assigned while playing by changing the incoming midi channel. to enable this option, <Channel> needs to be <= -2. in this case, the received channel is added to the target tracks.
+ - tracks can get dynamically re-assigned while playing by changing the incoming midi channel. to enable this option, `<Channel>` needs to be <= -2. in this case, the received channel is added to the target tracks.
  
 #### port/device mapping
 If the smf contains port-select meta-events where port numbers doesnt match to target device-IDs, you can apply additional port->device mappings.
-`<0x0001ppDD>` maps smf-port `<pp>` to device `<DD>`
-`<0x0003ppDD>` same as above, but devices count reverse starting with max-1 device number
+- `<0x0001ppDD>` maps smf-port `<pp>` to device `<DD>`
+- `<0x0003ppDD>` same as above, but devices count reverse starting with max-1 device number
 
 #### secondary slaved midi-input devices
 In case you want to hook additional real or virtual midi-equipment such as controller, mixer, keyboards, etc. to your output devices while playing, you can route them thru playsmf attaching directly to midi-tracks in track-follow mode. This might be required for devices using single client midi drivers. Typically those drivers dont allow to open multiple clients in parallel. Since this option works in track-follow-mode, each incoming channel is routed to one corresponding track starting from track `<TT>`.
-`<0x0002TTDD>` opens secondary slaved midi input device `<DD>` attaching to track `<TT>`
-`<0x0004TTDD>` same as above, but devices count reverse starting with max-1 device number
+- `<0x0002TTDD>` opens secondary slaved midi input device `<DD>` attaching to track `<TT>`
+- `<0x0004TTDD>` same as above, but devices count reverse starting with max-1 device number
 
 #### midi device reset options
 In order to reset midi equipment upon player start and/or exit, you can optionally define individual midi messages (typically controller reset messages) sent across all devices/channels before the player starts and after the player exists.
-`<0x01mmmmm0>` start midi message (play given message across all channels before smf sequence starts)
-`<0x02mmmmm0>` exit midi message (play given message across all channels after smf sequence stops)
-`<0x03mmmmm0>` start/exit midi message (play given message across all channels before and after smf sequence starts/stops)
+- `<0x01mmmmm0>` start midi message (play given message across all channels before smf sequence starts)
+- `<0x02mmmmm0>` exit midi message (play given message across all channels after smf sequence stops)
+- `<0x03mmmmm0>` start/exit midi message (play given message across all channels before and after smf sequence starts/stops)
 
 
 #### smf intrinsic arguments
-In order to store command line arguments with the smf, the player supports sequencer specific meta messages to set and/or override command line arguments.
-Argument data is stored as 32-bit integer values `<DD>` starting from argument address `<AA>` followed by one or more arguments.
+In order to store command line arguments with the smf, the player supports sequencer specific meta messages to set and/or override command line arguments. Argument data is stored as 32-bit integer values `<DD>` starting from argument address `<AA>` followed by one or more arguments.
 
-`<0xff> <length> <0x7f> <0x00> <0xab> <0xcd> <0x00> <AA[31:24]> <AA[23:16]> <AA[15:8]> <AA[7:0]> (<DD[31:24]> <DD[23:16]> <DD[15:8]> <DD[7:0]>)*`
+- `<0xff> <length> <0x7f> <0x00> <0xab> <0xcd> <0x00> <AA[31:24]> <AA[23:16]> <AA[15:8]> <AA[7:0]> (<DD[31:24]> <DD[23:16]> <DD[15:8]> <DD[7:0]>)*`
