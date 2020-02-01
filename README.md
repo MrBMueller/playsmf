@@ -2,6 +2,8 @@
 
 ![console screen shot](./img/Img0.png)
 
+![midi thru config](./img/Img5.png)
+
 ![markers and labels](./img/Img4.png)
 
 playsmf is a small, but powerful Windows (32/64bit) commandline standard midi file (SMF) player. Its specifically designed for low CPU and memory consumption to leave enough system recources for other applications such as soft-synths, DAWs, mixer apps, etc. while playing live and running in background.
@@ -61,18 +63,65 @@ The player comes with specific features such as:
 
 usage:
 
-`playsmf.exe <MidiFile> <TimerPeriod> <DefaultMidiOutputDevice> <DefaultMidiInputDevice> <TimeOut> <Channel> <Ofs> <REC> <INT>  <KeyStart> <KeyExit>  <KeyChordStart> <KeyChordStop>`
+`playsmf.exe <MidiFile> <TimerPeriod> <DefaultMidiOutputDevice> <DefaultMidiInputDevice> <TimeOut> <Channel> <Ofs> <REC> <INT> <KeyStart> <KeyExit>`
 
-* `<MidiFile>` - inputfile *.mid
-* `<TimerPeriod>` - windows timer resolution in ms or -1 if not used
-* `<DefaultMidiOutputDevice>` - default midi output device
-* `<DefaultMidiInputDevice>` - default midi input device (primary midi input)
-* `<TimeOut>` - midi in timeout in ms or -1 if not used (player will close if no midi in message received within this period)
-* `<Channel>` - channel used for chord recognition (-1 means all channes are used)
-* `<Ofs>` - midi in key offset (default 0)
-* `<REC>` - turns on midi recording (0xff means off)
-* `<INT>` - interrupt message control for styles (default 0x00008000 - all messages)
-* `<KeyStart>` - start key (EntryLabel)
-* `<KeyExit>` - exit key (ExitLabel)
-* `<KeyChordStart>` - lowest key used for chord recognition
-* `<KeyChordStop>` - highest key used for chord recognition`
+*  0 `playsmf.exe` - application
+*  1 `<MidiFile>` - inputfile *.mid
+*  2 `<TimerPeriod>` - windows timer resolution in ms or -1 if not used
+*  3 `<DefaultMidiOutputDevice>` - default midi output device ID
+*  4 `<DefaultMidiInputDevice>`  - default primary midi input device ID
+*  5 `<TimeOut>` - primary midi-input timeout in ms or -1 if not used (player will close if there is no primary input midi activity)
+*  6 `<Channel>` - primary midi-input channel filter/router used for midi-thru functionality [..-2:-1:0..15:16..]
+*  7 `<Ofs>` - primary midi in key offset [-127:0:127]
+*  8 `<REC>` - midi recording filter (default 0xff - off)
+*  9 `<INT>` - interrupt message control filter (default 0x00008000 - all messages)
+* 10 `<KeyStart>` - start key (EntryLabel)
+* 11 `<KeyExit>` - exit key (ExitLabel)
+
+
+additional options beyond argument address >= 12:
+
+ThruZone ::= (<LowKey> <HighKey> <Track> <Delay> <KeyOffset> <Von> <Voff>)
+
+Defines a midi-thru zone with the following mantadory attributes/parameters:
+
+<LowKey>    lowest  key in zone [0:127] (if <=-2 use <LowKey> from previous zone; if -1 use <HighKey>+1 from previous zone)
+<HighKey>   highest key in zone [0:127] or <range> if negative
+<Track>     assigned track [-1,0:n] (-1: no assignment)
+<Delay>     delay im ms [0:n] (experimental feature - use in rare cases with only small delay values to achive flanger-type effects)
+<KeyOffset> transpose [-127:0:127] or fixed key [128:255]
+<Von>       note-on  velocity modulator <0xssoo>: <ss> 0=1,([1:5:255]-1)*.25 -> [1,0:1:63.5] scale factor; <oo> [-127:0:127] offset
+<Voff>      note-off velocity modulator <0xssoo>: <ss> 0=1,([1:5:255]-1)*.25 -> [1,0:1:63.5] scale factor; <oo> [-127:0:127] offset
+
+notes/comments/terminologies:
+ - multiple zones can be defined consecutively
+ - chord recognizion key range is always derrived from the 1st defined zone in argument list (mandatory zone - even though chord recognition is not used)
+ - midi-thru works generally in 'track-follow-mode' with the primary midi input attached to individual tracks following their output device/channel combinations while playing
+ - each individual key allows having up to 8 zones/tracks (layers) attached
+ - 'active' zones/tracks are all zones (tracks) belonging to the latest pressed key
+ - incoming channel messages including controller, pitch-bend, program-change, etc. are generally routed to active zones/tracks only. this allows to change selectively patches, volumes, pannings, etc. for active zones only while playing
+ - exceptions are foot/pedal controller such as soft, sostenuto and sustain which are generally sent across all defined zones/tracks simultaneously
+ - tracks can get dynamically re-assigned while playing by changing the incoming midi channel. to enable this option, <Channel> needs to be <= -2. in this case, the received channel is added to the target tracks.
+ 
+port/device mapping
+If the smf contains port-select meta-events where port numbers doesnt match to target device-IDs, you can apply additional port->device mappings.
+<0x0001ppDD> maps smf-port <pp> to device <DD>
+<0x0003ppDD> same as above, but devices count reverse starting with max-1 device number
+
+secondary slaved midi-input devices
+In case you want to hook additional real or virtual midi-equipment such as controller, mixer, keyboards, etc. to your output devices while playing, you can route them thru playsmf attaching directly to midi-tracks in track-follow mode. This might be required for devices using single client midi drivers. Typically those drivers dont allow to open multiple clients in parallel. Since this option works in track-follow-mode, each incoming channel is routed to one corresponding track starting from track <TT>.
+<0x0002TTDD> opens secondary slaved midi input device <DD> attaching to track <TT>
+<0x0004TTDD> same as above, but devices count reverse starting with max-1 device number
+
+midi device reset options
+In order to reset midi equipment upon player start and/or exit, you can optionally define individual midi messages (typically controller reset messages) sent across all devices/channels before the player starts and after the player exists.
+<0x01mmmmm0> start midi message (play given message across all channels before smf sequence starts)
+<0x02mmmmm0> exit midi message (play given message across all channels after smf sequence stops)
+<0x03mmmmm0> start/exit midi message (play given message across all channels before and after smf sequence starts/stops)
+
+
+smf intrinsic arguments
+In order to store command line arguments with the smf, the player supports sequencer specific meta messages to set and/or override command line arguments.
+Argument data is stored as 32-bit integer values <DD> starting from argument address <AA> followed by one or more arguments.
+
+<0xff> <length> <0x7f> <0x00> <0xab> <0xcd> <0x00> <AA[31:24]> <AA[23:16]> <AA[15:8]> <AA[7:0]> (<DD[31:24]> <DD[23:16]> <DD[15:8]> <DD[7:0]>)*
