@@ -78,7 +78,7 @@ The player comes with specific features such as:
 * 10 `<KeyStart>` - start key (EntryLabel)
 * 11 `<KeyExit>` - exit key (ExitLabel)
 
-##### additional options beyond argument address >= 12:
+#### additional options beyond argument address >= 12:
 
 `ThruZone ::= (<LowKey> <HighKey> <Track> <Delay> <KeyOffset> <Von> <Voff>)`
 
@@ -92,7 +92,7 @@ Defines a midi-thru zone with the following mantadory attributes/parameters:
 * `<Von>`       note-on  velocity modulator <0xssoo>: <ss> 0=1,([1:5:255]-1)*.25 -> [1,0:1:63.5] scale factor; <oo> [-127:0:127] offset
 * `<Voff>`      note-off velocity modulator <0xssoo>: <ss> 0=1,([1:5:255]-1)*.25 -> [1,0:1:63.5] scale factor; <oo> [-127:0:127] offset
 
-notes/comments/terminologies:
+#### notes/comments/terminologies:
  - multiple zones can be defined consecutively
  - chord recognizion key range is always derrived from the 1st defined zone in argument list (mandatory zone - even though chord recognition is not used)
  - midi-thru works generally in 'track-follow-mode' with the primary midi input attached to individual tracks following their output device/channel combinations while playing
@@ -102,24 +102,24 @@ notes/comments/terminologies:
  - exceptions are foot/pedal controller such as soft, sostenuto and sustain which are generally sent across all defined zones/tracks simultaneously
  - tracks can get dynamically re-assigned while playing by changing the incoming midi channel. to enable this option, <Channel> needs to be <= -2. in this case, the received channel is added to the target tracks.
  
-port/device mapping
+#### port/device mapping
 If the smf contains port-select meta-events where port numbers doesnt match to target device-IDs, you can apply additional port->device mappings.
 `<0x0001ppDD>` maps smf-port `<pp>` to device `<DD>`
 `<0x0003ppDD>` same as above, but devices count reverse starting with max-1 device number
 
-secondary slaved midi-input devices
+#### secondary slaved midi-input devices
 In case you want to hook additional real or virtual midi-equipment such as controller, mixer, keyboards, etc. to your output devices while playing, you can route them thru playsmf attaching directly to midi-tracks in track-follow mode. This might be required for devices using single client midi drivers. Typically those drivers dont allow to open multiple clients in parallel. Since this option works in track-follow-mode, each incoming channel is routed to one corresponding track starting from track `<TT>`.
 `<0x0002TTDD>` opens secondary slaved midi input device `<DD>` attaching to track `<TT>`
 `<0x0004TTDD>` same as above, but devices count reverse starting with max-1 device number
 
-midi device reset options
+#### midi device reset options
 In order to reset midi equipment upon player start and/or exit, you can optionally define individual midi messages (typically controller reset messages) sent across all devices/channels before the player starts and after the player exists.
 `<0x01mmmmm0>` start midi message (play given message across all channels before smf sequence starts)
 `<0x02mmmmm0>` exit midi message (play given message across all channels after smf sequence stops)
 `<0x03mmmmm0>` start/exit midi message (play given message across all channels before and after smf sequence starts/stops)
 
 
-smf intrinsic arguments
+#### smf intrinsic arguments
 In order to store command line arguments with the smf, the player supports sequencer specific meta messages to set and/or override command line arguments.
 Argument data is stored as 32-bit integer values `<DD>` starting from argument address `<AA>` followed by one or more arguments.
 
