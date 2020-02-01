@@ -80,7 +80,7 @@ The player comes with specific features such as:
 
 #### additional options beyond argument address >= 12:
 
-`ThruZone ::= (<LowKey> <HighKey> <Track> <Delay> <KeyOffset> <Von> <Voff>)`
+* `ThruZone ::= (<LowKey> <HighKey> <Track> <Delay> <KeyOffset> <Von> <Voff>)`
 
 Defines a midi-thru zone with the following mantadory attributes/parameters:
 
