@@ -348,7 +348,7 @@ RecEvents = malloc((args[8]==0x0ff?1:1024*1024)*sizeof(struct RecEvent)); LabelN
 
 EntryLabel = &Labels[args[10]]; ExitLabel = &Labels[args[11]];
 
-for (i=0x0; i<=0xf; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]+1, K2 = Ck-MutesNum, K1 = K2-1, K0 = K1; if (LabelNum>>12) { K0 -= ((LabelNum-1)>>12)+1; } if (Mk-1 < 0) { Mk = Ck+abs(Mk-1); if (Mk > 128) { Mk = 128; }}
+for (i=0x0; i<=0xf; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]+1, K2 = Ck-MutesNum, K1 = K2-1, K0 = K1; if (LabelNum>>12) { K0 -= ((LabelNum-1)>>12)+1; } if (Mk-1 < 0) { Mk = Ck+abs(Mk-1); } if (Mk > 128) { Mk = 128; }
  for (j = K0; j < K1; j++) { Keys[i][j].Zone |= 2; Keys[i][j].Val = (K1-j-1)<<12; }
  for (j = K1; j < K2; j++) { Keys[i][j].Zone |= 4; Keys[i][j].Val = K2-j-1; }
  for (j = K2; j < Ck; j++) { Keys[i][j].Zone |= 8; if (j > (Ck-3)) { Keys[i][j].Val = (unsigned long)&Mutes[(j-K2)*(TrkNum+1)+1]; } else { Keys[i][j].Val = (unsigned long)&Mutes[(Ck-3-j)*(TrkNum+1)+1]; }}
@@ -358,7 +358,7 @@ for (i=0x0; i<=0xf; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]
  k = 12; Thrus[i] = &Thrus[0][i*(TrkNum+1)];
  while (((k+6) < _msize(args)/sizeof(signed long)) && (abs(args[k+6]) < 0x10000)) { signed long K0 = args[k++], K1 = args[k++]+1, T = args[k++], Delay = args[k++], K = args[k++], V1 = args[k++], V0 = args[k++];
   signed char v0o = V0&0xff, v1o = V1&0xff; float v0s = 1.0, v1s = 1.0; if (V0 > 255) { v0s = ((V0>>8)-1)*.25; } if (V1 > 255) { v1s = ((V1>>8)-1)*.25; }
-  if (K0 <= -2) { K0 = Ck; } if (K0 == -1) { K0 = Mk; } if (K1-1 < 0) { K1 = K0+abs(K1-1); if (K1 > 128) { K1 = 128; }} Ck = K0; Mk = K1;
+  if (K0 <= -2) { K0 = Ck; } if (K0 == -1) { K0 = Mk; } if (K1-1 < 0) { K1 = K0+abs(K1-1); } if (K1 > 128) { K1 = 128; } Ck = K0; Mk = K1;
   if ((T < TrkNum) && ((C < 0) || (i == C))) { if (C < -1) { T = (T+i+abs(C+2))%TrkNum; }
    for (j = K0; j < K1; j++) { signed long k = j+K, L = -1, a; while (Keys[i][j].Thrus[++L].Trk) {} if (K > 0x7f) { k = K & 0x7f; } if ((k > 127) || (k < 0)) { k = j; }
     Keys[i][j].Thrus[L].Trk = &TrkInfo[T]; Keys[i][j].Thrus[L].Delay = Delay; Keys[i][j].Thrus[L].k = k;
