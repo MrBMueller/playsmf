@@ -18,17 +18,17 @@
 
 #define MyMacro1 \
  if       (Label0->Event == MidiEvents || Label0->Event == LastLabel->Event)                                                    { SetEntryMute i = -2;                      c = Mute0[0]; }\
-  else if (Mute == EntryMute && (MidiEvent->Label->Event == EntryLabel->Event || MidiEvent->Label->Event == FirstLabel->Event)) { SetFirstMute i =  0;                      c = Mute0[0]; }\
+  else if (Mute == EntryMute && (MidiEvenT->Label->Event == EntryLabel->Event || MidiEvenT->Label->Event == FirstLabel->Event)) { SetFirstMute i =  0;                      c = Mute0[0]; }\
   else                                                                                                                          {              i = (Mute-Mutes)/(TrkNum+1); c = Mute[ 0]; }\
- printf("%4.2f -> %3d %4x %4x %4x %2d %d %d %2d %d %02x => %6.2f (%6.2f %d/%d) -> %6.2f (%6.2f %d/%d)\n", (float)(RecEvent->event_time-LastTime)*1000*(1<<MidiEvent->TimeSigD)/((MidiEvent->Tempo<<2)*MidiEvent->TimeSigN)/Speed0, V1, MidiEvent->Label->Idx, Label4->Idx, Label1->Idx, (signed char)Label4->Ret, Label4->Now, Label4->ReT, i, c, IRQ,\
-  (float)MidiEvent->event_time*1000*(1<<MidiEvent->TimeSigD)/((MidiEvent->Tempo<<2)*MidiEvent->TimeSigN), (float)60000000/MidiEvent->Tempo/Speed0, MidiEvent->TimeSigN, 1<<MidiEvent->TimeSigD, (float)Label4->Event->event_time*1000*(1<<Label4->Event->TimeSigD)/((Label4->Event->Tempo<<2)*Label4->Event->TimeSigN), (float)60000000/Label4->Event->Tempo/Speed0, Label4->Event->TimeSigN, 1<<Label4->Event->TimeSigD);\
- LastTime = RecEvent->event_time; if (MidiEvent->Label->Now) { SetEvent(signalling_object0); }
+ printf("%4.2f -> %3d %4x %4x %4x %2d %d %d %2d %d %02x => %6.2f (%6.2f %d/%d) -> %6.2f (%6.2f %d/%d)\n", (float)(RecEvent->event_time-LastTime)*1000*(1<<MidiEvenT->TimeSigD)/((MidiEvenT->Tempo<<2)*MidiEvenT->TimeSigN)/Speed0, V1, MidiEvenT->Label->Idx, Label4->Idx, Label1->Idx, (signed char)Label4->Ret, Label4->Now, Label4->ReT, i, c, IRQ,\
+  (float)MidiEvenT->event_time*1000*(1<<MidiEvenT->TimeSigD)/((MidiEvenT->Tempo<<2)*MidiEvenT->TimeSigN), (float)60000000/MidiEvenT->Tempo/Speed0, MidiEvenT->TimeSigN, 1<<MidiEvenT->TimeSigD, (float)Label4->Event->event_time*1000*(1<<Label4->Event->TimeSigD)/((Label4->Event->Tempo<<2)*Label4->Event->TimeSigN), (float)60000000/Label4->Event->Tempo/Speed0, Label4->Event->TimeSigN, 1<<Label4->Event->TimeSigD);\
+ LastTime = RecEvent->event_time; if (MidiEvenT->Label->Now) { SetEvent(signalling_object0); }
 
 #define MyMacro0 \
  if (V0 < LabelNum && Labels[V0].Event) {\
-  if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvent->Label->Ret) {                                                                               Label4 = Label3 = Label2 = Label1 =                                                                          Label0; if (Label4->Event != MidiEvent->Label->Event) { IRQ = 0x10; MyMacro1 }}}\
-                    else { Label1 = Label2; if (Label0->Ret&1) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; Label4 = (i=0x1000+V0)<LabelNum && (V0^Label4->Idx)&0xf7f && Labels[i].Event && Labels[i].Ret ? &Labels[i] : Label0;                                                 IRQ = 0x08; MyMacro1  }}\
-   else if (Label0->Ret) { Label1 = Label2; if (Label0->Ret&1) { if (!MidiEvent->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvent->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; Label4 =                                                                                                     Label0;                                                 IRQ = 0x08; MyMacro1   }\
+  if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvenT->Label->Ret) {                                                                               Label4 = Label3 = Label2 = Label1 =                                                                          Label0; if (Label4->Event != MidiEvenT->Label->Event) { IRQ = 0x10; MyMacro1 }}}\
+                    else { Label1 = Label2; if (Label0->Ret&1) { if (!MidiEvenT->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvenT->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; Label4 = (i=0x1000+V0)<LabelNum && (V0^Label4->Idx)&0xf7f && Labels[i].Event && Labels[i].Ret ? &Labels[i] : Label0;                                                 IRQ = 0x08; MyMacro1  }}\
+   else if (Label0->Ret) { Label1 = Label2; if (Label0->Ret&1) { if (!MidiEvenT->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvenT->Label->Idx&0xfff]; } Label1 = Label3; } Var = Label1->Idx&-4096; Label4 =                                                                                                     Label0;                                                 IRQ = 0x08; MyMacro1   }\
    else                  { Label4 = Label3 = Label2 = Label1 = Label0 = &Labels[V0]; if (!IRQ) { IRQ = 0x18^Label0->ReT; } if (Label0->ReT) { MyMacro1 }}}
 
 struct MidiEvent { unsigned long     event_time;
@@ -96,7 +96,7 @@ static struct Chord     Chords[0xcccc+1];
 static struct RecEvent  *RecEvents, *RecEvent;
 static unsigned char    RootKey, IRQ, *Mutes, *Mute, *Mute0, *Mute1, *Mute2, *Mute3, *Mute11, *EntryMute, *FirstMute, *MuteA, *MuteB, Dead, ExitVal, PedalLeft, PedalMid, InPortOrder[256];
 static unsigned long    V0, V1, c, i, i1, v, LastTime, LabelNum, TrkNum, Var, Var0, Var1;
-static struct MidiEvent *MidiEvents, *MidiEvent, **TrkInfo, ***Thrus[16], *ThruE, *ThruE1;
+static struct MidiEvent *MidiEvents, *MidiEvent, *MidiEvenT, **TrkInfo, ***Thrus[16], *ThruE, *ThruE1;
 static float            Speed0;
 static signed char      InOfs;
 
@@ -118,7 +118,7 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
   while (PendingI) { c = c<<4 | PendingI->Note; v += PendingI->Vel; PendingI = PendingI->Prev; } if (c <= 0xcccc && Chords[c].Type >= 0) { RootKey = PressedNotes[Chords[c].Root]->Key; PendingI = LatestPendingI; i = 0;
   while (PendingI) { if (PendingI->Key < RootKey) { i++; }          PendingI = PendingI->Prev; } V0 = Var | Chords[c].Type | i%Chords[c].Num<<4 | Chords[c].Root; V1 = v / Chords[c].Num; } break;
   case  2: if ((i = Key1->Val | Label0->Idx & 0xfff) < LabelNum && !Labels[i].Ret) { if (Key1->Val == Var0) { Var0 = Var1; } else { Var1 = Var0; Var0 = Key1->Val; } Var = Var0; } else { Var = Key1->Val; }
-           V0 = Var | Label2->Idx & 0xfff; if (MidiEvent->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label1 = &Labels[i]; V0 = -1; } break;
+           V0 = Var | Label2->Idx & 0xfff; if (MidiEvenT->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label1 = &Labels[i]; V0 = -1; } break;
   case  4: Mute[Key1->Val] ^= 0x08;                                                                                          V0 |= Var; break;
   case  8: if (!(Mute2 = (unsigned char*)Key1->Val)[-1]) { if (Mute2 == MuteA) { MuteA = MuteB; } else { MuteB = MuteA; MuteA = Mute2; } Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA; }
             else                                         { Mute1 = Mute3 = Mute2; if (!Mute[-1]) { Mute0 = Mute11 = Mute; }} V0 |= Var; break;
@@ -469,7 +469,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
  }
 
 MidiEvents[i].event_time = MidiEvents[i].EventData = 0; if (i) { MidiEvents[i].event_time = MidiEvents[i-1].event_time; }
-MidiEvents[i].Label = ExitLabel; ExitLabel->Event = &MidiEvents[i]; MidiEvent = EntryLabel->Event = &MidiEvents[0]; k = 0;
+MidiEvents[i].Label = ExitLabel; ExitLabel->Event = &MidiEvents[i]; MidiEvenT = MidiEvent = EntryLabel->Event = &MidiEvents[0]; k = 0;
 
 MidiEvents[i].Tempo    = Tempo & 0x00ffffff;
 MidiEvents[i].TimeSigN = TimeSig >> 24;
@@ -514,13 +514,13 @@ for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } SetEntryLabel
 
 FirstMute = EntryMute = &Mutes[(MutesNum-2)*(TrkNum+1)+1]; if (MutesNum > 2) { FirstMute = &Mutes[(0)*(TrkNum+1)+1]; } Mute = SetEntryMute
 
-Key0 = Key1 = &Keys[0x0][0x00]; PedalLeft = PedalMid = FlwMsk = IRQ = ExitVal = start_time = 0; Dead = 1; Speed = Speed0 = 1; (ThruE1 = ExitLabel->Event)->midi_out = Port2Out[DefODev].h;
+Key0 = Key1 = &Keys[0x0][0x00]; PedalLeft = PedalMid = FlwMsk = IRQ = ExitVal = 0; Dead = 1; Speed = Speed0 = 1; (ThruE1 = ExitLabel->Event)->midi_out = Port2Out[DefODev].h;
 
-if (args[2] >= 0) { timeBeginPeriod(args[2]); } LastTime = WatchDogTimeOut = timeGetTime(); WatchDogTimeOut += args[5]; if ((TimeOut = args[5]) < 0) { TimeOut = WatchDogTimeOut = -1; }
+if (args[2] >= 0) { timeBeginPeriod(args[2]); } LastTime = WatchDogTimeOut = start_time = timeGetTime(); WatchDogTimeOut += args[5]; if ((TimeOut = args[5]) < 0) { TimeOut = WatchDogTimeOut = -1; }
 
 SetConsoleCtrlHandler(HandlerRoutine, TRUE); for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStart(Port2In[i].h); }} printf("%d playing ...", ExitLabel->Event-MidiEvent);
 while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*Speed, current_time = timeGetTime(); if (!start_time) { start_time = current_time-t; }
- if ((signed long)(t += start_time-current_time) > 0) { WaitForSingleObject(signalling_object0, t); }
+ if ((signed long)(t += start_time-current_time) > 0) { WaitForSingleObject(signalling_object0, t); } *(MidiEvent->TrkInfo) = MidiEvenT = MidiEvent;
 
  switch (MidiEvent->FlwCtl^FlwMsk | IRQ) {
   case 0x09: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f: case 0x11: case 0x13: case 0x14: case 0x16:
@@ -534,7 +534,7 @@ while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*
    if ((MidiEvent = Label1->Event       )->FlwCtl > 2) { FlwMsk = MidiEvent->FlwCtl^1; }       start_time = 0; Mute = Mute0 = Mute3; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x1e: case 0x1f: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27: IRQ = 0; case 0x01: case 0x15: case 0x17: case 0x19: case 0x21: Mute = Mute0; }
 
- if (MidiEvent->Rec) { RecEvent->event_time = timeGetTime(); RecEvent->Event = MidiEvent; RecEvent = RecEvent->NextEvent; } *(MidiEvent->TrkInfo) = MidiEvent;
+ if (MidiEvent->Rec) { RecEvent->event_time = timeGetTime(); RecEvent->Event = MidiEvent; RecEvent = RecEvent->NextEvent; }
 
  switch (MidiEvent->MsgCtl | Mute[MidiEvent->Track]) {
   case 0x4:           midiOutShortMsg(MidiEvent->midi_out, MidiEvent->EventData); if (!(PendingO = MidiEvent->EventIdx)->Cnt) { PendingO->Event = MidiEvent;
