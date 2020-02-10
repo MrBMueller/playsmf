@@ -254,8 +254,8 @@ if (args[8] != 0x0ff) { MidiFile_save(midi_file, filename); } MidiFile_free(midi
 
 //----------------------------------------------------------------------------//
 
-unsigned long GetIDev(char *n) { signed long i, j = 0x0baddead; MIDIINCAPS  c; for (i = 0; i < midiInGetNumDevs();  i++) { midiInGetDevCaps( i, &c, sizeof(c)); if (strstr(c.szPname, n)) { j = i; break; }} return(j); }
-unsigned long GetODev(char *n) { signed long i, j = 0x0baddead; MIDIOUTCAPS c; for (i = 0; i < midiOutGetNumDevs(); i++) { midiOutGetDevCaps(i, &c, sizeof(c)); if (strstr(c.szPname, n)) { j = i; break; }} return(j); }
+unsigned long GetIDev(char *n) { unsigned long i; MIDIINCAPS  c; for (i = 0; i < midiInGetNumDevs();  i++) { midiInGetDevCaps( i, &c, sizeof(c)); if (strstr(c.szPname, n)) { return(i); }} return(0x0baddead); }
+unsigned long GetODev(char *n) { unsigned long i; MIDIOUTCAPS c; for (i = 0; i < midiOutGetNumDevs(); i++) { midiOutGetDevCaps(i, &c, sizeof(c)); if (strstr(c.szPname, n)) { return(i); }} return(0x0baddead); }
 
 //============================================================================//
 
