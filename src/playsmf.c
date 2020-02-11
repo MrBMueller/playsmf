@@ -55,19 +55,19 @@ struct RecEvent  { unsigned long     event_time;
 struct PNoteI    { struct PNoteI    *Prev;
                    struct PNoteI    *Next;
                    struct PNoteI    **NoteI;
-                   signed char       Key, Note, Vel; };
+                   unsigned char     Key, Note, Vel; };
 
 struct PNoteO    { struct PNoteO    *Prev;
                    struct PNoteO    *Next;
                    unsigned long     Cnt;
                    struct MidiEvent *Event; };
 
-struct Label     {   signed long     Idx;
+struct Label     { unsigned long     Idx;
                    struct MidiEvent *Event;
                    unsigned char     Ret, Now, ReT; };
 
 struct Chord     {   signed short    Type;
-                     signed char     Root, Num; };
+                   unsigned char     Root, Num; };
 
 struct Thru      { struct MidiEvent  **Trk, *Pending;
                    unsigned long     Delay;
