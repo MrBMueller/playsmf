@@ -112,8 +112,7 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
  while ((Thru = &Key1->Thrus[++i])->Trk) { if (*Thru->Trk && (*Thru->Trk)->Out & 0x1) { ThruE = Thru->Pending = *Thru->Trk; if (Thru->Delay) { Sleep(Thru->Delay); }
   midiOutShortMsg(ThruE->midi_out, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); }}
  if (!(PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel = V1;
- switch (Key1->Zone) { case 1:
-  if (LatestPendingI) { LatestPendingI->Next = PendingI; } PendingI->Prev = LatestPendingI; (LatestPendingI = PendingI)->Next = NULL;
+ switch (Key1->Zone) { case 1: if (LatestPendingI) { LatestPendingI->Next = PendingI; } PendingI->Prev = LatestPendingI; (LatestPendingI = PendingI)->Next = NULL;
   if (!(*PendingI->NoteI)->Vel || PendingI->Key < (*PendingI->NoteI)->Key) { *(PendingI->NoteI) = PendingI; } c = 0;
   while (PendingI) { c = c<<4 | PendingI->Note; PendingI = PendingI->Prev; } if (c <= 0xcccc && Chords[c].Type >= 0) { RootKey = PressedNotes[Chords[c].Root]->Key; PendingI = LatestPendingI; v = i = 0;
   while (PendingI) { if (PendingI->Key < RootKey) { i++; } v += PendingI->Vel; PendingI = PendingI->Prev; } V0 = Var | Chords[c].Type | i%Chords[c].Num<<4 | Chords[c].Root; V1 = v / Chords[c].Num; } break;
@@ -128,9 +127,7 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
 case 0x80: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16;                            L0x80:   if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { return; } Key0 = &Keys[dwParam1 & 0xf][V0]; i = -1;
  while (ThruE = (Thru = &Key0->Thrus[++i])->Pending) { midiOutShortMsg(ThruE->midi_out, Thru->v0[V1]<<16 | Thru->k<<8 | 0x80 | ThruE->Ch); }
  if ( (PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel =  0;
- switch (Key0->Zone) { case 1:
-  if (PendingI->Prev) { PendingI->Prev->Next = PendingI->Next; }
-  if (PendingI->Next) { PendingI->Next->Prev = PendingI->Prev; } else { LatestPendingI = PendingI->Prev; }
+ switch (Key0->Zone) { case 1: if (PendingI->Prev) { PendingI->Prev->Next = PendingI->Next; } if (PendingI->Next) { PendingI->Next->Prev = PendingI->Prev; } else { LatestPendingI = PendingI->Prev; }
   if (!LatestPendingI && !(Label0->Idx & 0x80)) { V0 = Label0->Idx & 0xfff; }}
  V0 |= Var | 0x80;
  MyMacro0 } RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
