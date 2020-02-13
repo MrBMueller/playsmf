@@ -95,7 +95,7 @@ static struct PNoteI    PendingEventsI[128], *PendingI, *LatestPendingI, *Presse
 static struct Chord     Chords[0xcccc+1];
 static struct RecEvent  *RecEvents, *RecEvent;
 static unsigned char    RootKey, IRQ, *Mutes, *Mute, *Mute0, *Mute1, *Mute2, *Mute3, *Mute11, *EntryMute, *FirstMute, *MuteA, *MuteB, Dead, ExitVal, PedalLeft, PedalMid, InPortOrder[256];
-static unsigned long    V0, V1, c, i, i1, v, LastTime, LabelNum, TrkNum, Var, Var0, Var1;
+static unsigned long    V0, V1, c, i, i1, LastTime, LabelNum, TrkNum, Var, Var0, Var1;
 static struct MidiEvent *MidiEvents, *MidiEvent, *MidiEvenT, **TrkInfo, ***Thrus[16], *ThruE, *ThruE1;
 static float            Speed0;
 static signed char      InOfs;
@@ -113,9 +113,9 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
   midiOutShortMsg(ThruE->midi_out, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); }}
  if (!(PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel = V1;
  switch (Key1->Zone) { case 1: if (LatestPendingI) { LatestPendingI->Next = PendingI; } PendingI->Prev = LatestPendingI; (LatestPendingI = PendingI)->Next = NULL;
-  if (!(*PendingI->NoteI)->Vel || PendingI->Key < (*PendingI->NoteI)->Key) { *(PendingI->NoteI) = PendingI; } c = 0;
-  while (PendingI) { c = c<<4 | PendingI->Note; PendingI = PendingI->Prev; } if (c <= 0xcccc && Chords[c].Type >= 0) { RootKey = PressedNotes[Chords[c].Root]->Key; PendingI = LatestPendingI; v = i = 0;
-  while (PendingI) { if (PendingI->Key < RootKey) { i++; } v += PendingI->Vel; PendingI = PendingI->Prev; } V0 = Var | Chords[c].Type | i%Chords[c].Num<<4 | Chords[c].Root; V1 = v / Chords[c].Num; } break;
+  if (!(*PendingI->NoteI)->Vel || PendingI->Key < (*PendingI->NoteI)->Key) { *(PendingI->NoteI) = PendingI; } i = 0; while (PendingI) { i = i<<4 | PendingI->Note; PendingI = PendingI->Prev; }
+  if (i <= 0xcccc && Chords[i].Type >= 0) { RootKey = PressedNotes[Chords[i].Root]->Key; PendingI = LatestPendingI; V1 = V0 = 0;
+  while (PendingI) { if (PendingI->Key < RootKey) { V0++; } V1 += PendingI->Vel; PendingI = PendingI->Prev; } V0 = Var | Chords[i].Type | V0%Chords[i].Num<<4 | Chords[i].Root; V1 /= Chords[i].Num; } break;
   case  2: if ((i = Key1->Val | Label0->Idx & 0xfff) < LabelNum && !Labels[i].Ret) { if (Key1->Val == Var0) { Var0 = Var1; } else { Var1 = Var0; Var0 = Key1->Val; } Var = Var0; } else { Var = Key1->Val; }
            V0 = Var | Label2->Idx & 0xfff; if (MidiEvenT->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label1 = &Labels[i]; V0 = -1; } break;
   case  4: Mute[Key1->Val] ^= 0x08;                                                                                          V0 |= Var; break;
