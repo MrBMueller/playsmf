@@ -54,7 +54,6 @@ struct RecEvent  { unsigned long     event_time;
 
 struct PNoteI    { struct PNoteI    *Prev;
                    struct PNoteI    *Next;
-                   struct PNoteI    **NoteI;
                    unsigned char     Key, Note, Vel; };
 
 struct PNoteO    { struct PNoteO    *Prev;
@@ -91,14 +90,16 @@ static HANDLE           signalling_object0, signalling_object1;
 static struct Label    *Labels, *Label0, *Label1, *Label2, *Label3, *Label4, *FirstLabel, *LastLabel, *EntryLabel, *ExitLabel;
 static struct Key       Keys[16][128], *Key0, *Key1;
 static struct Thru     *Thru;
-static struct PNoteI    PendingEventsI[128], *PendingI, *LatestPendingI, *PressedNotes[12];
+static struct PNoteI    PendingEventsI[128], *PendingI, *LatestPendingI;
 static struct Chord     Chords[0xcccc+1];
 static struct RecEvent  *RecEvents, *RecEvent;
-static unsigned char    RootKey, IRQ, *Mutes, *Mute, *Mute0, *Mute1, *Mute2, *Mute3, *Mute11, *EntryMute, *FirstMute, *MuteA, *MuteB, Dead, ExitVal, PedalLeft, PedalMid, InPortOrder[256];
-static unsigned long    V0, V1, c, i, i1, LastTime, LabelNum, TrkNum, Var, Var0, Var1;
+static unsigned char    IRQ, *Mutes, *Mute, *Mute0, *Mute1, *Mute2, *Mute3, *Mute11, *EntryMute, *FirstMute, *MuteA, *MuteB, Dead, ExitVal, PedalLeft, PedalMid, InPortOrder[256];
+static unsigned long    V0, V1, c, v, i, i1, LastTime, LabelNum, TrkNum, Var, Var0, Var1;
 static struct MidiEvent *MidiEvents, *MidiEvent, *MidiEvenT, **TrkInfo, ***Thrus[16], *ThruE, *ThruE1;
 static float            Speed0;
 static signed char      InOfs;
+
+static unsigned char Inversions[12] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00};
 
 //============================================================================//
 
@@ -113,9 +114,8 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
   midiOutShortMsg(ThruE->midi_out, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); }}
  if (!(PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel = V1;
  switch (Key1->Zone) { case 1: if (LatestPendingI) { LatestPendingI->Next = PendingI; } PendingI->Prev = LatestPendingI; (LatestPendingI = PendingI)->Next = NULL;
-  if (!(*PendingI->NoteI)->Vel || PendingI->Key < (*PendingI->NoteI)->Key) { *(PendingI->NoteI) = PendingI; } i = 0; while (PendingI) { i = i<<4 | PendingI->Note; PendingI = PendingI->Prev; }
-  if (i <= 0xcccc && Chords[i].Type >= 0) { RootKey = PressedNotes[Chords[i].Root]->Key; PendingI = LatestPendingI; V1 = V0 = 0;
-  while (PendingI) { if (PendingI->Key < RootKey) { V0++; } V1 += PendingI->Vel; PendingI = PendingI->Prev; } V0 = Var | Chords[i].Type | V0%Chords[i].Num<<4 | Chords[i].Root; V1 /= Chords[i].Num; } break;
+  c = v = 0; i = 128; while (PendingI) { c = c<<4 | PendingI->Note; v += PendingI->Vel; if (PendingI->Key < i) { i = PendingI->Key; } PendingI = PendingI->Prev; }
+  if (c <= 0xcccc && Chords[c].Type >= 0) { V0 = Var | Chords[c].Type | Inversions[abs(Chords[c].Root-12-i%12)%12] | Chords[c].Root; V1 = v / Chords[c].Num; } break;
   case  2: if ((i = Key1->Val | Label0->Idx & 0xfff) < LabelNum && !Labels[i].Ret) { if (Key1->Val == Var0) { Var0 = Var1; } else { Var1 = Var0; Var0 = Key1->Val; } Var = Var0; } else { Var = Key1->Val; }
            V0 = Var | Label2->Idx & 0xfff; if (MidiEvenT->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label1 = &Labels[i]; V0 = -1; } break;
   case  4: Mute[Key1->Val] ^= 0x08;                                                                                          V0 |= Var; break;
@@ -389,12 +389,11 @@ for (i=12; i<_msize(args)/sizeof(signed long); i++) {
 for (i=0; i<(sizeof(Port2In       )/sizeof(struct MidiIn     )); i++) { Port2In[i].s  = -1; Port2In[i].h  = NULL; for (j=0; j<sizeof(Port2In[i].b)/sizeof(struct MidiBuf); j++) { Port2In[i].b[j].h.lpData = Port2In[i].b[j].b; Port2In[i].b[j].h.dwBufferLength = sizeof(Port2In[i].b[j].b); Port2In[i].b[j].h.dwFlags = 0; }}
 for (i=0; i<(sizeof(Port2Out      )/sizeof(struct MidiOut    )); i++) { Port2Out[i].s = -1; Port2Out[i].h = NULL; }
 for (i=0; i<(_msize(TrkInfo       )/sizeof(struct MidiEvent* )); i++) { TrkInfo[i] = (struct MidiEvent*)(DefODev << 8); }
-for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI     )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel = 0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = (i%12)+1; PendingEventsI[i].NoteI = &PressedNotes[i%12]; } LatestPendingI = NULL;
-for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO     )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Cnt = 0; PendingEventsO[i].Event = NULL;                                                                              } LatestPendingO = NULL;
+for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI     )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel = 0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = (i%12)+1; } LatestPendingI = NULL;
+for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO     )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Cnt = 0; PendingEventsO[i].Event = NULL;                               } LatestPendingO = NULL;
 for (i=0; i<(_msize(Mutes         )/sizeof(unsigned char     )); i++) { Mutes[i] = 0; }
 for (i=0; i<(_msize(RecEvents     )/sizeof(struct RecEvent   )); i++) { RecEvents[i].NextEvent = &RecEvents[i+1]; RecEvents[i].EventData = 0; RecEvents[i].Event = NULL; } RecEvent = RecEvents[i-1].NextEvent = &RecEvents[0];
 for (i=0; i<(_msize(Thrus[0]      )/sizeof(struct MidiEvent**)); i++) { Thrus[0][i] = NULL; }
-for (i=0; i<(sizeof(PressedNotes  )/sizeof(struct PNoteI*    )); i++) { PressedNotes[i] = &PendingEventsI[0]; }
 for (i=0; i<(_msize(MidiEvents    )/sizeof(struct MidiEvent  )); i++) { MidiEvents[i].NextEvent = &MidiEvents[i+1]; MidiEvents[i].FlwCtl = MidiEvents[i].MsgCtl = MidiEvents[i].Rec = 0; }
 for (i=0; i<(_msize(Labels        )/sizeof(struct Label      )); i++) { Labels[i].Idx = i; Labels[i].Event = NULL; Labels[i].ReT = Labels[i].Now = Labels[i].Ret = 0; }
 
