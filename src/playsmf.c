@@ -183,7 +183,7 @@ for (i=0; i<LabelNum; i++) { j = (i>>8)&0xf; k = (i>>4)&0x3; l = i&0xf;
 
 for (i=0; i<LabelNum; i++) { j = (i>>8)&0xf; k = (i>>4)&0x3; l = i&0xf;
  if       ((j >= 1) && (j <= 1) && (k >= 1) && (k <= 1) && (!Labels[i].Event) && (Labels[i&(-1^0x30)].Event)) { Labels[i].Event = Labels[i&(-1^0x30)].Event; }
-  else if ((j >= 2) && (j <= 4) && (k >= 1) && (k <= 2) && (!Labels[i].Event) && (Labels[i&(-1^0x30)].Event)) { Labels[i].Event = Labels[i&(-1^0x30)].Event; }
+  else if ((j >= 2) && (j <= 4) && (k >= 1) && (k <= 3) && (!Labels[i].Event) && (Labels[i&(-1^0x30)].Event)) { Labels[i].Event = Labels[i&(-1^0x30)].Event; }
  }
 
 for (i=0; i<LabelNum ; i++) { if ((!Labels[i].Event) && (Labels[i&0xfff].Event)) { Labels[i].Event = Labels[i&0xfff].Event; }}
