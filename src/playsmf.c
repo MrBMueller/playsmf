@@ -479,13 +479,13 @@ MidiEvents[i].TimeSigD = TimeSig >> 16;
 
 ExpandLabels(Labels);
 
-while (--i >= 0) { MidiEvents[i].TrkInfo = &TrkInfo[MidiEvents[i].Track]; MidiEvents[i].Ch = (MidiEvents[i].Out >> 4) & 0xf;
- if (MidiEvents[i].FlwCtl & 2) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].FlwCtl &= ~4; MidiEvents[i].FlwCtl |= 1;
+while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInfo = &TrkInfo[MidiEvents[i].Track]; MidiEvents[i].Ch = (MidiEvents[i].Out >> 4) & 0xf;
+ if (MidiEvents[i].FlwCtl & 2) { MidiEvents[i].FlwCtl &= ~4; MidiEvents[i].FlwCtl |= 1;
   if (((unsigned long)MidiEvents[i].JumpEvent < LabelNum) && (Labels[(unsigned long)MidiEvents[i].JumpEvent].Event)) { if (!(k & 0x100)) { k = 0; } MidiEvents[i].JumpEvent = Labels[(unsigned long)MidiEvents[i].JumpEvent].Event; }
    else if ((l = (unsigned long)MidiEvents[i].JumpEvent*-1) >= 4) { l -= 4; j = i; while (l && j) { if (MidiEvents[j].Label->Event != MidiEvents[j-1].Label->Event) { l--; } j--; } if (l) { MidiEvents[i].FlwCtl = 1; } if (!(k & 0x100)) { k = 0; } MidiEvents[i].JumpEvent = MidiEvents[j].Label->Event; }
-   else { MidiEvents[i].FlwCtl = 4; k = (unsigned long)MidiEvents[i].JumpEvent; } if (fc & 4) { k &= ~0x100; }
-  } else if (MidiEvents[i].FlwCtl & 4) { MidiEvents[i].FlwCtl &= ~4; k &= ~0x100; }
- MidiEvents[i].Label->Ret = k;
+   else { MidiEvents[i].FlwCtl = 4; k = (unsigned long)MidiEvents[i].JumpEvent; }
+  } else if (MidiEvents[i].FlwCtl & 4) { MidiEvents[i].FlwCtl &= ~4; }
+ if (fc & 4) { k &= ~0x100; } MidiEvents[i].Label->Ret = k;
  if (MidiEvents[i].FlwCtl & 0x10) { MidiEvents[i].FlwCtl = 2; }
  if (MidiEvents[i].FlwCtl & 0x08) { MidiEvents[i].FlwCtl = 5; }
  if (MidiEvents[i].FlwCtl & 0x20) { MidiEvents[i].FlwCtl = 6; }
