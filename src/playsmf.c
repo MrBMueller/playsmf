@@ -128,7 +128,7 @@ case 0x80: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16;             
  while (ThruE = (Thru = &Key0->Thrus[++i])->Pending) { midiOutShortMsg(ThruE->midi_out, Thru->v0[V1]<<16 | Thru->k<<8 | 0x80 | ThruE->Ch); }
  if ( (PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel =  0;
  switch (Key0->Zone) { case 1: if (PendingI->Prev) { PendingI->Prev->Next = PendingI->Next; } if (PendingI->Next) { PendingI->Next->Prev = PendingI->Prev; } else { LatestPendingI = PendingI->Prev; }
-  if (!LatestPendingI && !(Label0->Idx & 0x80)) { V0 = Label0->Idx & 0xfff; }}
+  if (!LatestPendingI && (Label0->Idx & 0xf00) && !(Label0->Idx & 0x80)) { V0 = Label0->Idx & 0xfff; }}
  V0 |= Var | 0x80;
  MyMacro0 } RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
 
