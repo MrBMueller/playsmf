@@ -3854,7 +3854,7 @@ unsigned long MidiFileVoiceEvent_getData(MidiFileEvent_t event)
 			u;
 
 			u.data_as_bytes[0] = 0xE0 | MidiFilePitchWheelEvent_getChannel(event);
-			u.data_as_bytes[1] = MidiFilePitchWheelEvent_getValue(event) & 0x0F;
+			u.data_as_bytes[1] = MidiFilePitchWheelEvent_getValue(event) & 0x7F;
 			u.data_as_bytes[2] = MidiFilePitchWheelEvent_getValue(event) >> 7;
 			u.data_as_bytes[3] = 0;
 			return u.data_as_uint32;
