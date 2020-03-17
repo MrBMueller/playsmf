@@ -330,7 +330,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
    while (p1 = strstr(p1, KW3)) { signed long v = strtol(p1+sizeof(KW3)-1, &p1, 0); unsigned long t = 0; if (v == -1) { v = 0; } if (p1 == strstr(p1, "r")) { MutesRet |= v; } MutesInv |= v; while (v) { t++; v >>= 1; } if (t > MutesNum) { MutesNum = t; }}
    }
   if (MidiFileMetaEvent_getNumber(midi_file_event) == 0x06) { unsigned char *p0 = MidiFileMetaEvent_getData(midi_file_event), *p1; p1 = p0; //marker
-   while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); if (v < 0) { v = l & ~0xfff | v & 0xfff; } l = v; if (v > j) { j = v; }}
+   while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); if ((v&0xfff) == 0xfff || v < 0) { v = l & ~0xfff | v & 0xfff; } l = v; if (v > j) { j = v; }}
    }
   if (MidiFileMetaEvent_getNumber(midi_file_event) == 0x7f) { unsigned long L = MidiFileMetaEvent_getDataLength(midi_file_event); unsigned char *D = MidiFileMetaEvent_getData(midi_file_event);
    if ((L >= 4) && (D[0] == 0x00) && (D[1] == 0xab) && (D[2] == 0xcd)) {
