@@ -619,7 +619,7 @@ static void add_event_after_null(MidiFileEvent_t new_event)
     if (LoadMidiFile) {
 	 event = new_event->track->midi_file->first_event; if (LastNewEvent && LastEvent && LastNewEvent->track->number == new_event->track->number) { event = LastEvent; } //bmr
 	 while (event && event->next_event_in_file && event->next_event_in_file->tick <= new_event->tick) { event = event->next_event_in_file; }
-	 LastNewEvent = new_event; LastEvent = event;
+	 if (event && event->tick > new_event->tick) { event = NULL; } LastNewEvent = new_event; LastEvent = event;
      }
 	else { for (event = new_event->track->midi_file->last_event; (event != NULL) && (new_event->tick < event->tick); event = event->previous_event_in_file) {}}
 
