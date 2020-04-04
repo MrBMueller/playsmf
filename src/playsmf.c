@@ -497,7 +497,7 @@ while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInf
  if ((MidiEvents[i].EventData & (args[8]>>16)) == (args[8] & 0x7fff)) { MidiEvents[i].Rec |= 1; MidiEvents[i].MsgCtl *= (args[8]>>15) & 1; }
  }
 
-EntryLabel->Ret = -1; AlignLabels(Labels);
+EntryLabel->ReT = 8; AlignLabels(Labels);
 
 for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { if (i <= 0x7f) { for (j=0; j<=0xf; j++) { Keys[j][i].Zone &= ~16; }} if (Labels[i].Event->FlwCtl == 4) { j = Labels[i].Event-MidiEvents;
  k = 0; while (MidiEvents[j+k+1].EventData && (MidiEvents[j+k+1].event_time == MidiEvents[j].event_time)) { k++; }
