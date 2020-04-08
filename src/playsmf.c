@@ -103,10 +103,6 @@ static unsigned char Inversions[12] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x00,
 
 //============================================================================//
 
-static void CallMyMacro0() { RecEvent->event_time = timeGetTime(); V1 = -1; MyMacro0 }
-
-//----------------------------------------------------------------------------//
-
 static void CALLBACK MidiInProc(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { Dead = 0; switch (wMsg) { case MIM_DATA: switch (dwParam1 & 0xf0) {
 
 case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { return; } Key1 = &Keys[dwParam1 & 0xf][V0]; i = -1;
@@ -171,7 +167,7 @@ static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long
 
 //----------------------------------------------------------------------------//
 
-static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { if (dwCtrlType) { V0 = ExitLabel->Idx; ExitVal |= 4; } else { V0 = EntryLabel->Idx; } CallMyMacro0(); return(TRUE); }
+static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { if (dwCtrlType) { V0 = ExitLabel->Idx; ExitVal |= 4; } else { V0 = EntryLabel->Idx; } RecEvent->event_time = timeGetTime(); V1 = -1; MyMacro0 return(TRUE); }
 
 //----------------------------------------------------------------------------//
 
