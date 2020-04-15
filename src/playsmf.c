@@ -302,8 +302,8 @@ i = j = sizeof(DefArgs)/sizeof(signed long); if (argc > i) { i = argc; } args = 
 
 for (i=2; i<argc; i++) { unsigned char *a = argv[i]; args[i] = strtol(argv[i], &a, 0); if (a == argv[i]) { args[i] = i==3?GetODev(argv[i]):GetIDev(argv[i]); }}
 
-if       (args[2] < -1                     ) { SetPriorityClass(GetCurrentProcess(), ProcessPrios[abs(args[2]    +2)&7]); }
- else if (args[2] >= 0 && (args[2] & 0xf00)) { SetPriorityClass(GetCurrentProcess(), ProcessPrios[  ((args[2]>>8)-2)&7]); }
+if (args[2] < -1                     ) { SetPriorityClass(GetCurrentProcess(), ProcessPrios[abs(args[2]    +2)&7]); }
+if (args[2] >= 0 && (args[2] & 0xf00)) { SetPriorityClass(GetCurrentProcess(), ProcessPrios[  ((args[2]>>8)-2)&7]); }
 
 if (!(midi_file = MidiFile_load(argv[1]))) { printf("Error: Cannot open \"%s\".\n", argv[1]); free(args); return(1); }
 
