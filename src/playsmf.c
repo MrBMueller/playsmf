@@ -300,7 +300,7 @@ MidiFile_t midi_file = NULL; if (argc < 2) { printf("Usage: %s <filename.mid>\n"
 
 i = j = sizeof(DefArgs)/sizeof(signed long); if (argc > i) { i = argc; } args = malloc(i*sizeof(signed long)); for (i=0; i<j; i++) { args[i] = DefArgs[i]; }
 
-for (i=2; i<argc; i++) { unsigned char *a = argv[i]; args[i] = strtol(argv[i], &a, 0); if (a == argv[i]) { args[i] = i==3?GetODev(argv[i]):GetIDev(argv[i]); }}
+for (i=2; i<argc; i++) { unsigned char *a = argv[i]; args[i] = strtol(argv[i], &a, 0); if (a == argv[i]) { args[i] = i==3?GetODev(argv[i]):i==4?GetIDev(argv[i]):-1; if (args[i] < 0) { printf("Error in argument %d: \"%s\".\n", i, argv[i]); free(args); return(1); }}}
 
 if (args[2] < -1                     ) { SetPriorityClass(GetCurrentProcess(), ProcessPrios[abs(args[2]    +2)&7]); }
 if (args[2] >= 0 && (args[2] & 0xf00)) { SetPriorityClass(GetCurrentProcess(), ProcessPrios[  ((args[2]>>8)-2)&7]); }
