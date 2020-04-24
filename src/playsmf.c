@@ -247,8 +247,8 @@ if (args[8] != 0x0ff) { MidiFile_save(midi_file, filename); } MidiFile_free(midi
 
 //----------------------------------------------------------------------------//
 
-unsigned long GetIDev(char *n) { unsigned long i; MIDIINCAPS  c; for (i = 0; i < midiInGetNumDevs();  i++) { midiInGetDevCaps( i, &c, sizeof(c)); if (strstr(c.szPname, n)) { return(i); }} return(0x0baddead); }
-unsigned long GetODev(char *n) { unsigned long i; MIDIOUTCAPS c; for (i = 0; i < midiOutGetNumDevs(); i++) { midiOutGetDevCaps(i, &c, sizeof(c)); if (strstr(c.szPname, n)) { return(i); }} return(0x0baddead); }
+unsigned long GetIDev(char *n) { unsigned long i; MIDIINCAPS  c; for (i = 0; i < midiInGetNumDevs();  i++) { midiInGetDevCaps( i, &c, sizeof(c)); if (strstr(c.szPname, n)) { return(i); }} return(midiInGetNumDevs());  }
+unsigned long GetODev(char *n) { unsigned long i; MIDIOUTCAPS c; for (i = 0; i < midiOutGetNumDevs(); i++) { midiOutGetDevCaps(i, &c, sizeof(c)); if (strstr(c.szPname, n)) { return(i); }} return(0); }
 
 //============================================================================//
 
@@ -300,7 +300,7 @@ MidiFile_t midi_file = NULL; if (argc < 2) { printf("Usage: %s <filename.mid>\n"
 
 i = j = sizeof(DefArgs)/sizeof(signed long); if (argc > i) { i = argc; } args = malloc(i*sizeof(signed long)); for (i=0; i<j; i++) { args[i] = DefArgs[i]; }
 
-for (i=2; i<argc; i++) { unsigned char *a = argv[i]; args[i] = strtol(argv[i], &a, 0); if (a == argv[i]) { args[i] = i==3?GetODev(argv[i]):i==4?GetIDev(argv[i]):-1; if (args[i] < 0) { printf("Error in argument %d: \"%s\".\n", i, argv[i]); free(args); return(1); }}}
+for (i=2; i<argc; i++) { unsigned char *a = argv[i]; args[i] = strtol(argv[i], &a, 0); if (a == argv[i]) { args[i] = 0x0deadbad; if (i<3 || i>4) { printf("Error in argument %d: \"%s\".\n", i, argv[i]); free(args); return(1); }}}
 
 if (args[2] < -1                     ) { SetPriorityClass(GetCurrentProcess(), ProcessPrios[abs(args[2]    +2)&7]); }
 if (args[2] >= 0 && (args[2] & 0xf00)) { SetPriorityClass(GetCurrentProcess(), ProcessPrios[  ((args[2]>>8)-2)&7]); }
@@ -380,8 +380,8 @@ timeGetDevCaps(&time_caps, sizeof(TIMECAPS)); signalling_object0 = CreateEvent(N
 start:
 printf("[%d:%d] [%d:%d] %d %d %d %d %x %x %x %x %4.2f %4.2f\n", time_caps.wPeriodMin, time_caps.wPeriodMax, midiInGetNumDevs()-1, midiOutGetNumDevs()-1, MidiFile_getResolution(midi_file), MidiFile_getFileFormat(midi_file), TrkNum, _msize(MidiEvents)/sizeof(struct MidiEvent)-1, LabelNum-1, MutesNum-1, MutesInv2, MutesRet, (float)_msize(MidiEvents)/(1024*1024), (float)_msize(Labels)/(1024*1024));
 
-DefODev = args[3]; if (DefODev < 0) { DefODev += midiOutGetNumDevs(); } if (DefODev < 0 || DefODev >= midiOutGetNumDevs()) { DefODev = 0; } //if (args[3] == 0x0baddead) { DefODev = midiOutGetNumDevs(); }
-DefIDev = args[4]; if (DefIDev < 0) { DefIDev += midiInGetNumDevs();  } if (DefIDev < 0 || DefIDev >= midiInGetNumDevs() ) { DefIDev = 0; } if (args[4] == 0x0baddead) { DefIDev = midiInGetNumDevs();  }
+DefODev = args[3]; if (DefODev < 0) { DefODev += midiOutGetNumDevs(); } if (DefODev < 0 || DefODev >= midiOutGetNumDevs()) { DefODev = 0; } if (args[3] == 0x0deadbad) { DefODev = GetODev(argv[3]); }
+DefIDev = args[4]; if (DefIDev < 0) { DefIDev += midiInGetNumDevs();  } if (DefIDev < 0 || DefIDev >= midiInGetNumDevs() ) { DefIDev = 0; } if (args[4] == 0x0deadbad) { DefIDev = GetIDev(argv[4]); }
 
 for (i=12; i<_msize(args)/sizeof(signed long); i++) {
  if ((args[i]>>16) == 1) { Port2Port[(args[i]>>8)&0xff] =                       args[i]&0xff; if (Port2Port[(args[i]>>8)&0xff] >= midiOutGetNumDevs()) { Port2Port[(args[i]>>8)&0xff] = DefODev; }}
