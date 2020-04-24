@@ -346,6 +346,9 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   }
  }
 
+if (args[2] < -1                     ) { SetPriorityClass(GetCurrentProcess(), ProcessPrios[abs(args[2]    +2)&7]); }
+if (args[2] >= 0 && (args[2] & 0xf00)) { SetPriorityClass(GetCurrentProcess(), ProcessPrios[  ((args[2]>>8)-2)&7]); }
+
 if (args[10] > j) { j = args[10]; } if (args[11] > j) { j = args[11]; } MutesNum += 2; MutesInv1 = (-1^MutesInv) & ((1<<(MutesNum-2))-1); MutesInv2 = (1<<(MutesNum-1)) | MutesInv; InOfs = args[7];
 
 MidiEvents = malloc((i+1)*sizeof(struct MidiEvent)); Labels = malloc((j+1)*sizeof(struct Label)); PendingEventsO = malloc(1*(k+1)*16*128*sizeof(struct PNoteO)); Mutes = malloc(MutesNum*(k+2)*sizeof(unsigned char)); TrkInfo = malloc((k+1)*sizeof(struct MidiEvent*)); Thrus[0] = malloc(16*(k+2)*sizeof(struct MidiEvent**));
