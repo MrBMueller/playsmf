@@ -367,8 +367,8 @@ for (i=0x0; i<=0xf; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]
  k = 12; Thrus[i] = &Thrus[0][i*(TrkNum+1)];
  while (((k+6) < _msize(args)/sizeof(signed long)) && (abs(args[k+6]) < 0x10000)) { signed long K0 = args[k++], K1 = args[k++]+1, T = args[k++], Delay = args[k++], K = args[k++], V1 = args[k++], V0 = args[k++];
   signed char v0o = V0&0xff, v1o = V1&0xff; float v0s = 1.0, v1s = 1.0; if (V0 > 255) { v0s = ((V0>>8)-1)*.25; } if (V1 > 255) { v1s = ((V1>>8)-1)*.25; }
-  if (K0 <= -2) { K0 = Ck; } if (K0 == -1) { K0 = Mk; } if (K1-1 < 0) { K1 = K0+abs(K1-1); } if (K1 > 128) { K1 = 128; } Ck = K0; Mk = K1;
-  if ((T < TrkNum) && ((C < 0) || (i == C))) { if (C < -1) { T = (T+i+abs(C+2))%TrkNum; }
+  if (K0 <= -2) { K0 = Ck; } if (K0 == -1) { K0 = Mk; } if (K1-1 < 0) { K1 = K0+abs(K1-1); } if (K1 > 128) { K1 = 128; } Ck = K0; Mk = K1; if (T < 0) { T = TrkNum-abs(T); } if (Delay < 0) { T = -1; }
+  if ((T < TrkNum) && ((C < 0) || (i == C))) { if (C < -1) { if (args[k-5] < 0) { T -= i+abs(C+2); } else { T += i+abs(C+2); } T %= TrkNum; }
    for (j = K0; j < K1; j++) { signed long k = j+K, L = -1, a; while (Keys[i][j].Thrus[++L].Trk) {} if (K > 0x7f) { k = K & 0x7f; } if ((k > 127) || (k < 0)) { k = j; }
     Keys[i][j].Thrus[L].Trk = &TrkInfo[T]; Keys[i][j].Thrus[L].Delay = Delay; Keys[i][j].Thrus[L].k = k;
     for (a = 0; a <= 0x7f; a++) { signed long v = a*v0s; if (v > 127) { v = 127; } v += v0o; if (v > 127) { v = 127; } else if (v < 0) { v = 0; } Keys[i][j].Thrus[L].v0[a] = v; }
