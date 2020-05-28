@@ -501,7 +501,7 @@ while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInf
  if ((MidiEvents[i].MsgCtl == 4) && (MidiEvents[i].EventIdx->Event)) { MidiEvents[i].OffMsg          = MidiEvents[i].EventIdx->Event->EventData; }
  if (MidiEvents[i].Label->Now && !MidiEvents[i].FlwCtl) { MidiEvents[i].FlwCtl = 1; }
  if ((MidiEvents[i].EventData & (args[8]>>16)) == (args[8] & 0x7fff)) { MidiEvents[i].Rec |= 1; MidiEvents[i].MsgCtl *= (args[8]>>15) & 1; }
- if (MidiEvents[i].event_time == MidiEvents[i+1].event_time && MidiEvents[i+1].FlwCtl) { MidiEvents[i].MsgCtl = 0; }
+ if (MidiEvents[i].event_time == MidiEvents[i+1].event_time && MidiEvents[i+1].FlwCtl > 1) { MidiEvents[i].MsgCtl = 0; }
  }
 
 EntryLabel->ReT = ExitLabel->ReT = 8; AlignLabels(Labels);
