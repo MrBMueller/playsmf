@@ -114,7 +114,7 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
   c = v = 0; i = 127; while (PendingI) { c = c<<4 | PendingI->Note; v += PendingI->Vel; if (PendingI->Key < i) { i = PendingI->Key; } PendingI = PendingI->Prev; }
   if (c <= 0xcccc && Chords[c].Type >= 0) { V0 = Var | Chords[c].Type | Inversions[(i%12-Chords[c].Root+12)%12] | Chords[c].Root; V1 = v / Chords[c].Num; } else { V0 |= Var; } break;
   case  2: if ((i = Key1->Val | Label0->Idx & 0xfff) < LabelNum && !Labels[i].Ret && !MidiEvenT->Label->Ret) { if (Key1->Val == Var0) { Var0 = Var1; } else { Var1 = Var0; Var0 = Key1->Val; } Var = Var0; } else { Var = Key1->Val; }
-           V0 = Var | Label2->Idx & 0xfff; if (Var != (Label2->Idx&~0xfff) && MidiEvenT->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label1 = &Labels[i]; V0 = -1; } break;
+           V0 = Var | Label2->Idx & 0xfff; if (Var != (Label2->Idx&~0xfff) && MidiEvenT->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label4 = Label3 = Label2 = Label1 = Label0 = &Labels[i]; V0 = -1; } break;
   case  4: Mute[Key1->Val] ^= 0x08;                                                                                          V0 |= Var; break;
   case  8: if (!(Mute2 = (unsigned char*)Key1->Val)[-1]) { if (Mute2 == MuteA) { MuteA = MuteB; } else { MuteB = MuteA; MuteA = Mute2; } Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA; }
             else                                         { Mute1 = Mute3 = Mute2; if (!Mute[-1]) { Mute0 = Mute11 = Mute; }} V0 |= Var; break;
