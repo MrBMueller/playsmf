@@ -320,11 +320,9 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
    while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); if (v == 0xfff) { v = -1; } if (v < 0) { v = l & ~0xfff | v & 0xfff; } l = v; if (v > j) { j = v; }}
    }
   if (MidiFileMetaEvent_getNumber(midi_file_event) == 0x7f) { unsigned long L = MidiFileMetaEvent_getDataLength(midi_file_event); unsigned char *D = MidiFileMetaEvent_getData(midi_file_event);
-   if ((L >= 4) && (D[0] == 0x00) && (D[1] == 0xab) && (D[2] == 0xcd)) {
-    if ((D[3] == 0x00) && (L >= 8)) { signed long A = D[4]<<24 | D[5]<<16 | D[6]<<8 | D[7], t; if (A < 0) { A += _msize(args)/sizeof(signed long)+1; }
-	 if ((A+((L-8)>>2))*sizeof(signed long) > _msize(args)) { args = realloc(args, (A+((L-8)>>2))*sizeof(signed long)); }
-	 for (t=8; (t+3)<L; t += 4) { args[A++] = D[t+0]<<24 | D[t+1]<<16 | D[t+2]<<8 | D[t+3]; }
-	 }
+   if ((L >= 12) && (D[0] == 0x00) && (D[1] == 0xab) && (D[2] == 0xcd) && (D[3] == 0x00)) { signed long A = D[4]<<24 | D[5]<<16 | D[6]<<8 | D[7], t; if (A < 0) { A += _msize(args)/sizeof(signed long)+1; }
+	if ((A+((L-8)>>2))*sizeof(signed long) > _msize(args)) { args = realloc(args, (A+((L-8)>>2))*sizeof(signed long)); }
+	for (t=8; (t+3)<L; t += 4) { args[A++] = D[t+0]<<24 | D[t+1]<<16 | D[t+2]<<8 | D[t+3]; }
     }
    }
   }
