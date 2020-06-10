@@ -25,7 +25,7 @@
  SneakPending = 0; LastTime = RecEvent->event_time; if (MidiEvenT->Label->Now) { SetEvent(signalling_object0); }
 
 #define MyMacro0 \
- if       (SneakPending >= 3 && V0 != Label2->Idx && (V0&0xfff)==(Label2->Idx&0xfff)) { Label4 = Label3 = Label2 = Label1 = Label0 = &Labels[V0]; SneakPending  = 0; }\
+ if       (SneakPending >= 3 && V0 != Label0->Idx && (V0&0xfff)==(Label0->Idx&0xfff)) { Label4 = Label3 = Label2 = Label1 = Label0 = &Labels[V0]; SneakPending  = 0; }\
   else if (SneakPending      && (MidiEvenT->Label->Idx&~0xfff) != Var) { V0 = (Var = Var1 = Var0 = MidiEvenT->Label->Idx&~0xfff) | V0&0xfff;      SneakPending |= 2; }\
  if (V0 < LabelNum && Labels[V0].Event) {\
   if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvenT->Label->Ret || IRQ) {                                                         Label4 = Label3 = Label2 = Label1 =                                                                          Label0; IRQ = 0x10; MyMacro1 }}\
