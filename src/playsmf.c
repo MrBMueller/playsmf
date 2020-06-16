@@ -101,7 +101,7 @@ static struct MidiEvent *MidiEvents, *MidiEvent, *MidiEvenT, **TrkInfo, ***Thrus
 static float            Speed0;
 static signed char      InOfs;
 
-static unsigned char Inversions[12] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x00, 0x10, 0x00, 0x00, 0x30, 0x30};
+static unsigned char Inversions[12] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x10, 0x10, 0x10, 0x00, 0x30, 0x30};
 
 //============================================================================//
 
@@ -181,7 +181,7 @@ for (i=0; i<LabelNum; i++) { j = (i>>8)&0xf; k = (i>>4)&0x3; l = i&0xf;
 
 for (i=0; i<LabelNum; i++) { j = (i>>8)&0xf; k = (i>>4)&0x3; l = i&0xf;
  if       ((j >= 1) && (j <= 1) && (k >= 1) && (k <= 1) && (!Labels[i].Event) && (Labels[i&(-1^0x30)].Event)) { Labels[i].Event = Labels[i&(-1^0x30)].Event; }
-  else if ((j >= 2) && (j <= 4) && (k >= 1) && (k <= 3) && (!Labels[i].Event) && (Labels[i&(-1^0x30)].Event)) { Labels[i].Event = Labels[i&(-1^0x30)].Event; }
+  else if ((j >= 2) && (j <= 6) && (k >= 1) && (k <= 3) && (!Labels[i].Event) && (Labels[i&(-1^0x30)].Event)) { Labels[i].Event = Labels[i&(-1^0x30)].Event; }
  }
 
 for (i=0; i<LabelNum ; i++) { if ((!Labels[i].Event) && (Labels[i&0xfff].Event)) { Labels[i].Event = Labels[i&0xfff].Event; }}
@@ -284,7 +284,9 @@ static unsigned short    Intervals2[][4] = {{0x120, 0, 0, 0},
                                             {0x100, 0, 0, 7}, {0x100, 0, 7, 7},
                                             {0x200, 0, 4, 7},
                                             {0x300, 0, 3, 7},
-                                            {0x400, 0, 2, 7}};
+                                            {0x400, 0, 2, 7},
+                                            {0x500, 0, 4, 8},
+                                            {0x600, 0, 3, 6}};
 
 static unsigned short    Intervals3[][5] = {{0x120, 0, 0, 0,  0},
                                             {0x100, 0, 0, 0,  7}, {0x100, 0, 0, 7,  7}, {0x100, 0, 7, 7,  7},
@@ -345,10 +347,10 @@ for (i=0; i<(sizeof(Port2Port)/sizeof(unsigned char)); i++) { Port2Port[i] = i; 
 for (i=0; i<(sizeof(Chords)/sizeof(struct Chord)); i++) { Chords[i].Type = -1; Chords[i].Num = 0; j = i; while (j) { if (j&0xf) { Chords[i].Num++; } j >>= 4; }}
 
 for (i=0; i<=11; i++) { unsigned char m;
- for (j=0; j<= 0; j++) { for (m=0; m<sizeof(Intervals0)/2/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=0; k++) { l = (l<<4) + (i+Intervals0[m][Permutations0[j][k]+1])%12 + 1; } Chords[l].Type = Intervals0[m][0]; Chords[l].Root = i; }}
- for (j=0; j<= 1; j++) { for (m=0; m<sizeof(Intervals1)/3/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=1; k++) { l = (l<<4) + (i+Intervals1[m][Permutations1[j][k]+1])%12 + 1; } Chords[l].Type = Intervals1[m][0]; Chords[l].Root = i; }}
- for (j=0; j<= 5; j++) { for (m=0; m<sizeof(Intervals2)/4/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=2; k++) { l = (l<<4) + (i+Intervals2[m][Permutations2[j][k]+1])%12 + 1; } Chords[l].Type = Intervals2[m][0]; Chords[l].Root = i; }}
- for (j=0; j<=23; j++) { for (m=0; m<sizeof(Intervals3)/5/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=3; k++) { l = (l<<4) + (i+Intervals3[m][Permutations3[j][k]+1])%12 + 1; } Chords[l].Type = Intervals3[m][0]; Chords[l].Root = i; }}
+ for (j=0; j<= 0; j++) { for (m=0; m<sizeof(Intervals0)/2/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=0; k++) { l = (l<<4) + (i+Intervals0[m][Permutations0[j][k]+1])%12 + 1; } if (Chords[l].Type < 0) { Chords[l].Type = Intervals0[m][0]; Chords[l].Root = i; }}}
+ for (j=0; j<= 1; j++) { for (m=0; m<sizeof(Intervals1)/3/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=1; k++) { l = (l<<4) + (i+Intervals1[m][Permutations1[j][k]+1])%12 + 1; } if (Chords[l].Type < 0) { Chords[l].Type = Intervals1[m][0]; Chords[l].Root = i; }}}
+ for (j=0; j<= 5; j++) { for (m=0; m<sizeof(Intervals2)/4/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=2; k++) { l = (l<<4) + (i+Intervals2[m][Permutations2[j][k]+1])%12 + 1; } if (Chords[l].Type < 0) { Chords[l].Type = Intervals2[m][0]; Chords[l].Root = i; }}}
+ for (j=0; j<=23; j++) { for (m=0; m<sizeof(Intervals3)/5/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=3; k++) { l = (l<<4) + (i+Intervals3[m][Permutations3[j][k]+1])%12 + 1; } if (Chords[l].Type < 0) { Chords[l].Type = Intervals3[m][0]; Chords[l].Root = i; }}}
  }
 
 for (i=0x0; i<=0xf; i++) {
