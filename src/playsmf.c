@@ -95,7 +95,7 @@ static struct Thru     *Thru;
 static struct PNoteI    PendingEventsI[128], *PendingI, *LatestPendingI;
 static struct Chord     Chords[0xcccc+1];
 static struct RecEvent  *RecEvents, *RecEvent;
-static unsigned char    IRQ, *Mutes, *Mute, *Mute0, *Mute1, *Mute2, *Mute3, *Mute11, *EntryMute, *FirstMute, *MuteA, *MuteB, Dead, ExitVal, PedalLeft, PedalMid, InPortOrder[256], SneakPending;
+static unsigned char    IRQ, *Mutes, *Mute, *Mute0, *Mute1, *Mute2, *Mute3, *Mute11, *EntryMute, *FirstMute, *MuteA, *MuteB, Dead, ExitVal, InPortOrder[256], SneakPending;
 static unsigned long    V0, V1, c, v, i, i1, LastTime, LabelNum, TrkNum, Var, Var0, Var1;
 static struct MidiEvent *MidiEvents, *MidiEvent, *MidiEvenT, **TrkInfo, ***Thrus[16], *ThruE, *ThruE1;
 static float            Speed0;
@@ -131,12 +131,8 @@ case 0x80: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16;             
  MyMacro0 } RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
 
 case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: RecEvent->event_time = timeGetTime(); i = -1;
- switch (dwParam1 & 0x7ff0) { case 0x40b0: while (Thrus[c=dwParam1&0xf][++i]) { if (ThruE = *Thrus[c][i]) {    midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch); }} break;
-                              case 0x42b0: while (Thrus[c=dwParam1&0xf][++i]) { if (ThruE = *Thrus[c][i]) {    midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch); }}
-                                           PedalMid  = dwParam1>>16; if (PedalMid) { Speed0 = 1-(float)PedalLeft/127*.5; } else { Speed0 = 1+(float)PedalLeft/127; }                   break;
-                              case 0x43b0: while (Thrus[c=dwParam1&0xf][++i]) { if (ThruE = *Thrus[c][i]) {    midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch); }}
-                                           PedalLeft = dwParam1>>16; if (PedalMid) { Speed0 = 1-(float)PedalLeft/127*.5; } else { Speed0 = 1+(float)PedalLeft/127; }                   break;
-                              default:     while (ThruE = Key1->Thrus[++i].Pending) {                          midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch);  }        }
+ switch (dwParam1 & 0x7ff0) { case 0x40b0: case 0x42b0: case 0x43b0: while (Thrus[c=dwParam1&0xf][++i])       { if (ThruE = *Thrus[c][i]) { midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch); }} break;
+                              default:                               while (ThruE = Key1->Thrus[++i].Pending) {                             midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch);  }        }
  RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
 
 default: switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: return; default: RecEvent->event_time = timeGetTime(); RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; printf("0%x\n", dwParam1); }
@@ -340,7 +336,7 @@ MidiEvents = malloc((i+1)*sizeof(struct MidiEvent)); Labels = malloc((j+1)*sizeo
 
 RecEvents = malloc((args[8]==0x0ff?1:1024*1024)*sizeof(struct RecEvent)); LabelNum = _msize(Labels)/sizeof(struct Label); TrkNum = _msize(TrkInfo)/sizeof(struct MidiEvent*);
 
-EntryLabel = &Labels[args[10]]; ExitLabel = &Labels[args[11]];
+EntryLabel = &Labels[args[10]]; ExitLabel = &Labels[args[11]]; signalling_object0 = CreateEvent(NULL, FALSE, FALSE, NULL); signalling_object1 = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 for (i=0; i<(sizeof(Port2Port)/sizeof(unsigned char)); i++) { Port2Port[i] = i; }
 
@@ -353,8 +349,11 @@ for (i=0; i<=11; i++) { unsigned char m;
  for (j=0; j<=23; j++) { for (m=0; m<sizeof(Intervals3)/5/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=3; k++) { l = (l<<4) + (i+Intervals3[m][Permutations3[j][k]+1])%12 + 1; } if (Chords[l].Type < 0) { Chords[l].Type = Intervals3[m][0]; Chords[l].Root = i; }}}
  }
 
-for (i=0x0; i<=0xf; i++) {
- for (j=0x00; j <= 0x7f; j++) { Keys[i][j].Zone = 0;
+start: timeGetDevCaps(&time_caps, sizeof(TIMECAPS));
+printf("[%d:%d] [%d:%d] %d %d %d %d %x %x %x %x %4.2f %4.2f\n", time_caps.wPeriodMin, time_caps.wPeriodMax, midiInGetNumDevs()-1, midiOutGetNumDevs()-1, MidiFile_getResolution(midi_file), MidiFile_getFileFormat(midi_file), TrkNum, _msize(MidiEvents)/sizeof(struct MidiEvent)-1, LabelNum-1, MutesNum-1, MutesInv2, MutesRet, (float)_msize(MidiEvents)/(1024*1024), (float)_msize(Labels)/(1024*1024));
+
+for (i=0; i<=15; i++) {
+ for (j=0; j<=127; j++) { Keys[i][j].Zone = 0;
   for (k=0; k<(sizeof(Keys[i][j].Thrus)/sizeof(struct Thru)); k++) { Keys[i][j].Thrus[k].Trk = NULL; }
   }
  }
@@ -371,19 +370,14 @@ for (i=0x0; i<=0xf; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]
   signed char v0o = V0&0xff, v1o = V1&0xff; float v0s = 1.0, v1s = 1.0; if (V0 > 255) { v0s = ((V0>>8)-1)*.25; } if (V1 > 255) { v1s = ((V1>>8)-1)*.25; }
   if (K0 <= -2) { K0 = Ck; } if (K0 == -1) { K0 = Mk; } if (K1-1 < 0) { K1 = K0+abs(K1-1); } if (K1 > 128) { K1 = 128; } Ck = K0; Mk = K1; if (T < 0) { T = TrkNum-abs(T); } if (Delay < 0) { T = -1; }
   if ((T < TrkNum) && ((C < 0) || (i == C))) { if (C < -1) { if (args[k-5] < 0) { T -= i+abs(C+2); } else { T += i+abs(C+2); } T %= TrkNum; }
-   for (j = K0; j < K1; j++) { signed long k = j+K, L = -1, a; while (Keys[i][j].Thrus[++L].Trk) {} if (K > 0x7f) { k = K & 0x7f; } if ((k > 127) || (k < 0)) { k = j; }
-    Keys[i][j].Thrus[L].Trk = &TrkInfo[T]; Keys[i][j].Thrus[L].Delay = Delay; Keys[i][j].Thrus[L].k = k;
+   for (j = K0; j < K1; j++) { signed long L = -1, a = j+K; while (L < ((int)(sizeof(Keys[i][j].Thrus)/sizeof(struct Thru))-2) && Keys[i][j].Thrus[++L].Trk) {} if (K > 0x7f) { a = K & 0x7f; } if ((a > 127) || (a < 0)) { a = j; }
+    Keys[i][j].Thrus[L].Trk = &TrkInfo[T]; Keys[i][j].Thrus[L].Delay = Delay; Keys[i][j].Thrus[L].k = a; Keys[i][j].Thrus[L].Pending = NULL; if (args[k-6] > 127) { Keys[i][j].Thrus[L].Pending = (struct MidiEvent*)0x1; }
     for (a = 0; a <= 0x7f; a++) { signed long v = a*v0s; if (v > 127) { v = 127; } v += v0o; if (v > 127) { v = 127; } else if (v < 0) { v = 0; } Keys[i][j].Thrus[L].v0[a] = v; }
     for (a = 0; a <= 0x7f; a++) { signed long v = a*v1s; if (v > 127) { v = 127; } v += v1o; if (v > 127) { v = 127; } else if (v < 1) { v = 1; } Keys[i][j].Thrus[L].v1[a] = v; }
-	}
+    }
    }
   }
  }
-
-timeGetDevCaps(&time_caps, sizeof(TIMECAPS)); signalling_object0 = CreateEvent(NULL, FALSE, FALSE, NULL); signalling_object1 = CreateEvent(NULL, FALSE, FALSE, NULL);
-
-start:
-printf("[%d:%d] [%d:%d] %d %d %d %d %x %x %x %x %4.2f %4.2f\n", time_caps.wPeriodMin, time_caps.wPeriodMax, midiInGetNumDevs()-1, midiOutGetNumDevs()-1, MidiFile_getResolution(midi_file), MidiFile_getFileFormat(midi_file), TrkNum, _msize(MidiEvents)/sizeof(struct MidiEvent)-1, LabelNum-1, MutesNum-1, MutesInv2, MutesRet, (float)_msize(MidiEvents)/(1024*1024), (float)_msize(Labels)/(1024*1024));
 
 DefODev = args[3]; if (DefODev < 0) { DefODev += midiOutGetNumDevs(); } if (DefODev < 0 || DefODev >= midiOutGetNumDevs()) { DefODev = 0; } if (args[3] == 0x0deadbad) { DefODev = GetODev(argv[3]); }
 DefIDev = args[4]; if (DefIDev < 0) { DefIDev += midiInGetNumDevs();  } if (DefIDev < 0 || DefIDev >= midiInGetNumDevs() ) { DefIDev = 0; } if (args[4] == 0x0deadbad) { DefIDev = GetIDev(argv[4]); }
@@ -404,9 +398,15 @@ for (i=0; i<(_msize(Thrus[0]      )/sizeof(struct MidiEvent**)); i++) { Thrus[0]
 for (i=0; i<(_msize(MidiEvents    )/sizeof(struct MidiEvent  )); i++) { MidiEvents[i].NextEvent = &MidiEvents[i+1]; MidiEvents[i].FlwCtl = MidiEvents[i].MsgCtl = MidiEvents[i].Rec = 0; }
 for (i=0; i<(_msize(Labels        )/sizeof(struct Label      )); i++) { Labels[i].Idx = i; Labels[i].Event = NULL; Labels[i].ReT = Labels[i].Now = Labels[i].Ret = 0; }
 
-for (i=0x0; i<=0xf; i++) {
- for (j=0x00; j <= 0x7f; j++) {
-  k = -1; while (Keys[i][j].Thrus[++k].Trk) { signed long L = -1; Keys[i][j].Thrus[k].Pending = NULL; while ((Thrus[i][++L]) && (Thrus[i][L] != Keys[i][j].Thrus[k].Trk)) {} Thrus[i][L] = Keys[i][j].Thrus[k].Trk; }
+k = 0; for (i=0; i<=15; i++) { for (j=0; j<=127; j++) { signed long a = -1; while (Keys[i][j].Thrus[++a].Trk) { if (Keys[i][j].Thrus[a].Pending) { k = 1; }}}}
+
+for (i=0; i<=15; i++) {
+ for (j=0; j<=127; j++) { signed long a = -1;
+  while (Keys[i][j].Thrus[++a].Trk) { signed long L = -1; while ((Thrus[i][++L]) && (Thrus[i][L] != Keys[i][j].Thrus[a].Trk)) {}
+   if (!k || Keys[i][j].Thrus[a].Pending) { Thrus[i][L] = Keys[i][j].Thrus[a].Trk; }
+   if (      Keys[i][j].Thrus[a].Pending) { Keys[i][j].Thrus[a].Trk = NULL; }
+   Keys[i][j].Thrus[a].Pending = NULL;
+   }
   }
  }
 
@@ -525,7 +525,7 @@ for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } SetEntryLabel
 
 FirstMute = EntryMute = &Mutes[(MutesNum-2)*(TrkNum+1)+1]; if (MutesNum > 2) { FirstMute = &Mutes[(0)*(TrkNum+1)+1]; } Mute = SetEntryMute
 
-Key0 = Key1 = &Keys[0x0][0x00]; SneakPending = PedalLeft = PedalMid = FlwMsk = IRQ = ExitVal = 0; Dead = 1; Speed = Speed0 = 1; (ThruE1 = ExitLabel->Event)->midi_out = Port2Out[DefODev].h;
+Key0 = Key1 = &Keys[0x0][0x00]; SneakPending = FlwMsk = IRQ = ExitVal = 0; Dead = 1; Speed = Speed0 = 1; (ThruE1 = ExitLabel->Event)->midi_out = Port2Out[DefODev].h;
 
 if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeBeginPeriod(args[2]&0xff); } LastTime = WatchDogTimeOut = start_time = timeGetTime(); WatchDogTimeOut += args[5]; if ((TimeOut = args[5]) < 0) { TimeOut = WatchDogTimeOut = -1; }
 
