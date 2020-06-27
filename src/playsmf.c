@@ -338,8 +338,6 @@ RecEvents = malloc((args[8]==0x0ff?1:1024*1024)*sizeof(struct RecEvent)); LabelN
 
 EntryLabel = &Labels[args[10]]; ExitLabel = &Labels[args[11]]; signalling_object0 = CreateEvent(NULL, FALSE, FALSE, NULL); signalling_object1 = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-for (i=0; i<(sizeof(Port2Port)/sizeof(unsigned char)); i++) { Port2Port[i] = i; }
-
 for (i=0; i<(sizeof(Chords)/sizeof(struct Chord)); i++) { Chords[i].Type = -1; Chords[i].Num = 0; j = i; while (j) { if (j&0xf) { Chords[i].Num++; } j >>= 4; }}
 
 for (i=0; i<=11; i++) { unsigned char m;
@@ -348,6 +346,8 @@ for (i=0; i<=11; i++) { unsigned char m;
  for (j=0; j<= 5; j++) { for (m=0; m<sizeof(Intervals2)/4/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=2; k++) { l = (l<<4) + (i+Intervals2[m][Permutations2[j][k]+1])%12 + 1; } if (Chords[l].Type < 0) { Chords[l].Type = Intervals2[m][0]; Chords[l].Root = i; }}}
  for (j=0; j<=23; j++) { for (m=0; m<sizeof(Intervals3)/5/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=3; k++) { l = (l<<4) + (i+Intervals3[m][Permutations3[j][k]+1])%12 + 1; } if (Chords[l].Type < 0) { Chords[l].Type = Intervals3[m][0]; Chords[l].Root = i; }}}
  }
+
+for (i=0; i<(sizeof(Port2Port)/sizeof(unsigned char)); i++) { Port2Port[i] = i; }
 
 start: timeGetDevCaps(&time_caps, sizeof(TIMECAPS));
 printf("[%d:%d] [%d:%d] %d %d %d %d %x %x %x %x %4.2f %4.2f\n", time_caps.wPeriodMin, time_caps.wPeriodMax, midiInGetNumDevs()-1, midiOutGetNumDevs()-1, MidiFile_getResolution(midi_file), MidiFile_getFileFormat(midi_file), TrkNum, _msize(MidiEvents)/sizeof(struct MidiEvent)-1, LabelNum-1, MutesNum-1, MutesInv2, MutesRet, (float)_msize(MidiEvents)/(1024*1024), (float)_msize(Labels)/(1024*1024));
