@@ -153,7 +153,7 @@ case MIM_DATA: if ((dwParam1&0xff) < 0xf0) { if ((i1 += dwParam1&0xf) < TrkNum &
                                       else { switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: return; default: printf("1%x\n", dwParam1); }} return;
 case MIM_LONGDATA: if (((MIDIHDR*)dwParam1)->dwBytesRecorded) {
  i1 = ((MIDIHDR*)dwParam1)->dwBufferLength; ((MIDIHDR*)dwParam1)->dwBufferLength = ((MIDIHDR*)dwParam1)->dwBytesRecorded; midiOutLongMsg(ThruE1->midi_out, (MIDIHDR*)dwParam1, sizeof(MIDIHDR));
- if (((MIDIHDR*)dwParam1)->dwBytesRecorded >= 6 && (*(((MIDIHDR*)dwParam1)->lpData+1)&0xff) == 0x00 && (*(((MIDIHDR*)dwParam1)->lpData+2)&0xff) == 0x1b && (*(((MIDIHDR*)dwParam1)->lpData+3)&0xff) == 0x3d) {
+ if (((MIDIHDR*)dwParam1)->dwBytesRecorded >= 6 && (*(((MIDIHDR*)dwParam1)->lpData+1)&0xff) == 0x00 && (*(((MIDIHDR*)dwParam1)->lpData+2)&0xff) == 0x2b && (*(((MIDIHDR*)dwParam1)->lpData+3)&0xff) == 0x4d) {
   if       ((*(((MIDIHDR*)dwParam1)->lpData+4)&0xff) == 0x00) { Speed0 = 1+(float)(*(((MIDIHDR*)dwParam1)->lpData+5)&0xff)/127   ; }
    else if ((*(((MIDIHDR*)dwParam1)->lpData+4)&0xff) == 0x01) { Speed0 = 1-(float)(*(((MIDIHDR*)dwParam1)->lpData+5)&0xff)/127*.5; }
   }
@@ -322,7 +322,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
    while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); if (v == 0xfff) { v = -1; } if (v < 0) { v = l & ~0xfff | v & 0xfff; } l = v; if (v > j) { j = v; }}
    }
   if (MidiFileMetaEvent_getNumber(midi_file_event) == 0x7f) { unsigned long L = MidiFileMetaEvent_getDataLength(midi_file_event); unsigned char *D = MidiFileMetaEvent_getData(midi_file_event);
-   if ((L >= 12) && (D[0] == 0x00) && (D[1] == 0xab) && (D[2] == 0xcd) && (D[3] == 0x00)) { signed long A = D[4]<<24 | D[5]<<16 | D[6]<<8 | D[7], t; if (A < 0) { A += _msize(args)/sizeof(signed long)+1; }
+   if ((L >= 12) && (D[0] == 0x00) && ((D[1]&0x7f) == 0x2b) && ((D[2]&0x7f) == 0x4d) && (D[3] == 0x00)) { signed long A = D[4]<<24 | D[5]<<16 | D[6]<<8 | D[7], t; if (A < 0) { A += _msize(args)/sizeof(signed long)+1; }
 	if ((A+((L-8)>>2))*sizeof(signed long) > _msize(args)) { args = realloc(args, (A+((L-8)>>2))*sizeof(signed long)); }
 	for (t=8; (t+3)<L; t += 4) { args[A++] = D[t+0]<<24 | D[t+1]<<16 | D[t+2]<<8 | D[t+3]; }
     }
