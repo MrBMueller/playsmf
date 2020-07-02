@@ -384,12 +384,12 @@ for (i=0; i<=15; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]+1,
  for (j = args[10]+1; j <= args[10]+1; j++) { Keys[i][j].Zone |= 16; }
 
  k = 12;
- while (((k+6) < _msize(args)/sizeof(signed long)) && (abs(args[k+6]) < 0x10000)) { signed long K0 = args[k++], K1 = args[k++]+1, T = args[k++], Delay = args[k++], K = args[k++], V1 = args[k++], V0 = args[k++];
+ while (((k+6) < _msize(args)/sizeof(signed long)) && (abs(args[k+6]) < 0x10000)) { signed long K0 = args[k++], K1 = args[k++], T = args[k++], Delay = args[k++], K = args[k++], V1 = args[k++], V0 = args[k++];
   signed char v0o = V0&0xff, v1o = V1&0xff; float v0s = 1.0, v1s = 1.0; if (V0 > 255) { v0s = ((V0>>8)-1)*.25; } if (V1 > 255) { v1s = ((V1>>8)-1)*.25; }
-  if (K0 <= -2) { K0 = Ck; } if (K0 == -1) { K0 = Mk; } if (K1-1 < 0) { K1 = K0+abs(K1-1); } if (K1 > 128) { K1 = 128; } Ck = K0; Mk = K1; if (T < 0) { T = TrkNum-abs(T); } if (Delay < 0) { T = -1; }
+  if (K0 <= -2) { K0 = Ck; } if (K0 == -1) { K0 = Mk; } if (K1 < 0) { K1 = K0+abs(K1)-1; } if (K1 > 127) { K1 = 127; } Ck = K0; Mk = K1+1; if (T < 0) { T = TrkNum-abs(T); } if (Delay < 0) { T = -1; }
   if ((T < TrkNum) && ((C < 0) || (i == C))) { if (C < -1) { if (args[k-5] < 0) { T -= i+abs(C+2); } else { T += i+abs(C+2); } T %= TrkNum; }
-   for (j = K0; j < K1; j++) { signed long L = -1, a = j+K; while (L < ((int)(sizeof(Keys[i][j].Thrus)/sizeof(struct Thru))-2) && Keys[i][j].Thrus[++L].Trk) {} if (K > 0x7f) { a = K & 0x7f; } if ((a > 127) || (a < 0)) { a = j; }
-    Keys[i][j].Thrus[L].Trk = &TrkInfo[T]; Keys[i][j].Thrus[L].Delay = Delay; Keys[i][j].Thrus[L].k = a; Keys[i][j].Thrus[L].Pending = NULL; if (args[k-6] > 127) { Keys[i][j].Thrus[L].Pending = (struct MidiEvent*)args[k-6]; }
+   for (j = K0; j <= K1; j++) { signed long L = -1, a = j+K; while (L < ((int)(sizeof(Keys[i][j].Thrus)/sizeof(struct Thru))-2) && Keys[i][j].Thrus[++L].Trk) {} if (K > 0x7f) { a = K & 0x7f; } if ((a > 127) || (a < 0)) { a = j; }
+    Keys[i][j].Thrus[L].Trk = &TrkInfo[T]; Keys[i][j].Thrus[L].Delay = Delay; Keys[i][j].Thrus[L].k = a; Keys[i][j].Thrus[L].Pending = (struct MidiEvent*)args[k-6];
     for (a = 0; a <= 0x7f; a++) { signed long v = a*v0s; if (v > 127) { v = 127; } v += v0o; if (v > 127) { v = 127; } else if (v < 0) { v = 0; } Keys[i][j].Thrus[L].v0[a] = v; }
     for (a = 0; a <= 0x7f; a++) { signed long v = a*v1s; if (v > 127) { v = 127; } v += v1o; if (v > 127) { v = 127; } else if (v < 1) { v = 1; } Keys[i][j].Thrus[L].v1[a] = v; }
     }
@@ -397,13 +397,13 @@ for (i=0; i<=15; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]+1,
   }
  }
 
-k = 0; for (i=0; i<=15; i++) { for (j=0; j<=127; j++) { signed long a = -1; while (Keys[i][j].Thrus[++a].Trk) { if (Keys[i][j].Thrus[a].Pending) { k |= (unsigned long)Keys[i][j].Thrus[a].Pending; }}}}
+k = 0; for (i=0; i<=15; i++) { for (j=0; j<=127; j++) { signed long a = -1; while (Keys[i][j].Thrus[++a].Trk) { if ((signed long)Keys[i][j].Thrus[a].Pending > 127) { k |= (unsigned long)Keys[i][j].Thrus[a].Pending; }}}}
 
 for (i=0; i<=15; i++) {
  for (j=0; j<=127; j++) { signed long a = -1;
   while (Keys[i][j].Thrus[++a].Trk) { signed long L = -1; while ((Thrus[i][++L]) && (Thrus[i][L] != Keys[i][j].Thrus[a].Trk)) {}
-   if (!k       || Keys[i][j].Thrus[a].Pending) { Thrus[i][L] = Keys[i][j].Thrus[a].Trk; }
-   if ( k > 128 && Keys[i][j].Thrus[a].Pending) { Keys[i][j].Thrus[a].Trk = NULL; }
+   if (!k       || (signed long)Keys[i][j].Thrus[a].Pending > 127) { Thrus[i][L] = Keys[i][j].Thrus[a].Trk; }
+   if ( k > 128 && (signed long)Keys[i][j].Thrus[a].Pending > 127) { Keys[i][j].Thrus[a].Trk = NULL; }
    Keys[i][j].Thrus[a].Pending = NULL;
    }
   }
