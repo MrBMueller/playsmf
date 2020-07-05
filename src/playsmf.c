@@ -105,9 +105,9 @@ static unsigned char Inversions[12] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x10,
 
 //============================================================================//
 
-static void CALLBACK MidiInProc(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { Dead = 0; switch (wMsg) { case MIM_DATA: switch (dwParam1 & 0xf0) {
+static void CALLBACK MidiInProc(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { switch (wMsg) { case MIM_DATA: switch (dwParam1 & 0xf0) {
 
-case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { return; } Key1 = &Keys[dwParam1 & 0xf][V0]; i = -1;
+case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { Dead = 0; return; } Key1 = &Keys[dwParam1 & 0xf][V0]; i = -1;
  while ((Thru = &Key1->Thrus[++i])->Trk) { if (*Thru->Trk && (*Thru->Trk)->Out & 0x1) { ThruE = Thru->Pending = *Thru->Trk; if (Thru->Delay) { Sleep(Thru->Delay); }
   midiOutShortMsg(ThruE->midi_out, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); }}
  if (!(PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel = V1;
@@ -120,28 +120,28 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
   case  8: if (!(Mute2 = (unsigned char*)Key1->Val)[-1]) { if (Mute2 == MuteA) { MuteA = MuteB; } else { MuteB = MuteA; MuteA = Mute2; } Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA; }
             else                                         { Mute1 = Mute3 = Mute2; if (!Mute[-1]) { Mute0 = Mute11 = Mute; }} V0 |= Var; break;
   case 16: SetEntryLabel IRQ = 0x20; default: V0 |= Var; }
- MyMacro0 } RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
+ MyMacro0 } RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; Dead = 0; return;
 
-case 0x80: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16;                            L0x80:   if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { return; } Key0 = &Keys[dwParam1 & 0xf][V0]; i = -1;
+case 0x80: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16;                            L0x80:   if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { Dead = 0; return; } Key0 = &Keys[dwParam1 & 0xf][V0]; i = -1;
  while (ThruE = (Thru = &Key0->Thrus[++i])->Pending) { midiOutShortMsg(ThruE->midi_out, Thru->v0[V1]<<16 | Thru->k<<8 | 0x80 | ThruE->Ch); }
  if ( (PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel =  0;
  switch (Key0->Zone) { case 1: if (PendingI->Prev) { PendingI->Prev->Next = PendingI->Next; } if (PendingI->Next) { PendingI->Next->Prev = PendingI->Prev; } else { LatestPendingI = PendingI->Prev; }
   if (!LatestPendingI && (Label0->Idx & 0xf00) && !(Label0->Idx & 0x80)) { V0 = Label0->Idx & 0xfff; }}
  V0 |= Var | 0x80;
- MyMacro0 } RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
+ MyMacro0 } RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; Dead = 0; return;
 
 case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: RecEvent->event_time = timeGetTime(); i = -1;
  switch (dwParam1 & 0x7ff0) { case 0x40b0: case 0x42b0: case 0x43b0: while (Thrus[c=dwParam1&0xf][++i])       { if (ThruE = *Thrus[c][i]) { midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch); }} break;
                               default:                               while (ThruE = Key1->Thrus[++i].Pending) {                             midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch);  }        }
- RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; return;
+ RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; Dead = 0; return;
 
-default: switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: return; default: RecEvent->event_time = timeGetTime(); RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; printf("0%x\n", dwParam1); }
+default: switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: Dead = 0; return; default: RecEvent->event_time = timeGetTime(); RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; printf("0%x\n", dwParam1); }
 
-} return; //switch dwParam1 // MIM_DATA fallthru
+} Dead = 0; return; //switch dwParam1 // MIM_DATA fallthru
 
 case MIM_LONGDATA: V0 = timeGetTime(); i = -1;
  while (++i < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { RecEvent->event_time = V0; RecEvent->EventData = (*(((MIDIHDR*)dwParam1)->lpData+i)&0xff)<<8 | 0xf0; RecEvent = RecEvent->NextEvent; }
- if (((MIDIHDR*)dwParam1)->dwBytesRecorded) { midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } return; // MIM_LONGDATA
+ if (((MIDIHDR*)dwParam1)->dwBytesRecorded) { midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } Dead = 0; return; // MIM_LONGDATA
 case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
 } printf("%08x %08x %08x %08x %08x\n", hMidiIn, wMsg, dwInstance, dwParam1, dwParam2); } //switch wMsg // CALLBACK fallthru
@@ -203,7 +203,7 @@ return; }
 static void saveMidiEventsToFile(signed long *args, unsigned long PPQ, unsigned long Tempo, unsigned long TimeSig, unsigned long KeySig, struct RecEvent *RecEvents, struct RecEvent *RecEvent, unsigned char ExitVal, struct Label *Label0) {
 SYSTEMTIME    current_time;
 unsigned char filename[1024], tempo[] = {(Tempo>>16)&0xff, (Tempo>>8)&0xff, (Tempo>>0)&0xff}, timeSig[] = {(TimeSig>>24)&0xff, (TimeSig>>16)&0xff, (TimeSig>>8)&0xff, (TimeSig>>0)&0x7f}, keySig[] = {(KeySig>>8)&0xff, (KeySig>>0)&0xff};
-unsigned long PPQc = PPQ*1000;
+unsigned long PPQc = PPQ*1000, RecNum = 0;
 float         c = (float)PPQc/(float)(Tempo&0xffffff);
 
 MidiFile_t midi_file = MidiFile_new(1, MIDI_FILE_DIVISION_TYPE_PPQ, PPQ);
@@ -217,7 +217,7 @@ if (!(KeySig  & 0x00010000)) { MidiFileTrack_createMetaEvent(track0, 0, 0x59, 2,
 
 if (!RecEvent->EventData && !RecEvent->Event) { unsigned long i = -1, data_length = 0, t0; unsigned char data_buffer[1024];
  while (!(ExitVal&4) && (RecEvent-- > RecEvents) && (((RecEvent->EventData & 0xe0) == 0x80) && (((RecEvent->EventData>>8) & 0x7f) == (Label0->Idx&0xfff)) || RecEvent->Event)) { RecEvent->EventData = 0x00000000; }
- while (RecEvents[++i].EventData || RecEvents[i].Event) { unsigned long t = (RecEvents[i].event_time-RecEvents[0].event_time)*c; if (RecEvents[i].Event) { RecEvents[i].EventData = RecEvents[i].Event->EventData; }
+ while (RecEvents[++i].EventData || RecEvents[i].Event) { unsigned long t = (RecEvents[i].event_time-RecEvents[0].event_time)*c; if (RecEvents[i].Event) { RecEvents[i].EventData = RecEvents[i].Event->EventData; } else { RecNum++; }
   switch (RecEvents[i].EventData & 0xf0) {
    case 0x80: MidiFileTrack_createNoteOffEvent(        track1, t, RecEvents[i].EventData&0xf, (RecEvents[i].EventData>>8)&0x007f , (RecEvents[i].EventData>>16)&0x7f); break;
    case 0x90: MidiFileTrack_createNoteOnEvent(         track1, t, RecEvents[i].EventData&0xf, (RecEvents[i].EventData>>8)&0x007f , (RecEvents[i].EventData>>16)&0x7f); break;
@@ -244,7 +244,7 @@ if (!RecEvent->EventData && !RecEvent->Event) { unsigned long i = -1, data_lengt
  }
 
 GetLocalTime(&current_time); sprintf(filename, "MyMid%d%02d%02d%02d%02d%02d.mid", current_time.wYear, current_time.wMonth, current_time.wDay, current_time.wHour, current_time.wMinute, current_time.wSecond);
-if (args[8] != 0x0ff) { MidiFile_save(midi_file, filename); } MidiFile_free(midi_file); return; }
+if (args[8] != 0x0ff && (ExitVal >= 3 || RecNum)) { MidiFile_save(midi_file, filename); } MidiFile_free(midi_file); return; }
 
 //----------------------------------------------------------------------------//
 
@@ -506,7 +506,7 @@ while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInf
  if (MidiEvents[i].event_time == MidiEvents[i+1].event_time && MidiEvents[i+1].FlwCtl > 1) { MidiEvents[i].MsgCtl = 0; }
  }
 
-EntryLabel->ReT = ExitLabel->ReT = 8; AlignLabels(Labels);
+EntryLabel->ReT = ExitLabel->ReT = 8; EntryLabel->Now = ExitLabel->Now = 1; AlignLabels(Labels);
 
 for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { if (i <= 0x7f) { for (j=0; j<=0xf; j++) { Keys[j][i].Zone &= ~16; }} if (Labels[i].Event->FlwCtl == 4) { j = Labels[i].Event-MidiEvents;
  k = 0; while (MidiEvents[j+k+1].EventData && (MidiEvents[j+k+1].event_time == MidiEvents[j].event_time)) { k++; }
