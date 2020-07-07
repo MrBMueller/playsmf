@@ -137,7 +137,7 @@ case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: RecEvent->event_time = ti
 
 default: switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: Dead = 0; return; }
 
-} RecEvent->event_time = timeGetTime(); RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; printf("0%x\n", dwParam1); Dead = 0; return; //switch dwParam1 // MIM_DATA fallthru
+} RecEvent->event_time = timeGetTime(); printf("0%x\n", dwParam1); RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; Dead = 0; return; //switch dwParam1 // MIM_DATA fallthru
 
 case MIM_LONGDATA: V0 = timeGetTime(); i = -1;
  while (++i < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { RecEvent->event_time = V0; RecEvent->EventData = (*(((MIDIHDR*)dwParam1)->lpData+i)&0xff)<<8 | 0xf0; RecEvent = RecEvent->NextEvent; }
