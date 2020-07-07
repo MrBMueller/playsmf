@@ -135,9 +135,9 @@ case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: RecEvent->event_time = ti
                               default:                               while (ThruE = Key1->Thrus[++i].Pending) {                             midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch);  }        }
  RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; Dead = 0; return;
 
-default: switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: Dead = 0; return; default: RecEvent->event_time = timeGetTime(); RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; printf("0%x\n", dwParam1); }
+default: switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: Dead = 0; return; }
 
-} Dead = 0; return; //switch dwParam1 // MIM_DATA fallthru
+} RecEvent->event_time = timeGetTime(); RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; printf("0%x\n", dwParam1); Dead = 0; return; //switch dwParam1 // MIM_DATA fallthru
 
 case MIM_LONGDATA: V0 = timeGetTime(); i = -1;
  while (++i < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { RecEvent->event_time = V0; RecEvent->EventData = (*(((MIDIHDR*)dwParam1)->lpData+i)&0xff)<<8 | 0xf0; RecEvent = RecEvent->NextEvent; }
@@ -506,7 +506,7 @@ while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInf
  if (MidiEvents[i].event_time == MidiEvents[i+1].event_time && MidiEvents[i+1].FlwCtl > 1) { MidiEvents[i].MsgCtl = 0; }
  }
 
-EntryLabel->ReT = ExitLabel->ReT = 8; EntryLabel->Now = ExitLabel->Now = 1; AlignLabels(Labels);
+EntryLabel->ReT = ExitLabel->ReT = 8; if (!(args[9] & 0xf000f0)) { EntryLabel->Now = ExitLabel->Now = 1; } AlignLabels(Labels);
 
 for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { if (i <= 0x7f) { for (j=0; j<=0xf; j++) { Keys[j][i].Zone &= ~16; }} if (Labels[i].Event->FlwCtl == 4) { j = Labels[i].Event-MidiEvents;
  k = 0; while (MidiEvents[j+k+1].EventData && (MidiEvents[j+k+1].event_time == MidiEvents[j].event_time)) { k++; }
