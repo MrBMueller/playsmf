@@ -154,8 +154,8 @@ case MIM_DATA: if ((dwParam1&0xff) < 0xf0) { if ((i1 += dwParam1&0xf) < TrkNum &
 case MIM_LONGDATA: if (((MIDIHDR*)dwParam1)->dwBytesRecorded) {
  i1 = ((MIDIHDR*)dwParam1)->dwBufferLength; ((MIDIHDR*)dwParam1)->dwBufferLength = ((MIDIHDR*)dwParam1)->dwBytesRecorded; midiOutLongMsg(ThruE1->midi_out, (MIDIHDR*)dwParam1, sizeof(MIDIHDR));
  if (((MIDIHDR*)dwParam1)->dwBytesRecorded >= 6 && (*(((MIDIHDR*)dwParam1)->lpData+1)&0xff) == 0x00 && (*(((MIDIHDR*)dwParam1)->lpData+2)&0xff) == 0x2b && (*(((MIDIHDR*)dwParam1)->lpData+3)&0xff) == 0x4d) {
-  if       ((*(((MIDIHDR*)dwParam1)->lpData+4)&0xff) == 0x00) { Speed0 = 1+(float)(*(((MIDIHDR*)dwParam1)->lpData+5)&0xff)/127   ; }
-   else if ((*(((MIDIHDR*)dwParam1)->lpData+4)&0xff) == 0x01) { Speed0 = 1-(float)(*(((MIDIHDR*)dwParam1)->lpData+5)&0xff)/127*.5; }
+  switch (*(((MIDIHDR*)dwParam1)->lpData+4)&0xff) { case 0x00: Speed0 = 1+(float)(*(((MIDIHDR*)dwParam1)->lpData+5)&0xff)/127   ; break;
+                                                    case 0x01: Speed0 = 1-(float)(*(((MIDIHDR*)dwParam1)->lpData+5)&0xff)/127*.5; }
   }
  ((MIDIHDR*)dwParam1)->dwBufferLength = i1; midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } return; // MIM_LONGDATA
 case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
