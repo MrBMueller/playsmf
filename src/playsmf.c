@@ -248,7 +248,7 @@ if (args[8] != 0x0ff && (ExitVal >= 3 || RecNum)) { MidiFile_save(midi_file, fil
 
 //----------------------------------------------------------------------------//
 
-unsigned long GetIDev(char *n, unsigned long d) { unsigned long i; MIDIINCAPS  c; for (i = 0; i < midiInGetNumDevs();  i++) { midiInGetDevCaps( i, &c, sizeof(c)); if (strstr(c.szPname, n)) { return(i); }} return(d);  }
+unsigned long GetIDev(char *n, unsigned long d) { unsigned long i; MIDIINCAPS  c; for (i = 0; i < midiInGetNumDevs();  i++) { midiInGetDevCaps( i, &c, sizeof(c)); if (strstr(c.szPname, n)) { return(i); }} return(d); }
 unsigned long GetODev(char *n, unsigned long d) { unsigned long i; MIDIOUTCAPS c; for (i = 0; i < midiOutGetNumDevs(); i++) { midiOutGetDevCaps(i, &c, sizeof(c)); if (strstr(c.szPname, n)) { return(i); }} return(d); }
 
 //============================================================================//
