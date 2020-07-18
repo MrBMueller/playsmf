@@ -10,8 +10,8 @@
 #define KW2 "Mute"
 #define KW3 "Solo"
 
-#define SetEntryLabel Var = Var1 = Var0 = (Label4 = Label3 = Label2 = Label1 = Label0 = EntryLabel)->Idx&-4096;
-#define SetExitLabel  Var = Var1 = Var0 = (Label4 = Label3 = Label2 = Label1 = Label0 = ExitLabel )->Idx&-4096;
+#define SetEntryLabel Var = Var1 = Var0 = (Label3 = Label2 = Label1 = Label0 = EntryLabel)->Idx&-4096;
+#define SetExitLabel  Var = Var1 = Var0 = (Label3 = Label2 = Label1 = Label0 = ExitLabel )->Idx&-4096;
 
 #define SetEntryMute Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA = MuteB = EntryMute;
 #define SetFirstMute Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA = MuteB = FirstMute;
@@ -20,18 +20,18 @@
  if       (Label0->Event == MidiEvents || Label0->Event == LastLabel->Event)                                                    { SetEntryMute i = -2;                      c = Mute0[0]; }\
   else if (Mute == EntryMute && (MidiEvenT->Label->Event == EntryLabel->Event || MidiEvenT->Label->Event == FirstLabel->Event)) { SetFirstMute i =  0;                      c = Mute0[0]; }\
   else                                                                                                                          {              i = (Mute-Mutes)/(TrkNum+1); c = Mute[ 0]; }\
- printf("%4.2f -> %d %3d %4x %4x %4x %2d %d %d %2d %d %02x => %6.2f (%6.2f %d/%d) -> %6.2f (%6.2f %d/%d)\n", (float)(RecEvent->event_time-LastTime)*1000*(1<<MidiEvenT->TimeSigD)/((MidiEvenT->Tempo<<2)*MidiEvenT->TimeSigN)/Speed0, SneakPending, V1, MidiEvenT->Label->Idx, Label4->Idx, Label1->Idx, (signed char)Label4->Ret, Label4->Now, Label4->ReT, i, c, IRQ,\
-  (float)MidiEvenT->event_time*1000*(1<<MidiEvenT->TimeSigD)/((MidiEvenT->Tempo<<2)*MidiEvenT->TimeSigN), (float)60000000/MidiEvenT->Tempo/Speed0, MidiEvenT->TimeSigN, 1<<MidiEvenT->TimeSigD, (float)Label4->Event->event_time*1000*(1<<Label4->Event->TimeSigD)/((Label4->Event->Tempo<<2)*Label4->Event->TimeSigN), (float)60000000/Label4->Event->Tempo/Speed0, Label4->Event->TimeSigN, 1<<Label4->Event->TimeSigD);\
+ printf("%4.2f -> %d %3d %4x %4x %4x %2d %d %d %2d %d %02x => %6.2f (%6.2f %d/%d) -> %6.2f (%6.2f %d/%d)\n", (float)(RecEvent->event_time-LastTime)*1000*(1<<MidiEvenT->TimeSigD)/((MidiEvenT->Tempo<<2)*MidiEvenT->TimeSigN)/Speed0, SneakPending, V1, MidiEvenT->Label->Idx, Label0->Idx, Label1->Idx, (signed char)Label0->Ret, Label0->Now, Label0->ReT, i, c, IRQ,\
+  (float)MidiEvenT->event_time*1000*(1<<MidiEvenT->TimeSigD)/((MidiEvenT->Tempo<<2)*MidiEvenT->TimeSigN), (float)60000000/MidiEvenT->Tempo/Speed0, MidiEvenT->TimeSigN, 1<<MidiEvenT->TimeSigD, (float)Label0->Event->event_time*1000*(1<<Label0->Event->TimeSigD)/((Label0->Event->Tempo<<2)*Label0->Event->TimeSigN), (float)60000000/Label0->Event->Tempo/Speed0, Label0->Event->TimeSigN, 1<<Label0->Event->TimeSigD);\
  SneakPending = 0; LastTime = RecEvent->event_time; if (MidiEvenT->Label->Now) { SetEvent(signalling_object0); }
 
 #define MyMacro0 \
- if       (SneakPending >= 3 && V0 != Label0->Idx && !((V0^Label0->Idx)&0xfff)) { Label4 = Label3 = Label2 = Label1 = Label0 = &Labels[V0];  SneakPending  = 0; }\
+ if       (SneakPending >= 3 && V0 != Label0->Idx && !((V0^Label0->Idx)&0xfff)) { Label3 = Label2 = Label1 = Label0 = &Labels[V0];  SneakPending  = 0; }\
   else if (SneakPending      && (MidiEvenT->Label->Idx&~0xfff) != Var) { V0 = (Var = Var1 = Var0 = MidiEvenT->Label->Idx&~0xfff) | V0&0xfff; SneakPending |= 2; }\
  if (V0 < LabelNum && Labels[V0].Event) {\
-  if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvenT->Label->Ret || IRQ) {                                                         Label4 = Label3 = Label2 = Label1 =                                                                          Label0; IRQ = 0x10; MyMacro1 }}\
-                    else { if (!MidiEvenT->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvenT->Label->Idx&0xfff]; } Label1 = Label0->Ret&1 ? Label3 : Label2; Var = Label1->Idx&-4096; Label4 = (i=0x1000+V0)<LabelNum && (V0^Label4->Idx)&0xf7f && Labels[i].Event && Labels[i].Ret ? &Labels[i] : Label0; IRQ = 0x08; MyMacro1 }}\
-   else if (Label0->Ret) { if (!MidiEvenT->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvenT->Label->Idx&0xfff]; } Label1 = Label0->Ret&1 ? Label3 : Label2; Var = Label1->Idx&-4096; Label4 =                                                                                                     Label0; IRQ = 0x08; MyMacro1  }\
-   else                  { i = Label0->Idx; Label4 = Label3 = Label2 = Label1 = Label0 = &Labels[V0]; if (!IRQ) { IRQ = 0x18^Label0->ReT; } if (Label0->ReT) { MyMacro1 } else if (!((V0^i)&~0xfff)) { SneakPending = 1; }}}
+  if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvenT->Label->Ret || IRQ) { Label3 = Label2 = Label1 = Label0;                      IRQ = 0x10; MyMacro1 }}\
+                    else { if (!MidiEvenT->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvenT->Label->Idx&0xfff]; } Label1 = Label0->Ret&1 ? Label3 : Label2; Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1 }}\
+   else if (Label0->Ret) { if (!MidiEvenT->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvenT->Label->Idx&0xfff]; } Label1 = Label0->Ret&1 ? Label3 : Label2; Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1  }\
+   else                  { i = Label0->Idx; Label3 = Label2 = Label1 = Label0 = &Labels[V0]; if (!IRQ) { IRQ = 0x18^Label0->ReT; } if (Label0->ReT) { MyMacro1 } else if (!((V0^i)&~0xfff)) { SneakPending = 1; }}}
 
 struct MidiEvent { unsigned long     event_time;
                    unsigned long     Track;
@@ -89,7 +89,7 @@ struct MidiOut   { unsigned long     s;
                    HMIDIOUT          h; };
 
 static HANDLE           signalling_object0, signalling_object1;
-static struct Label    *Labels, *Label0, *Label1, *Label2, *Label3, *Label4, *FirstLabel, *LastLabel, *EntryLabel, *ExitLabel;
+static struct Label    *Labels, *Label0, *Label1, *Label2, *Label3, *FirstLabel, *LastLabel, *EntryLabel, *ExitLabel;
 static struct Key       Keys[16][128], *Key0, *Key1;
 static struct Thru     *Thru;
 static struct PNoteI    PendingEventsI[128], *PendingI, *LatestPendingI;
@@ -115,7 +115,7 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
   c = v = 0; i = 127; while (PendingI) { c = c<<4 | PendingI->Note; v += PendingI->Vel; if (PendingI->Key < i) { i = PendingI->Key; } PendingI = PendingI->Prev; }
   if (c <= 0xcccc && Chords[c].Type >= 0) { V0 = Var | Chords[c].Type | Inversions[(i%12-Chords[c].Root+12)%12] | Chords[c].Root; V1 = v / Chords[c].Num; } else { V0 |= Var; } break;
   case  2: if ((i = Key1->Val | Label0->Idx & 0xfff) < LabelNum && !Labels[i].Ret && !MidiEvenT->Label->Ret) { if (Key1->Val == Var0) { Var0 = Var1; } else { Var1 = Var0; Var0 = Key1->Val; } Var = Var0; } else { Var = Key1->Val; }
-           V0 = Var | Label2->Idx & 0xfff; if (Var != (Label2->Idx&~0xfff) && MidiEvenT->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label4 = Label3 = Label2 = Label1 = Label0 = &Labels[i]; V0 = -1; } SneakPending = 0; break;
+           V0 = Var | Label2->Idx & 0xfff; if (Var != (Label2->Idx&~0xfff) && MidiEvenT->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label3 = Label2 = Label1 = Label0 = &Labels[i]; V0 = -1; } SneakPending = 0; break;
   case  4: Mute[Key1->Val] ^= 0x08;                                                                                          V0 |= Var; break;
   case  8: if (!(Mute2 = (unsigned char*)Key1->Val)[-1]) { if (Mute2 == MuteA) { MuteA = MuteB; } else { MuteB = MuteA; MuteA = Mute2; } Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA; }
             else                                         { Mute1 = Mute3 = Mute2; if (!Mute[-1]) { Mute0 = Mute11 = Mute; }} V0 |= Var; break;
@@ -536,7 +536,7 @@ while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*
  switch ((*(MidiEvent->TrkInfo) = MidiEvenT = MidiEvent)->FlwCtl^FlwMsk | IRQ) {
   case 0x09: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f: case 0x11: case 0x13: case 0x14: case 0x16:
    while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
-   if ((MidiEvent = Label4->Event       )->FlwCtl > 2) { FlwMsk = MidiEvent->FlwCtl^1; } IRQ = start_time = 0; Mute = Mute0 = Mute2; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
+   if ((MidiEvent = Label0->Event       )->FlwCtl > 2) { FlwMsk = MidiEvent->FlwCtl^1; } IRQ = start_time = 0; Mute = Mute0 = Mute2; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x02: case 0x03: case 0x05: case 0x06: case 0x07: case 0x0a: case 0x12: case 0x1a: case 0x1b: case 0x1d:
    while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
    if ((MidiEvent = MidiEvent->JumpEvent)->FlwCtl > 2) { FlwMsk = MidiEvent->FlwCtl^1; }       start_time = 0; Mute = Mute0 = Mute1; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
