@@ -114,12 +114,12 @@ case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V
  switch (Key1->Zone) { case 1: if (LatestPendingI) { LatestPendingI->Next = PendingI; } PendingI->Prev = LatestPendingI; (LatestPendingI = PendingI)->Next = NULL;
   c = v = 0; i = 127; while (PendingI) { c = c<<4 | PendingI->Note; v += PendingI->Vel; if (PendingI->Key < i) { i = PendingI->Key; } PendingI = PendingI->Prev; }
   if (c <= 0xcccc && Chords[c].Type >= 0) { V0 = Var | Chords[c].Type | Inversions[(i%12-Chords[c].Root+12)%12] | Chords[c].Root; V1 = v / Chords[c].Num; } else { V0 |= Var; } break;
-  case  2: if ((i = Key1->Val | Label0->Idx & 0xfff) < LabelNum && !Labels[i].Ret && !MidiEvenT->Label->Ret) { if (Key1->Val == Var0) { Var0 = Var1; } else { Var1 = Var0; Var0 = Key1->Val; } Var = Var0; } else { Var = Key1->Val; }
-           V0 = Var | Label2->Idx & 0xfff; if (Var != (Label2->Idx&~0xfff) && MidiEvenT->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label3 = Label2 = Label1 = Label0 = &Labels[i]; V0 = -1; } SneakPending = 0; break;
-  case  4: Mute[Key1->Val] ^= 0x08;                                                                                          V0 |= Var; break;
-  case  8: if (!(Mute2 = (unsigned char*)Key1->Val)[-1]) { if (Mute2 == MuteA) { MuteA = MuteB; } else { MuteB = MuteA; MuteA = Mute2; } Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA; }
-            else                                         { Mute1 = Mute3 = Mute2; if (!Mute[-1]) { Mute0 = Mute11 = Mute; }} V0 |= Var; break;
-  case 16: SetEntryLabel IRQ = 0x20; default: V0 |= Var; }
+  case 2: if ((i = Key1->Val | Label0->Idx & 0xfff) < LabelNum && !Labels[i].Ret && !MidiEvenT->Label->Ret) { if (Key1->Val == Var0) { Var0 = Var1; } else { Var1 = Var0; Var0 = Key1->Val; } Var = Var0; } else { Var = Key1->Val; }
+          V0 = Var | Label2->Idx & 0xfff; if (Var != (Label2->Idx&~0xfff) && MidiEvenT->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label3 = Label2 = Label1 = Label0 = &Labels[i]; V0 = -1; } SneakPending = 0; break;
+  case 4: if (!(Mute2 = (unsigned char*)Key1->Val)[-1]) { if (Mute2 == MuteA) { MuteA = MuteB; } else { MuteB = MuteA; MuteA = Mute2; } Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA; }
+           else                                         { Mute1 = Mute3 = Mute2; if (!Mute[-1]) { Mute0 = Mute11 = Mute; }} V0 |= Var; break;
+  case 8: Mute[Key1->Val] ^= 0x08;                                                                                          V0 |= Var; break;
+  default: V0 |= Var; }
  MyMacro0 } RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; Dead = 0; return;
 
 case 0x80: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16;                            L0x80:   if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { Dead = 0; return; } Key0 = &Keys[dwParam1 & 0xf][V0]; i = -1;
@@ -378,10 +378,9 @@ for (i=0; i<=15; i++) { Thrus[i] = &Thrus[0][i*(TrkNum+1)]; for (j=0; j<=127; j+
 
 for (i=0; i<=15; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]+1, K2 = Ck-MutesNum, K1 = K2-1, K0 = K1; if (LabelNum>>12) { K0 -= ((LabelNum-1)>>12)+1; } if (Mk-1 < 0) { Mk = Ck+abs(Mk-1); } if (Mk > 128) { Mk = 128; }
  for (j = K0; j < K1; j++) { Keys[i][j].Zone |= 2; Keys[i][j].Val = (K1-j-1)<<12; }
- for (j = K1; j < K2; j++) { Keys[i][j].Zone |= 4; Keys[i][j].Val = K2-j-1; }
- for (j = K2; j < Ck; j++) { Keys[i][j].Zone |= 8; if (j > (Ck-3)) { Keys[i][j].Val = (unsigned long)&Mutes[(j-K2)*(TrkNum+1)+1]; } else { Keys[i][j].Val = (unsigned long)&Mutes[(Ck-3-j)*(TrkNum+1)+1]; }}
+ for (j = K1; j < K2; j++) { Keys[i][j].Zone |= 8; Keys[i][j].Val = K2-j-1; }
+ for (j = K2; j < Ck; j++) { Keys[i][j].Zone |= 4; if (j > (Ck-3)) { Keys[i][j].Val = (unsigned long)&Mutes[(j-K2)*(TrkNum+1)+1]; } else { Keys[i][j].Val = (unsigned long)&Mutes[(Ck-3-j)*(TrkNum+1)+1]; }}
  for (j = Ck; j < Mk; j++) { Keys[i][j].Zone |= 1; }
- for (j = args[10]+1; j <= args[10]+1; j++) { Keys[i][j].Zone |= 16; }
 
  k = 12;
  while (((k+6) < _msize(args)/sizeof(signed long)) && (abs(args[k+6]) < 0x10000)) { signed long K0 = args[k++], K1 = args[k++], T = args[k++], Delay = args[k++], K = args[k++], V1 = args[k++], V0 = args[k++];
@@ -508,7 +507,7 @@ while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInf
 
 EntryLabel->ReT = ExitLabel->ReT = 8; if (!(args[9] & 0xf000f0)) { EntryLabel->Now = ExitLabel->Now = 1; } AlignLabels(Labels);
 
-for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { if (i <= 0x7f) { for (j=0; j<=0xf; j++) { Keys[j][i].Zone &= ~16; }} if (Labels[i].Event->FlwCtl == 4) { j = Labels[i].Event-MidiEvents;
+for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { if (Labels[i].Event->FlwCtl == 4) { j = Labels[i].Event-MidiEvents;
  k = 0; while (MidiEvents[j+k+1].EventData && (MidiEvents[j+k+1].event_time == MidiEvents[j].event_time)) { k++; }
  l = MidiEvents[j+k].FlwCtl; MidiEvents[j+k].FlwCtl = MidiEvents[j].FlwCtl; MidiEvents[j].FlwCtl = l; MidiEvents[j+k].JumpEvent = MidiEvents[j].JumpEvent;
  }}}
@@ -543,7 +542,7 @@ while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*
   case 0x04: case 0x1c:
    while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
    if ((MidiEvent = Label1->Event       )->FlwCtl > 2) { FlwMsk = MidiEvent->FlwCtl^1; }       start_time = 0; Mute = Mute0 = Mute3; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
-  case 0x1e: case 0x1f: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27: IRQ = 0; case 0x01: case 0x15: case 0x17: case 0x19: case 0x21: Mute = Mute0; }
+  case 0x1e: case 0x1f: IRQ = 0; case 0x01: case 0x15: case 0x17: case 0x19: Mute = Mute0; }
 
  if (MidiEvent->Rec) { RecEvent->event_time = timeGetTime(); RecEvent->Event = MidiEvent; RecEvent = RecEvent->NextEvent; }
 
