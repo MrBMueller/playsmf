@@ -2,11 +2,11 @@
 
 playsmf is a small, but powerful Windows (32/64bit) commandline standard midi file (SMF) player. Its specifically designed for low CPU and memory consumption to leave enough system recources for other applications such as soft-synths, DAWs, mixer apps, etc. while playing live and running in background.
 
-![playsmf application integration](https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img0.png)
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img0.png width="100%">
 
 In addition it comes with intrinsic flow control features based on labels, jumps and interrupts defined by smf marker events. This allows to program loops, breaks, fills, intros, outros, etc. In combination with realtime interrupt (sequence transition) control, based on incoming midi data with or without chord recognition, the player can turn into an fully equipped arpeggiator or accompaniement software. However unlike typical arpeggiators or style players, the player doesnt do any (more or less intelligent) modification such as transpose, volume adjustments, etc. to the smf midi data and plays strongly the raw data as provided by the smf. This means you know exacly what gets played with each individual chord, however the smf needs to provide individual pattern for all required key/scale/inversion combinations which are played during a live session. Therefore its possible to play individual pattern - for instance with randomized timings/volume/controller/sysex events - for each individual chord.
 
-![general functionality example](https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img4.png)
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img4.png width="100%">
 
 ### example files
 To get started quickly, few example midi files are attached. Some of them are converted from Yamaha style files to demonstrate the players capabilities. Therefore best results will be achieved with an XG compatible sound device. Also in order to get the full realtime performance, it is strongly recommended to use either real midi equipment or softsynths with small latency settings (<= 10ms). For realtime accompaniement demonstration of course a real midi controller aka. keyboard is strongly recommended as a primary input device.
@@ -21,7 +21,7 @@ The player generally allows to play across multiple output devices simultaneousl
 ### MIDI-Thru and track-follow mode
 The player generally supports MIDI-Thru functionality with split and multi-layer modes for live-performances. However instead assigning fixed devices/channels to play on, you can assign tracks to follow their current device/channel combinations while playing. This enables dynamic MIDI-Thru (re)assignments during a live performance.
 
-![zones and layers](https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img5.png)
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img5.png width="100%">
 
 ### general system integration
 The player runs as a standalone console application more or less in background and is mainly controlled by the primary midi input device/controller. In addition, the computer keyboard controls only sequence restart (CTRL+C) and sequence exit (CTRL+PAUSE/BREAK) flow control jumps.
