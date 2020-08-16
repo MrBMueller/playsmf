@@ -4,9 +4,16 @@ playsmf is a small, but powerful Windows (32/64bit) commandline standard midi fi
 
 ![playsmf application integration](https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img0.png)
 
-In addition it comes with intrinsic flow control features based on labels, jumps and interrupts defined by smf marker events. This allows to program loops, breaks, fills, intros, outros, etc. In combination with realtime interrupt (sequence transition) control, based on incoming midi data with or without chord recognition, the player can turn into an fully equipped arpeggiator. However unlike typical arpeggiators or style players, the player doesnt do any (more or less intelligent) modification such as transpose, volume adjustments, etc. to the smf midi data and plays strongly the raw data as provided by the smf. This means you know exacly what gets played with each individual chord, however the smf needs to provide individual pattern for all required key/scale/inversion combinations which are played during a live session. Therefore its possible to play individual pattern - for instance with randomized timings/volume/controller/sysex events - for each individual chord.
+In addition it comes with intrinsic flow control features based on labels, jumps and interrupts defined by smf marker events. This allows to program loops, breaks, fills, intros, outros, etc. In combination with realtime interrupt (sequence transition) control, based on incoming midi data with or without chord recognition, the player can turn into an fully equipped arpeggiator or accompaniement software. However unlike typical arpeggiators or style players, the player doesnt do any (more or less intelligent) modification such as transpose, volume adjustments, etc. to the smf midi data and plays strongly the raw data as provided by the smf. This means you know exacly what gets played with each individual chord, however the smf needs to provide individual pattern for all required key/scale/inversion combinations which are played during a live session. Therefore its possible to play individual pattern - for instance with randomized timings/volume/controller/sysex events - for each individual chord.
 
 ![general functionality example](https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img4.png)
+
+### example files
+To get started quickly, few example midi files are attached. Some of them are converted from Yamaha style files to demonstrate the players capabilities. Therefore best results will be achieved with an XG compatible sound device. Also in order to get the full realtime performance, it is strongly recommended to use either real midi equipment or softsynths with small latency settings (<= 10ms). For realtime accompaniement demonstration of course a real midi controller aka. keyboard is strongly recommended as a primary input device.
+
+In case you dont know your midi device IDs or names for the correct player setup, run MidiPorts.bat to list all input and output devices. Chose the right ones as primary input and output devices and adjust command line parameters 3 and 4 accordingly.
+
+The style examples are typically setup with chord recognition left hand across 2 octaves thru keys 36..59 and melody right hand thru keys above >= 60. If required, adjust the transmission midi channel on your primary input device in order to attach to the right smf tracks while playing.
 
 ### output MIDI devices
 The player generally allows to play across multiple output devices simultaneously. Typically devices are chosen by SMF Meta-Event 0x20 (port select) for each individual track. Since the player uses those messages to switch beween output devices accordingly, it is valid to switch devices while playing within a sequence. If such port-select events are missing, the player uses the default midi output device.
@@ -84,11 +91,14 @@ One specific jump type is "return-from-interrupt". Actually there are two basic 
 ### Conditional Jumps/Interrupts (transitions)
 Typically jumps and interrupts are taken unconditional and immediate unless they are marked as conditional ones.
 
-### continue to next sync ('>|>')
+### Jump continue ('>>')
+This is a regular Jump, however it doesnt branch if a retrigger interrupt is pending. In this case the sequence continues as normal beyond the jump marker and the interrupt flag gets cleared. For example this behavior can be used to transition into a new variation without explicitly requesting a variation change.
+
+### Jump continue to next sync ('>|>')
 If a jump is marked as 'continue to next sync', a pending non-return interrupt across the jump boundary is not taken immediately and the sequence continues playing to next interrupt sync point before the transition is taken. This allows to run intermediate transitional sequences before jumping to target.
 
 ### Variations
-A set of Labels in the range from 0x000-0xfff is called a variation. To include multiple variations, the player takes the most significant Label digit as a variation number. So for instance Labels between 0x0000-0x0fff belong to variation 0 while Labels between 0x1000-0x1fff belong to variation 1.
+A set of Labels in the range from 0x000-0xfff is called a variation. To include multiple variations, the player takes the most significant Label digits as a variation number. So for instance Labels between 0x0000-0x0fff belong to variation 0 while Labels between 0x1000-0x1fff belong to variation 1.
 Variations can get switched by the keys right below the Mute-zone.  If you switch from a non-return (looping) sequence to a return (one-shot) sequence variation, the variation will return back once finished, else you'll stay in the new variation. This allows to implement variations with fills or breaks in contrast to regular main (looping) variations.
 
 ### Mute sets (groups)
@@ -108,7 +118,7 @@ The player exits with different return codes based on the exit scenario.
 
 * 0 regular exit: the player normally reached the sequence end
 * 2 error: the player stopped due to timeout (lost midi equipment connection)
-* 3 CTRL+C: player was forced to exit from computer keyboard (CTRL+C)
+* 3 CTRL+PAUSE/BREAK: player was forced to exit from computer keyboard
 * 4 exit: the player was forced to exit from primary midi input (exit label key)
 * 5 last: the player stopped normally after reaching the last sequence label
 
@@ -182,7 +192,7 @@ In order to reset midi equipment upon player start and/or exit, you can optional
 
 
 #### smf intrinsic arguments
-In order to store command line arguments with the smf, the player supports sequencer specific meta messages to set and/or override command line arguments. Argument data is stored as 32-bit integer values `<DD>` starting from argument address `<AA>` followed by one or more arguments.
+In order to store command line arguments with the smf, the player supports sequencer specific meta messages to set and/or override command line arguments. Argument data is stored in 32-bit integer values `<DD>` starting from argument address `<AA>` followed by one or more arguments.
 
 - `<0xff> <length> <0x7f> <0x00> <0xab> <0xcd> <0x00> <AA[31:24]> <AA[23:16]> <AA[15:8]> <AA[7:0]> (<DD[31:24]> <DD[23:16]> <DD[15:8]> <DD[7:0]>)*`
 
