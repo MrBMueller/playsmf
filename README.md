@@ -1,4 +1,5 @@
 # playsmf
+If you have additional questions, remarks, comments, ideas, requests - contact bm3_2000@yahoo.com
 
 playsmf is a small, but powerful Windows (32/64bit) commandline standard midi file (SMF) player. Its specifically designed for low CPU and memory consumption to leave enough system recources for other applications such as soft-synths, DAWs, mixer apps, etc. while playing live and running in background.
 
@@ -9,14 +10,15 @@ In addition it comes with intrinsic flow control features based on labels, jumps
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img4.png width="100%">
 
 ### example files
-To get started quickly, few example midi files are attached. Some of them are converted from Yamaha style files to demonstrate the players capabilities. Therefore best results will be achieved with an XG compatible sound device. Also in order to get the full realtime performance, it is strongly recommended to use either real midi equipment or softsynths with small latency settings (<= 10ms). For realtime accompaniement demonstration of course a real midi controller aka. keyboard is strongly recommended as a primary input device.
+To get started quickly, few example midi files are attached. Some of them are converted from Yamaha style files to demonstrate the players capabilities. Therefore best results will be achieved with an XG compatible sound device. In order to get full realtime performance, it is strongly recommended to use either real midi equipment or softsynths with low latency settings (responce <= 10ms). For realtime accompaniement demonstration of course a real midi controller aka. keyboard is strongly recommended as a primary input device.
 
-In case you dont know your midi device IDs or names for the correct player setup, run MidiPorts.bat to list all input and output devices. Chose the right ones as primary input and output devices and adjust command line parameters 3 and 4 accordingly.
+In case you dont know your midi device IDs or names for the correct player setup, run MidiPorts.bat to list all input and output devices respective their IDs. Chose the right ones as primary input and output devices and adjust command line parameters #3 and #4 accordingly.
 
-The style examples are typically setup with chord recognition left hand across 2 octaves thru keys 36..59 and melody right hand thru keys above >= 60. If required, adjust the transmission midi channel on your primary input device in order to attach to the right smf tracks while playing.
+The style examples are typically setup with chord recognition left hand across 2 octaves thru keys 36..59 and melody right hand thru keys above 60 (middle C). If required, adjust the transmission midi channel on your primary input device in order to attach to the right smf tracks while playing.
 
 ### output MIDI devices
 The player generally allows to play across multiple output devices simultaneously. Typically devices are chosen by SMF Meta-Event 0x20 (port select) for each individual track. Since the player uses those messages to switch beween output devices accordingly, it is valid to switch devices while playing within a sequence. If such port-select events are missing, the player uses the default midi output device.
+In addition SMF Text Meta-Event 0x9 is supported as well for name based port selection, however it is recommented to use device IDs rather than port names for better portability across systems.
 
 ### MIDI-Thru and track-follow mode
 The player generally supports MIDI-Thru functionality with split and multi-layer modes for live-performances. However instead assigning fixed devices/channels to play on, you can assign tracks to follow their current device/channel combinations while playing. This enables dynamic MIDI-Thru (re)assignments during a live performance.
@@ -50,12 +52,14 @@ Typically looped sequences will not get retriggered on consecutive subsequent re
 ### Jumps
 Jumps are basically branches jumping immediately to target address labels. The target label can either be a (positive) absolute address or a (negative) relative number of labels for relative backward jumps or looping. Numerical values can be presented in decimal or hexadecimal (0x) notation.
 
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img7.png width="100%">
+
 ### Interrupts (sequence transitions)
 Interrupts are basically breaks stopping the current midi flow by jumping to defined target address labels. They are typically requested by external MIDI (NoteOn/Off) events either directly by single keys or thru the chord recognition module. Since both NoteOn and -Off events can request individual interrupts with different target address labels, its possible to trigger different sequences by either pressing keys down or releasing them.
 
 Interrupt vectors (target Labels in binary / hexadecimal notation):
     
-    general binary vector structure: 0bvvvvttttRiiirrrr
+    general binary vector structure: 0bvvvvttttUiiirrrr
      vvvv:variation
      tttt:key/chord-type
       0x0:direct key w/o chord recognition (0x00..0x7f)
@@ -67,7 +71,7 @@ Interrupt vectors (target Labels in binary / hexadecimal notation):
       0x6:augmented triad
       0x7..0xe: unused (reserved for extensions)
       0xf:internally used for auto-labels
-     R: 0:key down; 1: key up
+     U: 0:key down; 1: key up
      iii:inversion (0: root down)
      rrrr:root (0x0..0xb; C..B)
     
@@ -82,20 +86,27 @@ Interrupt vectors (target Labels in binary / hexadecimal notation):
     0x310..0x31b minor triad root C..B 1st inversion
     0x320..0x32b minor triad root C..B 2nd inversion
 
-### Interrupt sync
-In order to guarantee smooth sequence flow transitions, interrupts are only taken at either jump points or certain defined midi events within the sequence. For example this can be a metronome click NoteOn message or a specific controller or meta event.
+### Interrupt sequence flow transition syncronisation
+In order to guarantee smooth sequence flow transitions, interrupts are only taken at either jump points or certain defined midi events within the sequence. For example those can be metronome click NoteOn messages or specific controller or meta events. This approach makes syncronisation completely independent from fixed time signatures in terms of bars and beats and refers only to so called ***INT*** points - basically sequence points where interrupt transtions are allowed.
 
-### Return from interrupt (Jump-1/Jump-3)
-One specific jump type is "return-from-interrupt". Actually there are two basic types of sequences: "non-return" (e.g. ending in a infinite loop) or "return" ending with an "return-from-interrupt" jump. Return-type sequences terminate with an immediate jump back to the caller sequence bei either restarting the caller sequence from its latest interrupt entry point (Jump-1) or from the latest label playing when interrupted (Jump-3).
+### Special Jumps - return from interrupt (Jump-1/Jump-3)
+One specific jump type is ***return-from-interrupt***. Actually there are two basic types of sequences: "non-return" (e.g. ending in a infinite loop) or "return" ending with an "return-from-interrupt" jump. Return-type sequences terminate with an immediate jump back to the caller sequence bei either restarting the caller sequence from its interrupt entry point (Jump-1) or from the latest label playing when interrupted (Jump-3).
+
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img6.png width="100%">
 
 ### Conditional Jumps/Interrupts (transitions)
 Typically jumps and interrupts are taken unconditional and immediate unless they are marked as conditional ones.
 
-### Jump continue ('>>')
-This is a regular Jump, however it doesnt branch if a retrigger interrupt is pending. In this case the sequence continues as normal beyond the jump marker and the interrupt flag gets cleared. For example this behavior can be used to transition into a new variation without explicitly requesting a variation change.
+### Jump continue to next sync ('>')
+This is a regular Jump, however the sequence doesnt branch if a **non-return** interrupt is pending and continues beyond the jump marker without clearing the interrupt flag. Therefore the interrupt is not taken immediately and the sequence will continue until the next interrupt sync point (INT) is reached. This allows to run intermediate transitional sequences before jumping to the target sequence.
 
-### Jump continue to next sync ('>|>')
-If a jump is marked as 'continue to next sync', a pending non-return interrupt across the jump boundary is not taken immediately and the sequence continues playing to next interrupt sync point before the transition is taken. This allows to run intermediate transitional sequences before jumping to target.
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img10.png width="100%">
+
+### Jump continue ('>>')
+This is a regular Jump, however the sequence doesnt branch if a **retrigger** interrupt is pending and continues as normal beyond the jump marker. This behavior can be used to transition into a new variation without explicitly requesting a variation change.
+
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img8.png width="100%">
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img9.png width="100%">
 
 ### Variations
 A set of Labels in the range from 0x000-0xfff is called a variation. To include multiple variations, the player takes the most significant Label digits as a variation number. So for instance Labels between 0x0000-0x0fff belong to variation 0 while Labels between 0x1000-0x1fff belong to variation 1.
