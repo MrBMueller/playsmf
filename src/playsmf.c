@@ -254,48 +254,48 @@ unsigned long GetODev(char *n, unsigned long d) { unsigned long i; MIDIOUTCAPS c
 //============================================================================//
 
 signed long main(signed long argc, unsigned char **argv) {
-static TIMECAPS          time_caps;
-static MIDIINCAPS        midi_i_caps;
-static MIDIOUTCAPS       midi_o_caps;
-static MIDIHDR           midi_message_header;
-static struct MidiIn     Port2In[  256];
-static struct MidiOut    Port2Out[ 256];
-static unsigned char     Port2Port[256], FlwMsk;
-static MidiFileEvent_t   midi_file_event;
-static unsigned long     start_time, WatchDogTimeOut, MutesNum, tick, tempo_event_tick, MutesInv, MutesRet, MutesInv1, MutesInv2, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0;
-static   signed long     i, j, k, l, *args, TimeOut, DefIDev, DefODev;
-static struct PNoteO     *PendingEventsO, *PendingO, *LatestPendingO;
-static float             Speed, tempo_event_time;
-static unsigned char     Permutations0[ 1][1] = {{0}};
-static unsigned char     Permutations1[ 2][2] = {{0,1},{1,0}};
-static unsigned char     Permutations2[ 6][3] = {{0,1,2},{0,2,1},{1,0,2},{1,2,0},{2,0,1},{2,1,0}};
-static unsigned char     Permutations3[24][4] = {{0,1,2,3},{0,1,3,2},{0,2,1,3},{0,2,3,1},{0,3,1,2},{0,3,2,1},
-                                                 {1,0,2,3},{1,0,3,2},{1,2,0,3},{1,2,3,0},{1,3,0,2},{1,3,2,0},
-                                                 {2,0,1,3},{2,0,3,1},{2,1,0,3},{2,1,3,0},{2,3,0,1},{2,3,1,0},
-                                                 {3,0,1,2},{3,0,2,1},{3,1,0,2},{3,1,2,0},{3,2,0,1},{3,2,1,0}};
+static TIMECAPS        time_caps;
+static MIDIINCAPS      midi_i_caps;
+static MIDIOUTCAPS     midi_o_caps;
+static MIDIHDR         midi_message_header;
+static struct MidiIn   Port2In[  256];
+static struct MidiOut  Port2Out[ 256];
+static unsigned char   Port2Port[256], FlwMsk;
+static MidiFileEvent_t midi_file_event;
+static unsigned long   start_time, WatchDogTimeOut, MutesNum, tick, tempo_event_tick, MutesInv, MutesRet, MutesInv1, MutesInv2, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0;
+static   signed long   i, j, k, l, *args, TimeOut, DefIDev, DefODev;
+static struct PNoteO   *PendingEventsO, *PendingO, *LatestPendingO;
+static float           Speed, tempo_event_time;
+static unsigned char   Permutations0[][1] = {{0}};
+static unsigned char   Permutations1[][2] = {{0,1},{1,0}};
+static unsigned char   Permutations2[][3] = {{0,1,2},{0,2,1},{1,0,2},{1,2,0},{2,0,1},{2,1,0}};
+static unsigned char   Permutations3[][4] = {{0,1,2,3},{0,1,3,2},{0,2,1,3},{0,2,3,1},{0,3,1,2},{0,3,2,1},
+                                             {1,0,2,3},{1,0,3,2},{1,2,0,3},{1,2,3,0},{1,3,0,2},{1,3,2,0},
+                                             {2,0,1,3},{2,0,3,1},{2,1,0,3},{2,1,3,0},{2,3,0,1},{2,3,1,0},
+                                             {3,0,1,2},{3,0,2,1},{3,1,0,2},{3,1,2,0},{3,2,0,1},{3,2,1,0}};
 
-static unsigned short    Intervals0[][2] = {{0x120, 0}};
+static unsigned short  Intervals0[][2] = {{0x120, 0}};
 
-static unsigned short    Intervals1[][3] = {{0x120, 0, 0},
-                                            {0x100, 0, 7}};
+static unsigned short  Intervals1[][3] = {{0x120, 0, 0},
+                                          {0x100, 0, 7}};
 
-static unsigned short    Intervals2[][4] = {{0x120, 0, 0, 0},
-                                            {0x100, 0, 0, 7}, {0x100, 0, 7, 7},
-                                            {0x200, 0, 4, 7},
-                                            {0x300, 0, 3, 7},
-                                            {0x400, 0, 2, 7},
-                                            {0x500, 0, 3, 6},
-                                            {0x600, 0, 4, 8}};
+static unsigned short  Intervals2[][4] = {{0x120, 0, 0, 0},
+                                          {0x100, 0, 0, 7}, {0x100, 0, 7, 7},
+                                          {0x200, 0, 4, 7},
+                                          {0x300, 0, 3, 7},
+                                          {0x400, 0, 2, 7},
+                                          {0x500, 0, 3, 6},
+                                          {0x600, 0, 4, 8}};
 
-static unsigned short    Intervals3[][5] = {{0x120, 0, 0, 0,  0},
-                                            {0x100, 0, 0, 0,  7}, {0x100, 0, 0, 7,  7}, {0x100, 0, 7, 7,  7},
-                                            {0x200, 0, 4, 7,  0}, {0x200, 0, 4, 7,  4}, {0x200, 0, 4, 7,  7},
-                                            {0x300, 0, 3, 7,  0}, {0x300, 0, 3, 7,  3}, {0x300, 0, 3, 7,  7},
-                                            {0x200, 0, 4, 7, 11},
-                                            {0x300, 0, 3, 7, 10},
-                                            {0x200, 0, 4, 7, 10}};
+static unsigned short  Intervals3[][5] = {{0x120, 0, 0, 0,  0},
+                                          {0x100, 0, 0, 0,  7}, {0x100, 0, 0, 7,  7}, {0x100, 0, 7, 7,  7},
+                                          {0x200, 0, 4, 7,  0}, {0x200, 0, 4, 7,  4}, {0x200, 0, 4, 7,  7},
+                                          {0x300, 0, 3, 7,  0}, {0x300, 0, 3, 7,  3}, {0x300, 0, 3, 7,  7},
+                                          {0x200, 0, 4, 7, 11},
+                                          {0x300, 0, 3, 7, 10},
+                                          {0x200, 0, 4, 7, 10}};
 
-static signed long       DefArgs[] = {0, 0, -1, 0, 0, -1, -1, 0, 0x0ff, 0x00008000, 21, 22, 36, 59};
+static   signed long   DefArgs[] = {0, 0, -1, 0, 0, -1, -1, 0, 0x0ff, 0x00008000, 21, 22, 36, 59};
 
 static unsigned long ProcessPrios[] = {IDLE_PRIORITY_CLASS, BELOW_NORMAL_PRIORITY_CLASS, NORMAL_PRIORITY_CLASS, ABOVE_NORMAL_PRIORITY_CLASS, HIGH_PRIORITY_CLASS, REALTIME_PRIORITY_CLASS, PROCESS_MODE_BACKGROUND_BEGIN, PROCESS_MODE_BACKGROUND_END};
 
