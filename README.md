@@ -5,12 +5,13 @@ playsmf is a small, but powerful Windows (32/64bit) commandline standard midi fi
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img0.png width="100%">
 
-In addition it comes with intrinsic flow control features based on labels, jumps and interrupts defined by smf marker events. This allows to program loops, breaks, fills, intros, outros, etc. In combination with realtime interrupt (sequence transition) control, based on incoming midi data with or without chord recognition, the player can turn into an fully equipped arpeggiator or accompaniement software. However unlike typical arpeggiators or style players, the player doesnt do any (more or less intelligent) modification such as transpose, volume adjustments, etc. to the smf midi data and plays strongly the raw data as provided by the smf. This means you know exacly what gets played with each individual chord, however the smf needs to provide individual pattern for all required key/scale/inversion combinations which are played during a live session. Therefore its possible to play individual pattern - for instance with randomized timings/volume/controller/sysex events - for each individual chord.
+In addition it comes with intrinsic flow control features based on labels, jumps and interrupts defined by smf marker events. This allows to program loops, breaks, fills, intros, outros, etc. In combination with realtime interrupt (sequence transition) control, based on incoming midi data with or without chord recognition, the player can turn into an fully equipped arranger/arpeggiator accompaniement software. However unlike typical arpeggiators or style players, the player doesnt do any (more or less intelligent) event data modification such as transpose, volume adjustments, etc. to the smf midi data and plays strongly the raw data exactly as provided by the smf. This gives full transparency to all transmitted midi data and you know exacly what gets played with each individual chord, however the smf needs to provide individual pattern for all required key/scale/inversion combinations which are played during a live session. Therefore its possible to play individual pre-compiled pattern - for instance with randomized timings/volume/controller/sysex events - for each individual chord.
+On purpose, the player lags for a graphical user interface since everything should be controlled in realtime by external MIDI equipment without taking your hands off the keyboard while playing. This includes direct access to style variations, grouped track mutes/unmutes, start/stop/continue/reset control, etc.
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img4.png width="100%">
 
 ### example files
-To get started quickly, few example midi files are attached. Some of them are converted from Yamaha style files to demonstrate the players capabilities. Therefore best results will be achieved with an XG compatible sound device. In order to get full realtime performance, it is strongly recommended to use either real midi equipment or softsynths with low latency settings (responce <= 10ms). For realtime accompaniement demonstration of course a real midi controller aka. keyboard is strongly recommended as a primary input device.
+To get started quickly, few example midi files are attached. Some of them are converted from Yamaha style files to demonstrate the players capabilities. Therefore best results will be achieved with an XG compatible sound device. In order to get full realtime performance, it is strongly recommended to use either real midi equipment or softsynths with low latency settings (response lag time <= 10ms). For realtime accompaniement demonstration of course a real midi controller aka. keyboard is strongly recommended as a primary input device.
 
 In case you dont know your midi device IDs or names for the correct player setup, run MidiPorts.bat to list all input and output devices respective their IDs. Chose the right ones as primary input and output devices and adjust command line parameters #3 and #4 accordingly.
 
@@ -18,15 +19,15 @@ The style examples are typically setup with chord recognition left hand across 2
 
 ### output MIDI devices
 The player generally allows to play across multiple output devices simultaneously. Typically devices are chosen by SMF Meta-Event 0x20 (port select) for each individual track. Since the player uses those messages to switch beween output devices accordingly, it is valid to switch devices while playing within a sequence. If such port-select events are missing, the player uses the default midi output device.
-In addition SMF Text Meta-Event 0x9 is supported as well for name based port selection, however it is recommented to use device IDs rather than port names for better portability across systems.
+In addition SMF Meta-Text-Event 0x9 is supported as well for name based port selection, however it is recommented to use device IDs rather than port names for better across system portability.
 
 ### MIDI-Thru and track-follow mode
-The player generally supports MIDI-Thru functionality with split and multi-layer modes for live-performances. However instead assigning fixed devices/channels to play on, you can assign tracks to follow their current device/channel combinations while playing. This enables dynamic MIDI-Thru (re)assignments during a live performance.
+The player generally supports MIDI-Thru functionality with split and multi-layer modes for live sessions. However instead assigning fixed devices/channels to play on, you can assign tracks to follow their current device/channel combinations while playing. This enables dynamic MIDI-Thru (re)assignments during a live session.
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img5.png width="100%">
 
 ### general system integration
-The player runs as a standalone console application more or less in background and is mainly controlled by the primary midi input device/controller. In addition, the computer keyboard controls only sequence restart (CTRL+C) and sequence exit (CTRL+PAUSE/BREAK) flow control jumps.
+The player runs as a standalone console application more or less in background and is mainly controlled by the primary midi input device/controller. In addition, the computer keyboard controls sequence restart (CTRL+C) and sequence exit (CTRL+PAUSE/BREAK) flow control jumps.
 
 For seamless system integration along with your faforite DAWs, software synthesizers, virtual midi controllers, etc. it is strongly recommented to install virtual midi routers/cables to connect playsmf with other applications. Especially since MIDI devices are typically blocked when opened by one client, it is possible to route additional (secondary slaved) input devices thru playsmf to all open output devices. This allows to hook real or virtual midi controllers (mixer applications, etc.) thru playsmf to all open outputs.
 
@@ -206,5 +207,3 @@ In order to reset midi equipment upon player start and/or exit, you can optional
 In order to store command line arguments with the smf, the player supports sequencer specific meta messages to set and/or override command line arguments. Argument data is stored in 32-bit integer values `<DD>` starting from argument address `<AA>` followed by one or more arguments.
 
 - `<0xff> <length> <0x7f> <0x00> <0xab> <0xcd> <0x00> <AA[31:24]> <AA[23:16]> <AA[15:8]> <AA[7:0]> (<DD[31:24]> <DD[23:16]> <DD[15:8]> <DD[7:0]>)*`
-
-
