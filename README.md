@@ -32,11 +32,11 @@ The player generally supports live session smf recording from the primary midi i
 
 Recording is controlled by command line parameter #8 (0x0ff = off, else enabled). In addition, the parameter controls internal smf recording using a message mask filter in the following binary/hexadecimal format:
 
-	binary format: 0b_0fffffff_0FFFFFFF_e_vvvvvvv_0VVVVVVV
-	fffffff: data mask
-    FFFFFFF: status mask
-    vvvvvvv: data filter
-    VVVVVVV: status filter
+	binary format: 0b_0mmmmmmm_MMMMMMMM_e_vvvvvvv_VVVVVVVV
+	0mmmmmmm: data mask (7 bit)
+    FFFFFFFF: status mask (8 bit)
+    0vvvvvvv: data filter (7 bit)
+    VVVVVVVV: status filter (8 bit)
     e: disable/enable event playing (allows to record internal events w/o playing them)
 
 example argument settings (hex values):
@@ -113,7 +113,22 @@ Interrupt vectors (target Labels in binary / hexadecimal notation):
     0x320..0x32b minor triad root C..B 2nd inversion
 
 ### Interrupt sequence flow transition syncronisation
-In order to guarantee smooth sequence flow transitions, interrupts are only taken at either jump points or certain defined midi events within the sequence. For example those can be metronome click NoteOn messages or specific controller or meta events. This approach makes syncronisation completely independent from fixed time signatures in terms of bars and beats and refers only to so called ***INT*** points - basically sequence points where interrupt transtions are allowed.
+In order to guarantee smooth song sequence flow transitions, interrupts are only taken at either jump marker positions or certain user-defined midi events such as metronome clicks, controller data, meta events, etc. within the song sequence. This approach decouples interrupt syncronisation completely from fixed time signatures or grids in terms of bars, beats, ticks and refers only to so called interrupt (***INT***) positions - basically song positions where interrupt transtions are allowed.
+
+Interrupts are controlled by command line parameter #9 (0x0ff = off, else enabled) using a similar event mask filter scheme as used for recording in the following binary/hexadecimal format:
+
+	binary format: 0b_0mmmmmmm_MMMMMMMM_e_vvvvvvv_VVVVVVVV
+	0mmmmmmm: data mask (7 bit)
+    FFFFFFFF: status mask (8 bit)
+    0vvvvvvv: data filter (7 bit)
+    VVVVVVVV: status filter (8 bit)
+    e: disable/enable event playing (0: use event only for interrupt sync w/o playing)
+
+example argument settings (hex values):
+- 0x00008000 - trigger on all events (used for regular smf playing)
+- 0x7fefa189 - trigger on NoteOn events from channel 9, key 0x21 (metronome klick - e.g. use for styles)
+
+Please note that interrupts are still triggered on Jump position markers even though the interrupt argument might be turned off (0x0ff).
 
 ### Special Jumps - return from interrupt (Jump-1/Jump-3)
 One specific jump type is ***return-from-interrupt***. Actually there are two basic types of sequences: "non-return" (e.g. ending in a infinite loop) or "return" ending with an "return-from-interrupt" jump. Return-type sequences terminate with an immediate jump back to the caller sequence bei either restarting the caller sequence from its interrupt entry point (Jump-1) or from the latest label playing when interrupted (Jump-3).
