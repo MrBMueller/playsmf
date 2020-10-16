@@ -32,11 +32,11 @@ The player generally supports live session smf recording from the primary midi i
 
 Recording is controlled by command line parameter #8 (0x0ff = off, else enabled). In addition, the parameter controls internal smf recording using a message mask filter scheme in the following binary/hexadecimal format:
 
-	binary format: 0b_0mmmmmmm_MMMMMMMM_e_vvvvvvv_VVVVVVVV
+	binary format: 0b_0mmmmmmm_MMMMMMMM_e_fffffff_FFFFFFFF
 	0mmmmmmm: data mask (7 bit)
-    FFFFFFFF: status mask (8 bit)
-    0vvvvvvv: data filter (7 bit)
-    VVVVVVVV: status filter (8 bit)
+    MMMMMMMM: status mask (8 bit)
+    0fffffff: data filter (7 bit)
+    FFFFFFFF: status filter (8 bit)
     e: disable/enable event playing (allows to record internal events w/o playing them)
 
 example argument settings (hex values):
@@ -117,11 +117,11 @@ In order to guarantee smooth song sequence flow transitions, interrupts are only
 
 Interrupts are controlled by command line parameter #9 (0x0ff = off, else enabled) using a similar event mask filter scheme as used for recording in the following binary/hexadecimal format:
 
-	binary format: 0b_0mmmmmmm_MMMMMMMM_e_vvvvvvv_VVVVVVVV
+	binary format: 0b_0mmmmmmm_MMMMMMMM_e_fffffff_FFFFFFFF
 	0mmmmmmm: data mask (7 bit)
-    FFFFFFFF: status mask (8 bit)
-    0vvvvvvv: data filter (7 bit)
-    VVVVVVVV: status filter (8 bit)
+    MMMMMMMM: status mask (8 bit)
+    0fffffff: data filter (7 bit)
+    FFFFFFFF: status filter (8 bit)
     e: disable/enable event playing (0: use event only for interrupt sync w/o playing)
 
 example argument settings (hex values):
