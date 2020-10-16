@@ -30,7 +30,7 @@ In addition SMF Meta-Text-Event 0x9 is supported as well for name based port sel
 ### midi recording
 The player generally supports live session smf recording from the primary midi input port. In addition, the software can also record individually selected events directly from the smf input file while playing. This provides a merged output smf storing mixed internal and external recorded data for further offline processing such as live + style smf down-mixing. Recorded data will be stored into a smf named MyMid*RecordTimeStamp*.mid within the current working directory. That way you can record as many takes as required without deleting older ones for further processing.
 
-Recording is controlled by command line parameter #8 (0x0ff = off, else enabled). In addition, the parameter controls internal smf recording using a message mask filter in the following binary/hexadecimal format:
+Recording is controlled by command line parameter #8 (0x0ff = off, else enabled). In addition, the parameter controls internal smf recording using a message mask filter scheme in the following binary/hexadecimal format:
 
 	binary format: 0b_0mmmmmmm_MMMMMMMM_e_vvvvvvv_VVVVVVVV
 	0mmmmmmm: data mask (7 bit)
