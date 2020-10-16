@@ -1,3 +1,4 @@
+
 # playsmf
 If you have additional questions, remarks, comments, ideas, requests - contact bm3_2000@yahoo.com
 
@@ -25,6 +26,24 @@ Generally there is not much to display since the user should more focus on playi
 ### output MIDI devices
 The player generally allows to play across multiple output devices simultaneously. Typically devices are chosen by SMF Meta-Event 0x20 (port select) for each individual track. Since the player uses those messages to switch beween output devices accordingly, it is valid to switch devices while playing within a sequence. If such port-select events are missing, the player uses the default midi output device.
 In addition SMF Meta-Text-Event 0x9 is supported as well for name based port selection, however it is recommented to use device IDs rather than port names for better across system portability.
+
+### midi recording
+The player generally supports live session smf recording from the primary midi input port. In addition, the software can also record individually selected events directly from the smf input file while playing. This provides a merged output smf storing mixed internal and external recorded data for further offline processing such as live + style smf down-mixing.
+Recording is controlled by command line parameter #8 (0x0ff = off, else enabled). In addition, the parameter controls internal smf recording using a message filter in the following binary/hexadecimal format:
+
+	binary format: 0b_0fffffff_0FFFFFFF_e_vvvvvvv_0VVVVVVV
+	fffffff: data mask
+    FFFFFFF: status mask
+    vvvvvvv: data filter
+    VVVVVVV: status filter
+    e: disable/enable event playing (allows to record internal events w/o playing them)
+
+example argument settings:
+- 0x1 - record only primary input events
+- 0x7ff040b0 - primary input + internal damper pedal events across all channels w/o playing them
+- 0x7ff0c0b0 - primary input + internal damper pedal events across all channels
+- 0xff06ff - primary input + internal marker text events (record meta events)
+- 0xff80f0 - primary input + internal sysex events
 
 ### MIDI-Thru and track-follow mode
 The player generally supports MIDI-Thru functionality with split and multi-layer modes for live sessions. However instead assigning fixed devices/channels to play on, you can assign tracks to follow their current device/channel combinations while playing. This enables dynamic MIDI-Thru (re)assignments during a live session.
