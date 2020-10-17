@@ -1,4 +1,3 @@
-
 # playsmf
 If you have additional questions, remarks, comments, ideas, requests - contact bm3_2000@yahoo.com
 
@@ -6,7 +5,7 @@ playsmf is a small, but powerful Windows (32/64bit) commandline standard midi fi
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img0.png width="100%">
 
-In addition it comes with intrinsic flow control features based on labels, jumps and interrupts defined by smf marker events. This allows to program loops, breaks, fills, intros, outros, etc. In combination with realtime interrupt (sequence transition) control, based on incoming midi data with or without chord recognition, the player can turn into an fully equipped arranger/arpeggiator accompaniement software. However unlike typical arpeggiators or style players, the player doesnt do any (more or less intelligent) event data modification such as transpose, volume adjustments, etc. to the smf midi data and plays strongly the raw data exactly as provided by the smf. This gives full transparency to all transmitted midi data and you know exacly what gets played with each individual chord, however the smf needs to provide individual pattern for all required key/scale/inversion combinations which are played during a live session. Therefore its possible to play individual pre-compiled pattern - for instance with randomized timings/volume/controller/sysex events - for each individual chord.
+In addition it comes with intrinsic flow control features based on labels, jumps and interrupts defined by smf marker events. This allows to program loops, breaks, fills, intros, outros, etc. In combination with realtime interrupt (song sequence transition) control, based on incoming midi data with or without chord recognition, the player can turn into an fully equipped arranger/arpeggiator accompaniement software. However unlike typical arpeggiators or style players, the player doesnt do any (more or less intelligent) event data modification such as transpose, volume adjustments, etc. to the smf midi data and plays strongly the raw data exactly as provided by the smf. This gives full transparency to all transmitted midi data and you know exacly what gets played with each individual chord, however the smf needs to provide individual pattern for all required key/scale/inversion combinations which are played during a live session. Therefore its possible to play individual pre-compiled pattern - for instance with randomized timings/volume/controller/sysex events - for each individual chord.
 On purpose, the player lags for a graphical user interface since everything should be controlled in realtime by external MIDI equipment without taking your hands off the keyboard while playing. This includes direct access to style variations, grouped track mutes/unmutes, start/stop/continue/reset control, etc.
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img4.png width="100%">
@@ -24,7 +23,7 @@ Generally there is not much to display since the user should more focus on playi
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img12.png width="100%">
 
 ### output MIDI devices
-The player generally allows to play across multiple output devices simultaneously. Typically devices are chosen by SMF Meta-Event 0x20 (port select) for each individual track. Since the player uses those messages to switch beween output devices accordingly, it is valid to switch devices while playing within a sequence. If such port-select events are missing, the player uses the default midi output device.
+The player generally allows to play across multiple output devices simultaneously. Typically devices are chosen by SMF Meta-Event 0x20 (port ID select) at the very beginning of each individual track, but in addition the player also allows switching port IDs while playing at any song position. If port-select events are missing, the player uses the default midi output device provided by command line parameter #3.
 In addition SMF Meta-Text-Event 0x9 is supported as well for name based port selection, however it is recommented to use device IDs rather than port names for better across system portability.
 
 ### midi recording
@@ -43,8 +42,13 @@ example argument settings (hex values):
 - 0x1 - record only primary input events
 - 0x7ff040b0 - primary input + internal damper pedal events across all channels w/o playing them
 - 0x7ff0c0b0 - primary input + internal damper pedal events across all channels
-- 0xff06ff - primary input + internal marker text events (record meta events)
+- 0x7fff06ff - primary input + internal marker text events (record meta events)
 - 0xff80f0 - primary input + internal sysex events (maybe used use for sysex data/dump requests)
+
+### supported midi event types (playing, recording)
+Basically all types of midi events including system common (sysex, time code, song select/position, etc.) and system realtime (start, stop, continue, active sensing) events are supported. Since system common (except sysex) and realtime events are not part of the smf specification, they are typically embedded in escape meta events (0xf7). Since the player generally supports such smf events, it is possible to include for instance time code, active sensing or start/stop/continue transport control events into the song sequence for playback.
+
+On the recording side, the player records everything including sysex, system common and system realtime events except midi timecode, timing clock and active sensing. Similar as on the player side, the recorder packs system common and realtime events (which are not part of the smf spec.) into escape meta events. This way you can even record something like start/stop/continue transport control data into the smf.
 
 ### MIDI-Thru and track-follow mode
 The player generally supports MIDI-Thru functionality with split and multi-layer modes for live sessions. However instead assigning fixed devices/channels to play on, you can assign tracks to follow their current device/channel combinations while playing. This enables dynamic MIDI-Thru (re)assignments during a live session.
