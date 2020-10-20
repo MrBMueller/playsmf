@@ -173,7 +173,8 @@ A style-like smf structure starts typically with an initialization sequence at t
 The player exits with different return codes based on the exit scenario.
 
 * 0 regular exit: the player normally reached the sequence end
-* 2 error: the player stopped due to timeout (lost midi equipment connection)
+* 1 error: e.g. file not found or argument error
+* 2 timeout: the player stopped due to midi timeout (lost midi equipment connection)
 * 3 CTRL+PAUSE/BREAK: player was forced to exit from computer keyboard
 * 4 exit: the player was forced to exit from primary midi input (exit label key)
 * 5 last: the player stopped normally after reaching the last sequence label
