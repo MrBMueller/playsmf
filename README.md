@@ -17,6 +17,8 @@ In case you dont know your midi device IDs or names for the correct player setup
 
 The style examples are typically setup with chord recognition left hand across 2 octaves thru keys 36..59 and melody right hand thru keys above 60 (middle C). If required, adjust the transmission midi channel on your primary input device in order to attach to the right smf tracks while playing.
 
+[![](https://img.youtube.com/vi/xDB1_mUJekQ/0.jpg) example video link](https://www.youtube.com/watch?v=xDB1_mUJekQ)
+
 ### console output screen
 Generally there is not much to display since the user should more focus on playing and listen rather than watching the screen. However in some situations it comes handy to track and follow requested sequence transitions. Therefore the console output displays one line for each transition request with additional information such as labels and song/sequence positions for playing and target sequences.
 
