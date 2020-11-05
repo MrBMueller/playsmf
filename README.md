@@ -19,6 +19,20 @@ The style examples are typically setup with chord recognition left hand across 2
 
 [![](https://img.youtube.com/vi/xDB1_mUJekQ/0.jpg) example video link](https://www.youtube.com/watch?v=xDB1_mUJekQ)
 
+https://www.youtube.com/watch?v=jLzvZD7qkvo
+https://www.youtube.com/watch?v=Ahbt5QPF_tg
+https://www.youtube.com/watch?v=2qpwCve10z4
+https://www.youtube.com/watch?v=E8uwvp4kxnw
+https://www.youtube.com/watch?v=7zThYNON17g
+https://www.youtube.com/watch?v=8Hd0g54biWc
+https://www.youtube.com/watch?v=E4mxh2Or7OE
+https://www.youtube.com/watch?v=uI2Kjw_qcV4
+https://www.youtube.com/watch?v=TR1069JXejM
+https://www.youtube.com/watch?v=soGtmCMgepA
+https://www.youtube.com/watch?v=w0LiKwODiIE
+https://www.youtube.com/watch?v=5WDd0XAmTrY
+https://www.youtube.com/watch?v=3SKOt4oED8Y
+
 ### console output screen
 Generally there is not much to display since the user should more focus on playing and listen rather than watching the screen. However in some situations it comes handy to track and follow requested sequence transitions. Therefore the console output displays one line for each transition request with additional information such as labels and song/sequence positions for playing and target sequences.
 
