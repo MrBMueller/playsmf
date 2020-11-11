@@ -174,20 +174,20 @@ static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent->event_time = tim
 
 static void ExpandLabels(struct Label *Labels) { unsigned long LabelNum = _msize(Labels)/sizeof(struct Label), i, j, k, l;
 
-for (i=0; i<LabelNum; i++) { j = (i>>8)&0xf; k = (i>>4)&0x3; l = i&0xf;
- if ((j >= 0x1) && (j <= 0x9) && (l >= 0x1) && (l <= 0xb) && !Labels[i].Event && Labels[i&~0xf].Event) { Labels[i].Event = Labels[i&~0xf].Event; }
- }
+for (i=0; i<LabelNum; i++) { if (!Labels[i].Event) { j = (i>>8)&0xf; k = (i>>4)&0x3; l = i&0xf;
+ if ((j >= 0x1) && (j <= 0x9) && (l >= 0x1) && (l <= 0xb) && Labels[i&~0xf].Event) { Labels[i].Event = Labels[i&~0xf].Event; }
+ }}
 
-for (i=0; i<LabelNum; i++) { j = (i>>8)&0xf; k = (i>>4)&0x3; l = i&0xf;
- if ((j >= 0x1) && (j <= 0x1) && (k >= 0x1) && (k <= 0x1) && !Labels[i].Event && Labels[i&~0x30].Event) { Labels[i].Event = Labels[i&~0x30].Event; }
- if ((j >= 0x2) && (j <= 0x9) && (k >= 0x1) && (k <= 0x3) && !Labels[i].Event && Labels[i&~0x30].Event) { Labels[i].Event = Labels[i&~0x30].Event; }
- }
+for (i=0; i<LabelNum; i++) { if (!Labels[i].Event) { j = (i>>8)&0xf; k = (i>>4)&0x3; l = i&0xf;
+ if ((j >= 0x1) && (j <= 0x1) && (k >= 0x1) && (k <= 0x1) && Labels[i&~0x30].Event) { Labels[i].Event = Labels[i&~0x30].Event; }
+ if ((j >= 0x2) && (j <= 0x9) && (k >= 0x1) && (k <= 0x3) && Labels[i&~0x30].Event) { Labels[i].Event = Labels[i&~0x30].Event; }
+ }}
 
-for (i=0; i<LabelNum; i++) { j = (i>>8)&0xf; k = (i>>4)&0x3; l = i&0xf;
- if ((j == 0x7) && !Labels[i].Event && Labels[i&~0xf00|0x200].Event) { Labels[i].Event = Labels[i&~0xf00|0x200].Event; }
- if ((j == 0x8) && !Labels[i].Event && Labels[i&~0xf00|0x300].Event) { Labels[i].Event = Labels[i&~0xf00|0x300].Event; }
- if ((j == 0x9) && !Labels[i].Event && Labels[i&~0xf00|0x200].Event) { Labels[i].Event = Labels[i&~0xf00|0x200].Event; }
- }
+for (i=0; i<LabelNum; i++) { if (!Labels[i].Event) { j = (i>>8)&0xf; k = (i>>4)&0x3; l = i&0xf;
+ if ((j == 0x7) && Labels[i&~0xf00|0x200].Event) { Labels[i].Event = Labels[i&~0xf00|0x200].Event; }
+ if ((j == 0x8) && Labels[i&~0xf00|0x300].Event) { Labels[i].Event = Labels[i&~0xf00|0x300].Event; }
+ if ((j == 0x9) && Labels[i&~0xf00|0x200].Event) { Labels[i].Event = Labels[i&~0xf00|0x200].Event; }
+ }}
 
 for (i=0; i<LabelNum ; i++) { if (!Labels[i].Event && Labels[i&0xfff].Event) { Labels[i].Event = Labels[i&0xfff].Event; }}
 
