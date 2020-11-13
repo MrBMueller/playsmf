@@ -190,6 +190,12 @@ for (i=0; i<LabelNum; i++) { if (!Labels[i].Event) { unsigned long j = (i>>8)&0x
 
 for (i=0; i<LabelNum ; i++) { if (!Labels[i].Event && Labels[i&0xfff].Event) { Labels[i].Event = Labels[i&0xfff].Event; }}
 
+return; }
+
+//----------------------------------------------------------------------------//
+
+static void AlignLabels(struct Label *Labels) { unsigned long LabelNum = _msize(Labels)/sizeof(struct Label), i;
+
 for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { unsigned long j; unsigned char a = 0, b = 0, c = 0;
  for (j=0; j<LabelNum; j++) { if (Labels[i].Event == Labels[j].Event) { a |= Labels[j].Ret; b |= Labels[j].Now; c |= Labels[j].ReT; }}
  for (j=0; j<LabelNum; j++) { if (Labels[i].Event == Labels[j].Event) { Labels[j].Ret = a;  Labels[j].Now = b;  Labels[j].ReT = c;  }}
@@ -483,6 +489,8 @@ MidiEvents[i].Tempo    = Tempo & 0x00ffffff;
 MidiEvents[i].TimeSigN = TimeSig >> 24;
 MidiEvents[i].TimeSigD = TimeSig >> 16;
 
+ExpandLabels(Labels);
+
 while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInfo = &TrkInfo[MidiEvents[i].Track]; MidiEvents[i].Ch = (MidiEvents[i].Out >> 4) & 0xf;
  if (MidiEvents[i].FlwCtl & 2) { MidiEvents[i].FlwCtl &= ~4; MidiEvents[i].FlwCtl |= 1;
   if (((unsigned long)MidiEvents[i].JumpEvent < LabelNum) && (Labels[(unsigned long)MidiEvents[i].JumpEvent].Event)) { if (!(k & 0x100)) { k = 0; } MidiEvents[i].JumpEvent = Labels[(unsigned long)MidiEvents[i].JumpEvent].Event; }
@@ -502,14 +510,14 @@ while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInf
  if (MidiEvents[i].event_time == MidiEvents[i+1].event_time && MidiEvents[i+1].FlwCtl > 1) { MidiEvents[i].MsgCtl = 0; }
  }
 
-EntryLabel->ReT = ExitLabel->ReT = 8; if (!(args[9] & 0xf000f0)) { EntryLabel->Now = ExitLabel->Now = 1; }
+EntryLabel->ReT = ExitLabel->ReT = 8; if (!(args[9] & 0xf000f0)) { EntryLabel->Now = ExitLabel->Now = 1; } AlignLabels(Labels);
 
 for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { if (Labels[i].Event->FlwCtl == 4) { j = Labels[i].Event-MidiEvents;
  k = 0; while (MidiEvents[j+k+1].EventData && (MidiEvents[j+k+1].event_time == MidiEvents[j].event_time)) { k++; }
  l = MidiEvents[j+k].FlwCtl; MidiEvents[j+k].FlwCtl = MidiEvents[j].FlwCtl; MidiEvents[j].FlwCtl = l; MidiEvents[j+k].JumpEvent = MidiEvents[j].JumpEvent;
  }}}
 
-if (!FirstLabel) { FirstLabel = EntryLabel; } if (!LastLabel) { LastLabel = ExitLabel; } ExpandLabels(Labels);
+if (!FirstLabel) { FirstLabel = EntryLabel; } if (!LastLabel) { LastLabel = ExitLabel; }
 
 for (j=0; j<MutesNum; j++) { Mutes[j*(TrkNum+1)] |= (MutesRet>>j)&1; for (i=0; i<TrkNum; i++) { Mutes[j*(TrkNum+1)+1+i] ^= ((MutesInv2>>j)&1)<<3; }}
 
