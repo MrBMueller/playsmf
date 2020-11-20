@@ -463,7 +463,8 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   MidiEvents[i].EventData   = 0x000000f0;
   MidiEvents[i].data_length = MidiFileSysexEvent_getDataLength(midi_file_event);
   MidiEvents[i].data_buffer = MidiFileSysexEvent_getData(midi_file_event);
-  if (MidiEvents[i].data_length > 0) { MidiEvents[i].EventData = MidiEvents[i].data_buffer[0]; } if (MidiEvents[i].EventData == 0xf7) { MidiEvents[i].data_length--; MidiEvents[i].data_buffer++; }
+  if (MidiEvents[i].data_length) { MidiEvents[i].EventData = MidiEvents[i].data_buffer[0]; } if (MidiEvents[i].EventData == 0xf7) { MidiEvents[i].data_length--; MidiEvents[i].data_buffer++; }
+  if (MidiEvents[i].data_length && MidiEvents[i].data_length < 4 && MidiEvents[i].data_buffer[0] != 0xf0) { unsigned long a = MidiEvents[i].data_length, b = 0; while (a--) { b = b << 8 | MidiEvents[i].data_buffer[a]; } if (!(b & 0x808000)) { MidiEvents[i].EventData = b; MidiEvents[i].MsgCtl = 2; }}
   if ((MidiEvents[i].EventData & (args[9]>>16)) == (args[9] & 0x7fff)) { MidiEvents[j].FlwCtl |= 1; MidiEvents[i].MsgCtl *= (args[9]>>15) & 1; }
   }
   else { unsigned long EventIdx;
