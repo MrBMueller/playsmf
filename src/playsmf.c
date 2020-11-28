@@ -235,7 +235,7 @@ if (!RecEvent->EventData && !RecEvent->Event) { unsigned long i = -1, data_lengt
    default: if (RecEvents[i].Event) {
    switch (RecEvents[i].EventData & 0xff) {
     case 0x7f: MidiFileTrack_createMetaEvent( track0, t, RecEvents[i].EventData>>8, RecEvents[i].Event->data_length  , RecEvents[i].Event->data_buffer  ); break;
-    case 0x7e:
+    case 0x77:
     case 0xf0: MidiFileTrack_createSysexEvent(track0, t,                            RecEvents[i].Event->data_length  , RecEvents[i].Event->data_buffer  ); break;
     default  : MidiFileTrack_createSysexEvent(track0, t,                            RecEvents[i].Event->data_length+1, RecEvents[i].Event->data_buffer-1); } break; }
    switch (RecEvents[i].EventData & 0xff) {
@@ -463,7 +463,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   MidiEvents[i].MsgCtl      = 1;
   MidiEvents[i].data_length = MidiFileSysexEvent_getDataLength(midi_file_event);
   MidiEvents[i].data_buffer = MidiFileSysexEvent_getData(midi_file_event);
-  MidiEvents[i].EventData   = MidiEvents[i].data_buffer[0]; if (MidiEvents[i].EventData == 0xf7 && MidiEvents[i].data_length < 2) { MidiEvents[i].EventData = 0x7e; }
+  MidiEvents[i].EventData   = MidiEvents[i].data_buffer[0]; if (MidiEvents[i].EventData == 0xf7 && MidiEvents[i].data_length < 2) { MidiEvents[i].EventData = 0x77; }
   if (MidiEvents[i].EventData == 0xf7) { MidiEvents[i].data_length--; MidiEvents[i].data_buffer++;
    if (MidiEvents[i].data_length < 4) { unsigned long a = MidiEvents[i].data_length, b = 0; while (a--) { b = b << 8 | MidiEvents[i].data_buffer[a]; } if (!(b & 0x808000)) { MidiEvents[i].EventData = b; MidiEvents[i].MsgCtl = 2; }}
    }
