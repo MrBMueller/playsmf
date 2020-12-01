@@ -464,7 +464,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   MidiEvents[i].data_buffer = MidiFileSysexEvent_getData(midi_file_event);
   MidiEvents[i].EventData   = MidiEvents[i].data_buffer[0] & 0x0000007f;
   if (MidiEvents[i].EventData == 0x77) { unsigned long a = --MidiEvents[i].data_length, b = 0; MidiEvents[i].data_buffer++; if (!a) { MidiEvents[i].MsgCtl = 0; }
-   if (a && a < 4) { while (a--) { b = b << 8 | MidiEvents[i].data_buffer[a]; } if (!(b & 0x808000)) { MidiEvents[i].EventData = b; MidiEvents[i].MsgCtl = 2; }}
+   if (a < 4) { while (a--) { b = b << 8 | MidiEvents[i].data_buffer[a]; } if ((b & 0x808080) == 0x80 && (b & 0xff) != 0xf0 && (b & 0xff) != 0xf7) { MidiEvents[i].EventData = b; MidiEvents[i].MsgCtl = 2; }}
    }
   }
   else {
@@ -520,9 +520,9 @@ if (!FirstLabel) { FirstLabel = EntryLabel; } if (!LastLabel) { LastLabel = Exit
 
 for (j=0; j<MutesNum; j++) { Mutes[j*(TrkNum+1)] |= (MutesRet>>j)&1; for (i=0; i<TrkNum; i++) { Mutes[j*(TrkNum+1)+1+i] ^= ((MutesInv2>>j)&1)<<3; }}
 
-for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { for (j=0; j<=0xf; j++) {
- for (k=12; k<_msize(args)/sizeof(signed long); k++) { if (((args[k]>>24) == 1) || ((args[k]>>24) == 3)) { midiOutShortMsg(Port2Out[i].h, args[k]&0x7f7fff | j); }}
- }}}
+for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { for (k=12; k<_msize(args)/sizeof(signed long); k++) { if (((args[k]>>24) == 1) || ((args[k]>>24) == 3)) {
+ unsigned long a = 0, b = 0xf; if ((args[k] & 0xf0) >= 0xf0) { b = a = args[k] & 0xf; } for (j=a; j<=b; j++) { midiOutShortMsg(Port2Out[i].h, args[k]&0xffffff | j); }
+ }}}}
 
 for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } SetEntryLabel
 
@@ -571,9 +571,9 @@ ExitVal |= 1; Exit2: ExitVal |= 2; Exit0: printf(" done. (%x)\n", ExitVal); Acti
 while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
 while (LatestPendingI) {                                                                                                                                         LatestPendingI = LatestPendingI->Prev; }
 
-for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { for (j=0; j<=0xf; j++) {
- for (k=12; k<_msize(args)/sizeof(signed long); k++) { if (((args[k]>>24) == 2) || ((args[k]>>24) == 3)) { midiOutShortMsg(Port2Out[i].h, args[k]&0x7f7fff | j); }}
- } midiOutClose(Port2Out[i].h); }}
+for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { for (k=12; k<_msize(args)/sizeof(signed long); k++) { if (((args[k]>>24) == 2) || ((args[k]>>24) == 3)) {
+ unsigned long a = 0, b = 0xf; if ((args[k] & 0xf0) >= 0xf0) { b = a = args[k] & 0xf; } for (j=a; j<=b; j++) { midiOutShortMsg(Port2Out[i].h, args[k]&0xffffff | j); }
+ }} midiOutClose(Port2Out[i].h); }}
 
 for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInReset(Port2In[i].h); for (j=0; j<sizeof(Port2In[i].b)/sizeof(struct MidiBuf); j++) { midiInUnprepareHeader(Port2In[i].h, &Port2In[i].b[j].h, sizeof(MIDIHDR)); } midiInClose(Port2In[i].h); }} if (ExitVal < 3) { Sleep(TimeOut); } //goto start;
 
