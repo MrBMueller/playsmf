@@ -463,8 +463,8 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   MidiEvents[i].data_length = MidiFileSysexEvent_getDataLength(midi_file_event);
   MidiEvents[i].data_buffer = MidiFileSysexEvent_getData(midi_file_event);
   MidiEvents[i].EventData   = MidiEvents[i].data_buffer[0] & 0x0000007f;
-  if (MidiEvents[i].EventData == 0x77) { unsigned long a = --MidiEvents[i].data_length, b = 0; MidiEvents[i].data_buffer++; if (!a) { MidiEvents[i].MsgCtl = 0; }
-   if (a < 4) { while (a--) { b = b << 8 | MidiEvents[i].data_buffer[a]; } if ((b & 0x808080) == 0x80 && (b & 0xff) != 0xf0 && (b & 0xff) != 0xf7) { MidiEvents[i].EventData = b; MidiEvents[i].MsgCtl = 2; }}
+  if (MidiEvents[i].EventData == 0x77) { unsigned long a = --MidiEvents[i].data_length, b = 0; MidiEvents[i].data_buffer++; if (a < 4) { while (a--) { b = b << 8 | MidiEvents[i].data_buffer[a]; }}
+   MidiEvents[i].MsgCtl *= MidiEvents[i].data_length > 0; if ((b & 0x808080) == 0x80 && (b & 0xff) != 0xf0 && (b & 0xff) != 0xf7) { MidiEvents[i].EventData = b; MidiEvents[i].MsgCtl = 2; }
    }
   }
   else {
