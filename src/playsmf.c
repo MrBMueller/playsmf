@@ -175,17 +175,17 @@ static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent->event_time = tim
 static void ExpandLabels(struct Label *Labels) { unsigned long LabelNum = _msize(Labels)/sizeof(struct Label), i;
 
 for (i=0; i<LabelNum; i++) { if (!Labels[i].Event) { unsigned long j = (i>>8)&0xf, k = (i>>4)&0x3, l = i&0xf;
- if (j >= 0x1 && j <= 0x9 && l >= 0x1 && l <= 0xb) { Labels[i].Event = Labels[i&~0xf].Event; }
+ if (j >= 0x1 && j <= 0xa && l >= 0x1 && l <= 0xb) { Labels[i].Event = Labels[i&~0xf].Event; }
  }}
 
 for (i=0; i<LabelNum; i++) { if (!Labels[i].Event) { unsigned long j = (i>>8)&0xf, k = (i>>4)&0x3, l = i&0xf;
  if (j >= 0x1 && j <= 0x1 && k >= 0x1 && k <= 0x1
-  || j >= 0x2 && j <= 0x9 && k >= 0x1 && k <= 0x3) { Labels[i].Event = Labels[i&~0x30].Event; }
+  || j >= 0x2 && j <= 0xa && k >= 0x1 && k <= 0x3) { Labels[i].Event = Labels[i&~0x30].Event; }
  }}
 
 for (i=0; i<LabelNum; i++) { if (!Labels[i].Event) { unsigned long j = (i>>8)&0xf, k = (i>>4)&0x3, l = i&0xf;
  if (j == 0x7 || j == 0x9) { Labels[i].Event = Labels[i&~0xf00|0x200].Event; }
- if (j == 0x8)             { Labels[i].Event = Labels[i&~0xf00|0x300].Event; }
+ if (j == 0x8 || j == 0xa) { Labels[i].Event = Labels[i&~0xf00|0x300].Event; }
  }}
 
 for (i=0; i<LabelNum ; i++) { if (!Labels[i].Event && Labels[i&0xfff].Event) { Labels[i].Event = Labels[i&0xfff].Event; }}
@@ -299,7 +299,8 @@ static unsigned short  Intervals3[][5] = {{0x120, 0, 0, 0,  0},
                                           {0x300, 0, 3, 7,  0}, {0x300, 0, 3, 7,  3}, {0x300, 0, 3, 7,  7},
                                           {0x700, 0, 4, 7, 11},
                                           {0x800, 0, 3, 7, 10},
-                                          {0x900, 0, 4, 7, 10}};
+                                          {0x900, 0, 4, 7, 10},
+                                          {0xa00, 0, 3, 7, 11}};
 
 static   signed long   DefArgs[] = {0, 0, -1, 0, 0, -1, -1, 0, 0x0ff, 0x00008000, 21, 22, 36, 59};
 
