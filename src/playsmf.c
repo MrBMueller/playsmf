@@ -172,6 +172,18 @@ static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent->event_time = tim
 
 //----------------------------------------------------------------------------//
 
+static unsigned long IntLabel(unsigned long i) { unsigned long a, b, c, z = 0; i &= 0xfff;
+
+for (b = 0x00; b <= 0x80; b += 0x80) { if (i >= (b|0x00) && i <= (b|0x7f)) { z |= 1; }
+
+ for (a = 0x100; a <= 0x600; a += 0x100) { for (c = 0x00; c <= 0x20; c += 0x10) { if (i >= (a|b|c|0x0) && i <= (a|b|c|0xb)) { z |= 1; }}}
+ for (a = 0x700; a <= 0xa00; a += 0x100) { for (c = 0x00; c <= 0x30; c += 0x10) { if (i >= (a|b|c|0x0) && i <= (a|b|c|0xb)) { z |= 1; }}}
+ }
+
+return(z); }
+
+//----------------------------------------------------------------------------//
+
 static void ExpandLabels(struct Label *Labels) { unsigned long LabelNum = _msize(Labels)/sizeof(struct Label), i;
 
 for (i=0; i<LabelNum; i++) { if (!Labels[i].Event) { unsigned long j = (i>>8)&0xf, k = (i>>4)&0x3, l = i&0xf;
@@ -425,6 +437,12 @@ Port2In[k].s = midiInOpen(&Port2In[k].h, k, (unsigned long)MidiInProc1, (unsigne
 strcpy(midi_i_caps.szPname, ""); midiInGetDevCaps(k, &midi_i_caps, sizeof(midi_i_caps)); printf("i%2d %x '%s'\n", k, Port2In[k].s, midi_i_caps.szPname);
 for (j=0; j<sizeof(Port2In[k].b)/sizeof(struct MidiBuf); j++) { midiInPrepareHeader(Port2In[k].h, &Port2In[k].b[j].h, sizeof(MIDIHDR)); midiInAddBuffer(Port2In[k].h, &Port2In[k].b[j].h, sizeof(MIDIHDR)); }}}
 
+for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_file_event = MidiFileEvent_getNextEventInFile(midi_file_event)) {
+ if (MidiFileEvent_getType(midi_file_event) == MIDI_FILE_EVENT_TYPE_META && MidiFileMetaEvent_getNumber(midi_file_event) == 0x06) { unsigned char *p0 = MidiFileMetaEvent_getData(midi_file_event); //marker
+  while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); if ((v&0xfff) != 0xfff && v >= 0) { Labels[v].Event = &MidiEvents[0]; }}
+  }
+ }
+
 i = j = tempo_event_tick = tick = 0; tempo_event_time = 0; FirstLabel = LastLabel = NULL; Tempo = Tempo0 = 0x0107a120; TimeSig = TimeSig0 = 0x04021888; KeySig = KeySig0 = 0x00010000;
 for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_file_event = MidiFileEvent_getNextEventInFile(midi_file_event)) {
  if (MidiFileEvent_getTick(midi_file_event) != tick) { j = i; tick = MidiFileEvent_getTick(midi_file_event); } while ((i > j) && !MidiEvents[i-1].MsgCtl) { i--; }
@@ -455,7 +473,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
    while (p1 = strstr(p1, KW3)) { signed long v = strtol(p1+sizeof(KW3)-1, &p1, 0); unsigned long t = 0; if (!v) { v = MutesInv1; } if (v == -1) { v = MutesInv;  } while (v) { if (v&1) { Mutes[t*(TrkNum+1)+1+MidiEvents[i].Track] ^= 0x08; } t++; v >>= 1; }}
    }
   if (MidiEvents[i].EventData == 0x0000067f) { unsigned char *p0 = MidiEvents[i].data_buffer, *p1; p1 = p0; //marker
-   while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); unsigned long t = j;                                                MidiEvents[t].FlwCtl |= 4; if ((v&0xfff) == 0xfff || v < 0) { v = (LastLabel?LastLabel->Idx:0) & ~0xfff | v & 0xfff; while (Labels[v].Event) { v--; }} (LastLabel = &Labels[v])->Event = &MidiEvents[t]; if (!FirstLabel) { FirstLabel = LastLabel; } for (k=t; k<=i; k++) { MidiEvents[k].Label = LastLabel; } if (p0 == strstr(p0, "i")) { LastLabel->Now = 1; p0++; } if (p0 == strstr(p0, "r")) { LastLabel->ReT = 8; }}
+   while (p0 = strstr(p0, KW0)) { signed long v = strtol(p0+sizeof(KW0)-1, &p0, 0); unsigned long t = j;                                                MidiEvents[t].FlwCtl |= 4; if ((v&0xfff) == 0xfff || v < 0) { unsigned long a = v = (LastLabel?LastLabel->Idx:0) & ~0xfff | v & 0xfff; while (a & 0xfff && (Labels[a].Event || IntLabel(a))) { a--; } if (a & 0xfff) { v = a; } else { printf("warning: autolabel overflow!\n"); }} (LastLabel = &Labels[v])->Event = &MidiEvents[t]; if (!FirstLabel) { FirstLabel = LastLabel; } for (k=t; k<=i; k++) { MidiEvents[k].Label = LastLabel; } if (p0 == strstr(p0, "i")) { LastLabel->Now = 1; p0++; } if (p0 == strstr(p0, "r")) { LastLabel->ReT = 8; }}
    while (p1 = strstr(p1, KW1)) { signed long v = strtol(p1+sizeof(KW1)-1, &p1, 0); unsigned long t = j; while (t<i && MidiEvents[t].FlwCtl&2) { t++; } MidiEvents[t].FlwCtl |= 2; if (v == -3) { v++; } MidiEvents[t].JumpEvent = (struct MidiEvent*)v; if (p1 == strstr(p1, ">|")) { MidiEvents[t].FlwCtl |= 0x40; } else if (p1 == strstr(p1, ">>")) { MidiEvents[t].FlwCtl |= 0x20; } else if (p1 == strstr(p1, ">")) { MidiEvents[t].FlwCtl |= 8; } else if (p1 == strstr(p1, "v")) { MidiEvents[t].FlwCtl |= 0x10; }}
    }
   }
