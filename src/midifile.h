@@ -57,12 +57,8 @@
  *     be reattached to the same or a different file by setting its track
  *     property, or explicitly deleted.
  *
- * 13. Events can be marked as "selected", but while this is convenient to do
- *     in memory, there is no standard for how it should be expressed in a file
- *     on disk.  A mechanism for transforming selection flags into text events
- *     is provided as an extension.  This will produce files that interoperate
- *     perfectly with other MIDI software, but the other software is unlikely
- *     to recognize the text events as signifying anything special.
+ * 13. Events can be marked as "selected" but this is only meaningful in
+ *     memory; it is not persisted to disk.
  */
 
 #ifdef __cplusplus
@@ -155,6 +151,7 @@ int MidiFile_getTickFromHourMinuteSecondString(MidiFile_t midi_file, char *hour_
 char *MidiFile_getHourMinuteSecondFrameStringFromTick(MidiFile_t midi_file, long tick);
 int MidiFile_getTickFromHourMinuteSecondFrameString(MidiFile_t midi_file, char *hour_minute_second_frame_string);
 long MidiFile_getTickFromMarker(MidiFile_t midi_file, char *marker);
+long MidiFile_getTickFromTimeString(MidiFile_t midi_file, char *time_string);
 
 MidiFileEvent_t MidiFile_getFirstEventForTick(MidiFile_t midi_file, long tick);
 MidiFileEvent_t MidiFile_getLastEventForTick(MidiFile_t midi_file, long tick);
