@@ -236,6 +236,7 @@ if (!RecEvent->EventData && !RecEvent->Event) { unsigned long i = -1, data_lengt
  while (!(ExitVal&4) && (RecEvent-- > RecEvents) && (((RecEvent->EventData & 0xe0) == 0x80) && (((RecEvent->EventData>>8) & 0x7f) == (Label0->Idx&0xfff)) || RecEvent->Event)) { RecEvent->EventData = 0x00000000; }
  while (RecEvents[++i].EventData || RecEvents[i].Event) { unsigned long t = (RecEvents[i].event_time-RecEvents[0].event_time)*c; if (RecEvents[i].Event) { RecEvents[i].EventData = RecEvents[i].Event->EventData; } else { RecNum++; }
   if (RecEvents[i].Event && RecEvents[i].Event->data_buffer && (RecEvents[i].EventData & 0xf0) >= 0x80 && (RecEvents[i].EventData & 0xf0) <= 0xe0) { RecEvents[i].EventData = 0x77; }
+  if (RecEvents[i].EventData == 0x2f7f) { RecEvents[i].EventData = 0x7f7f; }
   switch (RecEvents[i].EventData & 0xf0) {
    case 0x80: MidiFileTrack_createNoteOffEvent(        track1, t, RecEvents[i].EventData&0xf, (RecEvents[i].EventData>>8)&0x007f , (RecEvents[i].EventData>>16)&0x7f); break;
    case 0x90: MidiFileTrack_createNoteOnEvent(         track1, t, RecEvents[i].EventData&0xf, (RecEvents[i].EventData>>8)&0x007f , (RecEvents[i].EventData>>16)&0x7f); break;
