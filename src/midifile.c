@@ -880,8 +880,8 @@ static MidiFile_t load_midi_file(MidiFileIO_t io)
 								if (number == 0x2F)
 								{
 									MidiFileTrack_createMetaEvent(track, tick, number, data_length, data_buffer); //bmr
-									MidiFileTrack_setEndTick(track, tick);
-									at_end_of_track = 1;
+									//MidiFileTrack_setEndTick(track, tick);
+									//at_end_of_track = 1;
 								}
 								else
 								{
