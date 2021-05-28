@@ -49,10 +49,10 @@ Recording is controlled by command line parameter #8 (0x0ff = off, else enabled)
 
 	binary format: 0b_0mmmmmmm_MMMMMMMM_e_fffffff_FFFFFFFF
 	0mmmmmmm: data mask (7 bit)
-    MMMMMMMM: status mask (8 bit)
-    0fffffff: data filter (7 bit)
-    FFFFFFFF: status filter (8 bit)
-    e: disable/enable event playing (allows to record internal events w/o playing them)
+	MMMMMMMM: status mask (8 bit)
+	0fffffff: data filter (7 bit)
+	FFFFFFFF: status filter (8 bit)
+	e: disable/enable event playing (allows to record internal events w/o playing them)
 
 example argument settings (hex values):
 - 0x1 - record only primary input events
@@ -104,7 +104,6 @@ Jumps are basically branches jumping immediately to target address labels. The t
 Interrupts are basically breaks stopping the current midi flow by jumping to defined target address labels. They are typically requested by external MIDI (NoteOn/Off) events either directly by single keys or thru the chord recognition module. Since both NoteOn and -Off events can request individual interrupts with different target address labels, its possible to trigger different sequences by either pressing keys down or releasing them.
 
 Interrupt vectors (target Labels in binary / hexadecimal notation):
-    
     general binary vector structure: 0bvvvvttttUiiirrrr
      vvvv:variation
      tttt:key/chord-type
@@ -115,12 +114,17 @@ Interrupt vectors (target Labels in binary / hexadecimal notation):
       0x4:sus2 triad
       0x5:diminished triad
       0x6:augmented triad
-      0x7..0xe: unused (reserved for extensions)
+      0x7:maj7
+      0x8:m7
+      0x9:7
+      0xa:mmaj7
+      0xb..0xe: unused (reserved for extensions)
       0xf:internally used for auto-labels
      U: 0:key down; 1: key up
      iii:inversion (0: root down)
      rrrr:root (0x0..0xb; C..B)
     
+    #decoded value examples
     0x000..0x07f single key pressed down w/o chord recognition
     0x100..0x10b 5th root C..B no inversion
     0x110..0x11b 5th root C..B inverted
@@ -139,10 +143,10 @@ Interrupts are controlled by command line parameter #9 (0x0ff = off, else enable
 
 	binary format: 0b_0mmmmmmm_MMMMMMMM_e_fffffff_FFFFFFFF
 	0mmmmmmm: data mask (7 bit)
-    MMMMMMMM: status mask (8 bit)
-    0fffffff: data filter (7 bit)
-    FFFFFFFF: status filter (8 bit)
-    e: disable/enable event playing (0: use event only for interrupt sync w/o playing)
+	MMMMMMMM: status mask (8 bit)
+	0fffffff: data filter (7 bit)
+	FFFFFFFF: status filter (8 bit)
+	e: disable/enable event playing (0: use event only for interrupt sync w/o playing)
 
 example argument settings (hex values):
 - 0x00008000 - trigger on all events (used for regular smf playing)
@@ -246,7 +250,7 @@ Defines a midi-thru zone with the following mantadory attributes/parameters:
  - incoming channel messages including controller, pitch-bend, program-change, etc. are generally routed to active zones/tracks only. this allows to change selectively patches, volumes, pannings, etc. for active zones only while playing
  - exceptions are foot/pedal controller such as soft, sostenuto and sustain which are generally sent across all defined zones/tracks simultaneously
  - tracks can get dynamically re-assigned while playing by changing the incoming midi channel. to enable this option, `<Channel>` needs to be <= -2. in this case, the received channel is added to the target tracks.
- 
+
 #### port/device mapping
 If the smf contains port-select meta-events where port numbers doesnt match to target device-IDs, you can apply additional port->device mappings.
 - `<0x0001ppDD>` maps smf-port `<pp>` to device `<DD>`
