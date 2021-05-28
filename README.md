@@ -124,7 +124,6 @@ Interrupt vectors (target Labels in binary / hexadecimal notation):
      iii:inversion (0: root down)
      rrrr:root (0x0..0xb; C..B)
     
-    #decoded value examples
     0x000..0x07f single key pressed down w/o chord recognition
     0x100..0x10b 5th root C..B no inversion
     0x110..0x11b 5th root C..B inverted
