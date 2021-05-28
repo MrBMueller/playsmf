@@ -104,6 +104,9 @@ Jumps are basically branches jumping immediately to target address labels. The t
 Interrupts are basically breaks stopping the current midi flow by jumping to defined target address labels. They are typically requested by external MIDI (NoteOn/Off) events either directly by single keys or thru the chord recognition module. Since both NoteOn and -Off events can request individual interrupts with different target address labels, its possible to trigger different sequences by either pressing keys down or releasing them.
 
 Interrupt vectors (target Labels in binary / hexadecimal notation):
+
+
+
     general binary vector structure: 0bvvvvttttUiiirrrr
      vvvv:variation
      tttt:key/chord-type
@@ -123,7 +126,6 @@ Interrupt vectors (target Labels in binary / hexadecimal notation):
      U: 0:key down; 1: key up
      iii:inversion (0: root down)
      rrrr:root (0x0..0xb; C..B)
-    
     0x000..0x07f single key pressed down w/o chord recognition
     0x100..0x10b 5th root C..B no inversion
     0x110..0x11b 5th root C..B inverted
