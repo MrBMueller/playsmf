@@ -168,7 +168,7 @@ static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long
 
 //----------------------------------------------------------------------------//
 
-static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent->event_time = timeGetTime(); if (dwCtrlType) { V0 = ExitLabel->Idx; ExitVal |= 4; } else { V0 = EntryLabel->Idx; } V1 = -1; SneakPending = 0; MyMacro0 return(TRUE); }
+static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent->event_time = timeGetTime(); if (dwCtrlType) { V0 = ExitLabel->Idx; ExitVal |= 4; } else { V0 = EntryLabel->Idx; } V1 = -1; SneakPending = 0; MyMacro0 if (dwCtrlType >= 2) { ExitVal |= 8; Sleep(4000); return(FALSE); } return(TRUE); }
 
 //----------------------------------------------------------------------------//
 
@@ -586,7 +586,7 @@ while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*
 
  MidiEvent = MidiEvent->NextEvent; FlwMsk = 0; if (current_time+t > WatchDogTimeOut) { WatchDogTimeOut = current_time+t+TimeOut; if (Dead) { goto Exit0; } Dead = 1; }
  }
-ExitVal |= 1; Exit2: ExitVal |= 2; Exit0: printf(" done. (%x)\n", ExitVal); Active = 0; for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStop(Port2In[i].h); }} SetConsoleCtrlHandler(HandlerRoutine, FALSE); if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeEndPeriod(args[2]&0xff); }
+ExitVal |= 1; Exit2: ExitVal |= 2; Exit0: printf(" done. (%x)\n", ExitVal); Active = 0; for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStop(Port2In[i].h); }} if (ExitVal < 8) { SetConsoleCtrlHandler(HandlerRoutine, FALSE); } if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeEndPeriod(args[2]&0xff); }
 
 while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
 while (LatestPendingI) {                                                                                                                                         LatestPendingI = LatestPendingI->Prev; }
