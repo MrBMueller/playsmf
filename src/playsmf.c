@@ -600,7 +600,7 @@ for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { 
 CloseHandle(signalling_object0); CloseHandle(signalling_object1); saveMidiEventsToFile(args, MidiFile_getResolution(midi_file), Tempo0, TimeSig0, KeySig0, RecEvents, RecEvent, ExitVal, Label0);
 
                                                                                      i = 0;   //regular
- if      ( ExitVal & 8                                                           ) { i = 6; } //close
+if       ( ExitVal & 8                                                           ) { i = 6; } //close
  else if ( ExitVal & 4                                                           ) { i = 3; } //CTRL+PAUSE/BREAK
  else if ((ExitVal & 3) < 3                                                      ) { i = 2; } //timeout
  else if (Label0->Event != EntryLabel->Event && Label0->Event == ExitLabel->Event) { i = 4; } //exit
