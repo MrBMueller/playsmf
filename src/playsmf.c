@@ -107,7 +107,7 @@ static unsigned char Inversions[12] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x10,
 static void CALLBACK MidiInProc(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { switch (wMsg) { case MIM_DATA: switch (dwParam1 & 0xf0) {
 
 case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { Dead = 0; return; } Key1 = &Keys[dwParam1 & 0xf][V0]; i = -1;
- while ((Thru = &Key1->Thrus[++i])->Trk) { if (*Thru->Trk && (*Thru->Trk)->Ch < 0x10) { ThruE = Thru->Pending = *Thru->Trk; if (Thru->Delay) { Sleep(Thru->Delay); }
+ while ((Thru = &Key1->Thrus[++i])->Trk) { if ((ThruE = *Thru->Trk) && ThruE->Ch < 16) { Thru->Pending = *Thru->Trk; if (Thru->Delay) { Sleep(Thru->Delay); }
   midiOutShortMsg(ThruE->midi_out, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); }}
  if (!(PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel = V1;
  switch (Key1->Zone) { case 1: if (LatestPendingI) { LatestPendingI->Next = PendingI; } PendingI->Prev = LatestPendingI; (LatestPendingI = PendingI)->Next = NULL;
@@ -130,8 +130,8 @@ case 0x80: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16;             
  MyMacro0 } RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; Dead = 0; return;
 
 case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: RecEvent->event_time = timeGetTime(); i = -1;
- switch (dwParam1 & 0x7ff0) { case 0x40b0: case 0x42b0: case 0x43b0: while (Thrus[c=dwParam1&0xf][++i])      { if ((ThruE = *Thrus[c][i]) && ThruE->Ch < 0x10) { midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch); }} break;
-                              default:                               while ((Thru = &Key1->Thrus[++i])->Trk) { if ((ThruE = *Thru->Trk  ) && ThruE->Ch < 0x10) { midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch); }}}
+ switch (dwParam1 & 0x7ff0) { case 0x40b0: case 0x42b0: case 0x43b0: while (Thrus[c=dwParam1&0xf][++i])      { if ((ThruE = *Thrus[c][i]) && ThruE->Ch < 16) { midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch); }} break;
+                              default:                               while ((Thru = &Key1->Thrus[++i])->Trk) { if ((ThruE = *Thru->Trk  ) && ThruE->Ch < 16) { midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch); }}}
  RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; Dead = 0; return;
 
 default: switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: Dead = 0; return; }
@@ -148,7 +148,7 @@ case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 //----------------------------------------------------------------------------//
 
 static void CALLBACK MidiInProc1(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { midiInGetID(hMidiIn, &i1); i1 = InPortOrder[i1]; switch (wMsg) {
-case MIM_DATA: if ((dwParam1&0xff) < 0xf0) { if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Ch < 0x10) { midiOutShortMsg(ThruE1->midi_out, dwParam1 & 0xfffffff0 | ThruE1->Ch); }}
+case MIM_DATA: if ((dwParam1&0xff) < 0xf0) { if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Ch < 16) { midiOutShortMsg(ThruE1->midi_out, dwParam1 & 0xfffffff0 | ThruE1->Ch); }}
                                       else { switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: return; default: printf(" \n1%x", dwParam1); }} return;
 case MIM_LONGDATA: if (((MIDIHDR*)dwParam1)->dwBytesRecorded && Active) {
  i1 = ((MIDIHDR*)dwParam1)->dwBufferLength; ((MIDIHDR*)dwParam1)->dwBufferLength = ((MIDIHDR*)dwParam1)->dwBytesRecorded; midiOutLongMsg(ThruE1->midi_out, (MIDIHDR*)dwParam1, sizeof(MIDIHDR));
@@ -447,11 +447,8 @@ i = j = tempo_event_tick = tick = 0; tempo_event_time = 0; FirstLabel = LastLabe
 for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_file_event = MidiFileEvent_getNextEventInFile(midi_file_event)) {
  if (MidiFileEvent_getTick(midi_file_event) != tick) { j = i; tick = MidiFileEvent_getTick(midi_file_event); } while ((i > j) && !MidiEvents[i-1].MsgCtl) { i--; }
  MidiEvents[i].event_time = (unsigned long)(tempo_event_time + (float)(tick - tempo_event_tick) * (float)(Tempo & 0x00ffffff) / (MidiFile_getResolution(midi_file)*1000));
- MidiEvents[i].Tempo      = Tempo & 0x00ffffff;
- MidiEvents[i].TimeSigN   = TimeSig >> 24;
- MidiEvents[i].TimeSigD   = TimeSig >> 16;
- MidiEvents[i].Label      = EntryLabel; if (LastLabel) { MidiEvents[i].Label = LastLabel; }
  MidiEvents[i].Track      = MidiFileTrack_getNumber(MidiFileEvent_getTrack(midi_file_event));
+ MidiEvents[i].Label      = EntryLabel; if (LastLabel) { MidiEvents[i].Label = LastLabel; }
  if (MidiFileEvent_getType(midi_file_event) == MIDI_FILE_EVENT_TYPE_META) {
   MidiEvents[i].EventData   = (MidiFileMetaEvent_getNumber(midi_file_event) << 8) | 0x0000007f;
   MidiEvents[i].data_length = MidiFileMetaEvent_getDataLength(midi_file_event);
@@ -489,13 +486,16 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   else if ( (MidiEvents[i].EventData & 0xf0) == 0x90                                                   ) { MidiEvents[i].MsgCtl += 2; }
  //MidiEvents[i].MsgCtl += 1*((MidiEvents[i].EventData & 0x407ff0) == 0x0040b0);
  //MidiEvents[i].MsgCtl += 2*((MidiEvents[i].EventData & 0x407ff0) == 0x4040b0);
- if ((MidiEvents[i].EventData & (args[9]>>16)) == (args[9] & 0x7fff)) { if (((MidiEvents[i].EventData & 0xf0) != 0x80) || !(args[9] & 0xf000f0)) { MidiEvents[j].FlwCtl |= 1; } MidiEvents[i].MsgCtl *= (args[9]>>15) & 1; }
  if (MidiEvents[i].EventData & 0x80 && (MidiEvents[i].EventData & 0xf0) < 0xf0) { TrkInfo[MidiEvents[i].Track] = (struct MidiEvent*)((unsigned long)TrkInfo[MidiEvents[i].Track] & 0xfffffff0 | (MidiEvents[i].EventData & 0xf) | 0x10); }
  MidiEvents[i].midi_out = (HMIDIOUT)TrkInfo[MidiEvents[i].Track];
  if (Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].s == -1) { Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].s = midiOutOpen(&Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].h, (unsigned long)MidiEvents[i].midi_out>>8, (unsigned long)MidiOutProc, (unsigned long)NULL, CALLBACK_FUNCTION);
   strcpy(midi_o_caps.szPname, ""); midiOutGetDevCaps((unsigned long)MidiEvents[i].midi_out>>8, &midi_o_caps, sizeof(midi_o_caps)); printf("o%2d %x '%s'\n", (unsigned long)MidiEvents[i].midi_out>>8, Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].s, midi_o_caps.szPname);
   }
  if (!Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].h) { MidiEvents[i].midi_out = (HMIDIOUT)(DefODev << 8); }
+ MidiEvents[i].Tempo      = Tempo & 0x00ffffff;
+ MidiEvents[i].TimeSigN   = TimeSig >> 24;
+ MidiEvents[i].TimeSigD   = TimeSig >> 16;
+ if ((MidiEvents[i].EventData & (args[9]>>16)) == (args[9] & 0x7fff)) { if (((MidiEvents[i].EventData & 0xf0) != 0x80) || !(args[9] & 0xf000f0)) { MidiEvents[j].FlwCtl |= 1; } MidiEvents[i].MsgCtl *= (args[9]>>15) & 1; }
  while (MidiEvents[i].FlwCtl | MidiEvents[i].MsgCtl) { i++; }
  }
 
