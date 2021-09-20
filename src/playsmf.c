@@ -107,8 +107,8 @@ static unsigned char Inversions[12] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x10,
 static void CALLBACK MidiInProc(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { switch (wMsg) { case MIM_DATA: switch (dwParam1 & 0xf0) {
 
 case 0x90: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { Dead = 0; return; } Key1 = &Keys[dwParam1 & 0xf][V0]; i = -1;
- while ((Thru = &Key1->Thrus[++i])->Trk) { if ((ThruE = *Thru->Trk) && ThruE->Ch < 16) { Thru->Pending = *Thru->Trk; if (Thru->Delay) { Sleep(Thru->Delay); }
-  midiOutShortMsg(ThruE->midi_out, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); }}
+ while ((Thru = &Key1->Thrus[++i])->Trk) { if ((ThruE = *Thru->Trk) && ThruE->Ch < 16) { if (Thru->Delay) { Sleep(Thru->Delay); }
+  midiOutShortMsg(ThruE->midi_out, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); Thru->Pending = ThruE; }}
  if (!(PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel = V1;
  switch (Key1->Zone) { case 1: if (LatestPendingI) { LatestPendingI->Next = PendingI; } PendingI->Prev = LatestPendingI; (LatestPendingI = PendingI)->Next = NULL;
   c = v = 0; i = 127; while (PendingI) { c = c<<4 | PendingI->Note; v += PendingI->Vel; if (PendingI->Key < i) { i = PendingI->Key; } PendingI = PendingI->Prev; }
