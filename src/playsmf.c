@@ -130,8 +130,8 @@ case 0x80: RecEvent->event_time = timeGetTime(); V1 = dwParam1>>16;             
  MyMacro0 } RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; Dead = 0; return;
 
 case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: RecEvent->event_time = timeGetTime(); i = -1;
- switch (dwParam1 & 0x7ff0) { case 0x40b0: case 0x42b0: case 0x43b0: while (Thrus[c=dwParam1&0xf][++i]     ) { if ((ThruE = *Thrus[c][i]) && ThruE->Ch < 16) { if (cmap[ThruE->Track]) { if (v = cmap[ThruE->Track][dwParam1>>9&0x3f80 | dwParam1>>8&0x7f | dwParam1<<10&0x1c000]) midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); } else { midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch); }}} break;
-                              default:                               while ((Thru = &Key1->Thrus[++i])->Trk) { if ((ThruE = *Thru->Trk  ) && ThruE->Ch < 16) { if (cmap[ThruE->Track]) { if (v = cmap[ThruE->Track][dwParam1>>9&0x3f80 | dwParam1>>8&0x7f | dwParam1<<10&0x1c000]) midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); } else { midiOutShortMsg(ThruE->midi_out, dwParam1 & 0xfffffff0 | ThruE->Ch); }}} }
+ switch (dwParam1 & 0x7ff0) { case 0x40b0: case 0x42b0: case 0x43b0: while (Thrus[c=dwParam1&0xf][++i]     ) { if ((ThruE = *Thrus[c][i]) && ThruE->Ch < 16) { if (v = cmap[ThruE->Track][dwParam1>>9&0x3f80 | dwParam1>>8&0x7f | dwParam1<<10&0x1c000]) midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); }} break;
+                              default:                               while ((Thru = &Key1->Thrus[++i])->Trk) { if ((ThruE = *Thru->Trk  ) && ThruE->Ch < 16) { if (v = cmap[ThruE->Track][dwParam1>>9&0x3f80 | dwParam1>>8&0x7f | dwParam1<<10&0x1c000]) midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); }} }
  RecEvent->EventData = dwParam1; RecEvent = RecEvent->NextEvent; Dead = 0; return;
 
 default: switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: Dead = 0; return; }
@@ -148,7 +148,7 @@ case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 //----------------------------------------------------------------------------//
 
 static void CALLBACK MidiInProc1(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { midiInGetID(hMidiIn, &i1); i1 = InPortOrder[i1]; switch (wMsg) {
-case MIM_DATA: if ((dwParam1&0xff) < 0xf0) { if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Ch < 16) { if (cmap[ThruE1->Track]) { if (v1 = cmap[ThruE->Track][dwParam1>>9&0x3f80 | dwParam1>>8&0x7f | dwParam1<<10&0x1c000]) midiOutShortMsg(ThruE1->midi_out, v1 | ThruE1->Ch); } else { midiOutShortMsg(ThruE1->midi_out, dwParam1 & 0xfffffff0 | ThruE1->Ch); }}}
+case MIM_DATA: if ((dwParam1&0xff) < 0xf0) { if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Ch < 16) { if (v1 = cmap[ThruE->Track][dwParam1>>9&0x3f80 | dwParam1>>8&0x7f | dwParam1<<10&0x1c000]) midiOutShortMsg(ThruE1->midi_out, v1 | ThruE1->Ch); }}
                                       else { switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: return; default: printf(" \n1%x", dwParam1); }} return;
 case MIM_LONGDATA: if (((MIDIHDR*)dwParam1)->dwBytesRecorded && Active) {
  i1 = ((MIDIHDR*)dwParam1)->dwBufferLength; ((MIDIHDR*)dwParam1)->dwBufferLength = ((MIDIHDR*)dwParam1)->dwBytesRecorded; midiOutLongMsg(ThruE1->midi_out, (MIDIHDR*)dwParam1, sizeof(MIDIHDR));
@@ -329,7 +329,7 @@ if (args[2] >= 0 && (args[2] & 0xf00)) { SetPriorityClass(GetCurrentProcess(), P
 
 if (!(midi_file = MidiFile_load(argv[1]))) { printf("Error: Cannot open \"%s\".\n", argv[1]); free(args); return(1); } TrkNum = MidiFile_getNumberOfTracks(midi_file);
 
-cmap = malloc(TrkNum*sizeof(unsigned long*)); for (k=0; k<(_msize(cmap)/sizeof(unsigned long*)); k++) { cmap[k] = NULL; }
+cmap = malloc((TrkNum+1)*sizeof(unsigned long*)); cmap[0] = malloc(7*128*128*sizeof(unsigned long)); for (k=0; k<=TrkNum; k++) { cmap[k] = cmap[0]; } for (k=0; k<7*128*128; k++) { cmap[0][k] = (k&0x3f80)<<9 | (k&0x7f)<<8 | ((k&0x1c000)>>10)+0x80; }
 
 i = l = 0; j = -1; MutesNum = MutesInv = MutesRet = 0;
 for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_file_event = MidiFileEvent_getNextEventInFile(midi_file_event)) { i++;
@@ -346,12 +346,12 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
 	if ((A+((L-8)>>2))*sizeof(signed long) > _msize(args)) { args = realloc(args, (A+((L-8)>>2))*sizeof(signed long)); }
 	for (t=8; (t+3)<L; t += 4) { args[A++] = D[t+0]<<24 | D[t+1]<<16 | D[t+2]<<8 | D[t+3]; }
     }
-   if ((L >= 24) && (D[0] == 0x00) && ((D[1]&0x7f) == 0x2b) && ((D[2]&0x7f) == 0x4d) && (D[3] == 0x01)) { unsigned long T = MidiFileTrack_getNumber(MidiFileEvent_getTrack(midi_file_event));
-    signed long a = D[4]<<24 | D[5]<<16 | D[6]<<8 | D[7], b = D[8]<<24 | D[9]<<16 | D[10]<<8 | D[11], c = D[12]<<24 | D[13]<<16 | D[14]<<8 | D[15],
-		        d = D[16]<<24 | D[17]<<16 | D[18]<<8 | D[19], e = D[20]<<24 | D[21]<<16 | D[22]<<8 | D[23], v0 = d & 0x3fff, v1 = e & 0x3fff, t; d >>= 16;
-    for (t=a; t<=b; t+=c) { signed long v = v0; if (b-a) { v += (signed long)((t-a)*(float)(v1-v0)/(float)(b-a)); }
+   if ((L >= 24) && (D[0] == 0x00) && ((D[1]&0x7f) == 0x2b) && ((D[2]&0x7f) == 0x4d) && (D[3] == 0x01)) { unsigned long T = MidiFileTrack_getNumber(MidiFileEvent_getTrack(midi_file_event)),
+    a = D[4]<<24 | D[5]<<16 | D[6]<<8 | D[7], b = D[8]<<24 | D[9]<<16 | D[10]<<8 | D[11], c = D[12]<<24 | D[13]<<16 | D[14]<<8 | D[15],
+    d = D[16]<<24 | D[17]<<16 | D[18]<<8 | D[19], e = D[20]<<24 | D[21]<<16 | D[22]<<8 | D[23], v0 = d & 0x3fff, v1 = e & 0x3fff, t; d >>= 16;
+    for (t=a; t<=b; t+=c) { signed long v = v0; if (b-a) { v += (signed long)((t-a)*(float)(signed long)(v1-v0)/(float)(b-a)); }
      switch (d & 0xf0) { case 0xb0: v = v << 16; break; case 0xe0: v = v << 9 & 0x7f0000 | v << 8 & 0x7f00; break; default: v <<= 8; }
-     if (!cmap[T]) { unsigned long k; cmap[T] = malloc(7*128*128*sizeof(unsigned long )); for (k=0; k<(_msize(cmap[T])/sizeof(unsigned long )); k++) { cmap[T][k] = (k&0x3f80)<<9 | (k&0x7f)<<8 | ((k&0x1c000)>>10)+0x80; }}
+     if (cmap[T] == cmap[TrkNum]) { unsigned long k; cmap[T] = malloc(7*128*128*sizeof(unsigned long)); for (k=0; k<7*128*128; k++) { cmap[T][k] = (k&0x3f80)<<9 | (k&0x7f)<<8 | ((k&0x1c000)>>10)+0x80; }}
      cmap[T][t] = v | d;
      }
     }
@@ -614,7 +614,7 @@ if       ( ExitVal & 8                                                          
  else if (Label0->Event != EntryLabel->Event && Label0->Event == ExitLabel->Event) { i = 4; } //exit
  else if (Label0->Event != EntryLabel->Event && Label0->Event == LastLabel->Event) { i = 5; } //last
 
-for (k=0; k<(_msize(cmap)/sizeof(unsigned long*)); k++) { free(cmap[k]); } free(cmap);
+for (k=0; k<TrkNum; k++) { if (cmap[k] != cmap[TrkNum]) { free(cmap[k]); }} free(cmap[TrkNum]); free(cmap);
 
 free(RecEvents); free(Thrus[0]); free(TrkInfo); free(Mutes); free(PendingEventsO); free(Labels); free(MidiEvents); MidiFile_free(midi_file); free(args); return(i); }
 
