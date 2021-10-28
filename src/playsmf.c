@@ -347,14 +347,14 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
 	if ((A+((L-8)>>2))*sizeof(signed long) > _msize(args)) { args = realloc(args, (A+((L-8)>>2))*sizeof(signed long)); }
 	for (t=8; (t+3)<L; t += 4) { args[A++] = D[t+0]<<24 | D[t+1]<<16 | D[t+2]<<8 | D[t+3]; }
     }
-   if ((L >= 24) && (D[0] == 0x00) && ((D[1]&0x7f) == 0x2b) && ((D[2]&0x7f) == 0x4d) && (D[3] >= 0x01) && (D[3] <= 0x02)) { signed long T = MidiFileTrack_getNumber(MidiFileEvent_getTrack(midi_file_event)),
+   if ((L >= 24) && (D[0] == 0x00) && ((D[1]&0x7f) == 0x2b) && ((D[2]&0x7f) == 0x4d) && (D[3] >= 0x01) && (D[3] <= 0x03)) { signed long T = MidiFileTrack_getNumber(MidiFileEvent_getTrack(midi_file_event)),
     a = D[4]<<24 | D[5]<<16 | D[6]<<8 | D[7], b = D[8]<<24 | D[9]<<16 | D[10]<<8 | D[11], c = D[12]<<24 | D[13]<<16 | D[14]<<8 | D[15],
     d = D[16]<<24 | D[17]<<16 | D[18]<<8 | D[19], e = D[20]<<24 | D[21]<<16 | D[22]<<8 | D[23], v0 = d & 0xffff, v1 = e & 0xffff, t; d >>= 16;
     T |= a>>17; if (T < 0) { T += TrkNum; } if (T > TrkNum) { T = TrkNum; } a &= 0x1ffff; b &= 0x1ffff;
     for (t=a; t<=b; t+=c) { signed long v = v0; if (b-a) { v += (signed long)((t-a)*(float)(v1-v0)/(float)(b-a)); }
      switch (d & 0xf0) { case 0xb0: v = v << 16; break; case 0xe0: v = v << 9 & 0x7f0000 | v << 8 & 0x7f00; break; default: v <<= 8; }
-     if (D[3] == 0x01) { if (T < TrkNum && cmap [T] == cmap [TrkNum]) { unsigned long k; cmap [T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap [T][k] = cmap [TrkNum][k]; }} cmap [T][t] = v | d; }
-     if (D[3] == 0x02) { if (T < TrkNum && cmap1[T] == cmap1[TrkNum]) { unsigned long k; cmap1[T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap1[T][k] = cmap1[TrkNum][k]; }} cmap1[T][t] = v | d; }
+     if (D[3]&1) { if (T < TrkNum && cmap [T] == cmap [TrkNum]) { unsigned long k; cmap [T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap [T][k] = cmap [TrkNum][k]; }} cmap [T][t] = v | d; }
+     if (D[3]&2) { if (T < TrkNum && cmap1[T] == cmap1[TrkNum]) { unsigned long k; cmap1[T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap1[T][k] = cmap1[TrkNum][k]; }} cmap1[T][t] = v | d; }
      }
     }
    }
