@@ -461,7 +461,6 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
  if (MidiFileEvent_getTick(midi_file_event) != tick) { j = i; tick = MidiFileEvent_getTick(midi_file_event); } while ((i > j) && !MidiEvents[i-1].MsgCtl) { i--; }
  MidiEvents[i].event_time = (unsigned long)(tempo_event_time + (float)(tick - tempo_event_tick) * (float)(Tempo & 0x00ffffff) / (MidiFile_getResolution(midi_file)*1000));
  MidiEvents[i].Track      = MidiFileTrack_getNumber(MidiFileEvent_getTrack(midi_file_event));
- MidiEvents[i].Label      = EntryLabel; if (LastLabel) { MidiEvents[i].Label = LastLabel; }
  if (MidiFileEvent_getType(midi_file_event) == MIDI_FILE_EVENT_TYPE_META) {
   MidiEvents[i].EventData   = (MidiFileMetaEvent_getNumber(midi_file_event) << 8) | 0x0000007f;
   MidiEvents[i].data_length = MidiFileMetaEvent_getDataLength(midi_file_event);
@@ -494,6 +493,10 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   MidiEvents[i].MsgCtl    = 2;
   MidiEvents[i].EventData = (unsigned long)MidiFileVoiceEvent_getData(midi_file_event); MidiEvents[i].data_length = 0; MidiEvents[i].data_buffer = NULL;
   }
+ MidiEvents[i].Tempo      = Tempo & 0x00ffffff;
+ MidiEvents[i].TimeSigN   = TimeSig >> 24;
+ MidiEvents[i].TimeSigD   = TimeSig >> 16;
+ MidiEvents[i].Label      = EntryLabel; if (LastLabel) { MidiEvents[i].Label = LastLabel; }
  MidiEvents[i].EventIdx = &PendingEventsO[((MidiEvents[i].EventData & 0xf0) == 0xb0)*TrkNum*16*128 + (MidiEvents[i].Track<<11 | (MidiEvents[i].EventData & 0x7f00)>>8 | (MidiEvents[i].EventData & 0xf)<<7)];
  if       (((MidiEvents[i].EventData & 0xf0) == 0x80) || ((MidiEvents[i].EventData & 0x7f00f0) == 0x90)) { MidiEvents[i].MsgCtl += 1; }
   else if ( (MidiEvents[i].EventData & 0xf0) == 0x90                                                   ) { MidiEvents[i].MsgCtl += 2; }
@@ -501,18 +504,11 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
  //MidiEvents[i].MsgCtl += 2*((MidiEvents[i].EventData & 0x407ff0) == 0x4040b0);
  if (MidiEvents[i].EventData & 0x80 && (MidiEvents[i].EventData & 0xf0) < 0xf0) { TrkInfo[MidiEvents[i].Track] = (struct MidiEvent*)((unsigned long)TrkInfo[MidiEvents[i].Track] & 0xfffffff0 | (MidiEvents[i].EventData & 0xf) | 0x10); }
  MidiEvents[i].midi_out = (HMIDIOUT)TrkInfo[MidiEvents[i].Track];
- if (Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].s == -1) { Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].s = midiOutOpen(&Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].h, (unsigned long)MidiEvents[i].midi_out>>8, (unsigned long)MidiOutProc, (unsigned long)NULL, CALLBACK_FUNCTION);
-  strcpy(midi_o_caps.szPname, ""); midiOutGetDevCaps((unsigned long)MidiEvents[i].midi_out>>8, &midi_o_caps, sizeof(midi_o_caps)); printf("o%2d %x '%s'\n", (unsigned long)MidiEvents[i].midi_out>>8, Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].s, midi_o_caps.szPname);
-  }
- if (!Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].h) { MidiEvents[i].midi_out = (HMIDIOUT)(DefODev << 8); }
- MidiEvents[i].Tempo      = Tempo & 0x00ffffff;
- MidiEvents[i].TimeSigN   = TimeSig >> 24;
- MidiEvents[i].TimeSigD   = TimeSig >> 16;
  if ((MidiEvents[i].EventData & (args[9]>>16)) == (args[9] & 0x7fff)) { if (((MidiEvents[i].EventData & 0xf0) != 0x80) || !(args[9] & 0xf000f0)) { MidiEvents[j].FlwCtl |= 1; } MidiEvents[i].MsgCtl *= (args[9]>>15) & 1; }
  while (MidiEvents[i].FlwCtl | MidiEvents[i].MsgCtl) { i++; }
  }
 
-MidiEvents[i].event_time = MidiEvents[i].EventData = 0; if (i) { MidiEvents[i].event_time = MidiEvents[i-1].event_time; }
+MidiEvents[i].event_time = MidiEvents[i].EventData = 0; if (i) { MidiEvents[i].event_time = MidiEvents[i-1].event_time; } MidiEvents[i].midi_out = NULL;
 MidiEvents[i].Label = ExitLabel; ExitLabel->Event = &MidiEvents[i]; MidiEvenT = MidiEvent = EntryLabel->Event = &MidiEvents[0]; k = 0;
 
 MidiEvents[i].Tempo    = Tempo & 0x00ffffff;
@@ -521,7 +517,12 @@ MidiEvents[i].TimeSigD = TimeSig >> 16;
 
 ExpandLabels(Labels);
 
-while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInfo = &TrkInfo[MidiEvents[i].Track]; MidiEvents[i].Ch = (unsigned long)MidiEvents[i].midi_out^0x10; MidiEvents[i].midi_out = Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].h;
+while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInfo = &TrkInfo[MidiEvents[i].Track]; MidiEvents[i].Ch = (unsigned long)MidiEvents[i].midi_out^0x10;
+ j = 2; while (j--) {
+ if (Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].s == -1) { Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].s = midiOutOpen(&Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].h, (unsigned long)MidiEvents[i].midi_out>>8, (unsigned long)MidiOutProc, (unsigned long)NULL, CALLBACK_FUNCTION);
+  strcpy(midi_o_caps.szPname, ""); midiOutGetDevCaps((unsigned long)MidiEvents[i].midi_out>>8, &midi_o_caps, sizeof(midi_o_caps)); printf("o%2d %x '%s'\n", (unsigned long)MidiEvents[i].midi_out>>8, Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].s, midi_o_caps.szPname);
+  } if (Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].s) { MidiEvents[i].midi_out = (HMIDIOUT)(DefODev << 8); }}
+ MidiEvents[i].midi_out = Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].h;
  if (MidiEvents[i].FlwCtl & 2) { MidiEvents[i].FlwCtl &= ~4; MidiEvents[i].FlwCtl |= 1;
   if (((unsigned long)MidiEvents[i].JumpEvent < LabelNum) && (Labels[(unsigned long)MidiEvents[i].JumpEvent].Event)) { if (!(k & 0x100)) { k = 0; } MidiEvents[i].JumpEvent = Labels[(unsigned long)MidiEvents[i].JumpEvent].Event; }
    else if ((l = (unsigned long)MidiEvents[j=i].JumpEvent*-1-4) >= 0) { while (l && j) { if (MidiEvents[j].Label->Event != MidiEvents[j-1].Label->Event) { l--; } j--; } if (!(k & 0x100)) { k = 0; } MidiEvents[i].JumpEvent = MidiEvents[j].Label->Event; }
@@ -559,7 +560,7 @@ for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } SetEntryLabel
 
 FirstMute = EntryMute = &Mutes[(MutesNum-2)*(TrkNum+1)+1]; if (MutesNum > 2) { FirstMute = &Mutes[(0)*(TrkNum+1)+1]; } Mute = SetEntryMute
 
-Key0 = Key1 = &Keys[0x0][0x00]; SneakPending = FlwMsk = IRQ = ExitVal = 0; Active = Dead = 1; Speed = Speed0 = 1; (ThruE1 = ExitLabel->Event)->midi_out = Port2Out[DefODev].h;
+Key0 = Key1 = &Keys[0x0][0x00]; SneakPending = FlwMsk = IRQ = ExitVal = 0; Active = Dead = 1; Speed = Speed0 = 1; ThruE1 = EntryLabel->Event;
 
 if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeBeginPeriod(args[2]&0xff); } LastTime = WatchDogTimeOut = start_time = timeGetTime(); WatchDogTimeOut += args[5]; if ((TimeOut = args[5]) < 0) { TimeOut = WatchDogTimeOut = -1; }
 
