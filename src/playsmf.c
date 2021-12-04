@@ -358,6 +358,8 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
      if (D[3]&2) { if (T < TrkNum && cmap1[T] == cmap1[TrkNum]) { unsigned long k; cmap1[T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap1[T][k] = cmap1[TrkNum][k]; }} cmap1[T][t] = v | d; }
      }
     }
+   if ((L >= 5) && (D[0] == 0x00) && ((D[1]&0x7f) == 0x2b) && ((D[2]&0x7f) == 0x4d) && (D[3] == 0x04) && D[L-1] == 0x00 && argc > 3) { argv[3] = D+4; args[3] = 0x0deadbad; }
+   if ((L >= 5) && (D[0] == 0x00) && ((D[1]&0x7f) == 0x2b) && ((D[2]&0x7f) == 0x4d) && (D[3] == 0x05) && D[L-1] == 0x00 && argc > 4) { argv[4] = D+4; args[4] = 0x0deadbad; }
    }
   }
  }
