@@ -426,6 +426,7 @@ for (i=0; i<=15; i++) { signed long C = args[6], Ck = args[12], Mk = args[13]+1,
     for (a = 0; a <= 0x7f; a++) { signed long v = a*v1s; if (v > 127) { v = 127; } v += v1o; if (v > 127) { v = 127; } else if (v < 1) { v = 1; } Keys[i][j].Thrus[L].v1[a] = v; }
     }
    }
+  while (k < _msize(args)/sizeof(signed long) && abs(args[k]) >= 0x10000) { k++; }
   }
  }
 
