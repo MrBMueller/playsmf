@@ -510,9 +510,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
 MidiEvents[i].event_time = MidiEvents[i].EventData = 0; if (i) { MidiEvents[i].event_time = MidiEvents[i-1].event_time; } MidiEvents[i].midi_out = NULL;
 MidiEvents[i].Label = ExitLabel; ExitLabel->Event = &MidiEvents[i]; MidiEvenT = MidiEvent = EntryLabel->Event = &MidiEvents[0]; k = 0;
 
-MidiEvents[i].Tempo    = Tempo & 0x00ffffff;
-MidiEvents[i].TimeSigN = TimeSig >> 24;
-MidiEvents[i].TimeSigD = TimeSig >> 16;
+MidiEvents[i].Tempo = Tempo & 0xffffff; MidiEvents[i].TimeSigN = TimeSig >> 24; MidiEvents[i].TimeSigD = TimeSig >> 16;
 
 ExpandLabels(Labels);
 
@@ -563,7 +561,7 @@ Key0 = Key1 = &Keys[0x0][0x00]; SneakPending = FlwMsk = IRQ = ExitVal = 0; Activ
 
 if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeBeginPeriod(args[2]&0xff); } LastTime = WatchDogTimeOut = start_time = timeGetTime(); WatchDogTimeOut += args[5]; if ((TimeOut = args[5]) < 0) { TimeOut = WatchDogTimeOut = -1; }
 
-SetConsoleCtrlHandler(HandlerRoutine, TRUE); for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStart(Port2In[i].h); }} printf("%d %d:%02d:%03d %.2f (%s%.2f %s%d/%d %s%d) playing ...", ExitLabel->Event-MidiEvent, ExitLabel->Event->event_time/(1000*60), (ExitLabel->Event->event_time/1000)%60, ExitLabel->Event->event_time%1000, (float)ExitLabel->Event->event_time*1000*(1<<(TimeSig0>>16&0xff))/(((Tempo0&0xffffff)<<2)*(TimeSig0>>24&0xff)), Tempo0&0x1000000?"-":"", (float)60000000/(Tempo0&0xffffff), TimeSig0&0x80?"-":"", TimeSig0>>24&0xff, 1<<(TimeSig0>>16&0xff), KeySig0&0x10000?"-":"", KeySig0&0xffff);
+SetConsoleCtrlHandler(HandlerRoutine, TRUE); for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStart(Port2In[i].h); }} printf("%d %d:%02d:%03d %.2f (%s%.2f %s%d/%d) playing ...", ExitLabel->Event-MidiEvent, ExitLabel->Event->event_time/(1000*60), (ExitLabel->Event->event_time/1000)%60, ExitLabel->Event->event_time%1000, (float)ExitLabel->Event->event_time*1000*(1<<(TimeSig0>>16&0xff))/(((Tempo0&0xffffff)<<2)*(TimeSig0>>24&0xff)), Tempo0&0x1000000?"-":"", (float)60000000/(Tempo0&0xffffff), TimeSig0&0x80?"-":"", TimeSig0>>24&0xff, 1<<(TimeSig0>>16&0xff));
 while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*Speed, current_time = timeGetTime(); if (!start_time) { start_time = current_time-t; }
  if ((signed long)(t += start_time-current_time) > 0) { WaitForSingleObject(signalling_object0, t); }
 
