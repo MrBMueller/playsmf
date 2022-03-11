@@ -230,8 +230,8 @@ MidiFile_t midi_file = MidiFile_new(1, MIDI_FILE_DIVISION_TYPE_PPQ, PPQ);
 
 MidiFileTrack_t track0 = MidiFile_createTrack(midi_file), track1 = MidiFile_createTrack(midi_file);
 
-MidiFileTrack_createMetaEvent(track0, 0, 0x03, strlen("SMF"), "SMF");
-MidiFileTrack_createMetaEvent(track1, 0, 0x03, strlen("SMF/primary"), "SMF/primary");
+MidiFileTrack_createMetaEvent(track0, 0, 0x03, sizeof("SMF")-1, "SMF");
+MidiFileTrack_createMetaEvent(track1, 0, 0x03, sizeof("SMF/primary")-1, "SMF/primary");
 
 MidiFileTrack_createMetaEvent(track0, 0, 0x02, strlen(GetCommandLineA()), GetCommandLineA());
 MidiFileTrack_createMetaEvent(track0, 0, 0x51, 3, tempo);
