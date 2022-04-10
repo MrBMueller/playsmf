@@ -25,7 +25,7 @@
  SneakPending = 0; LastTime = RecEvent0->event_time; if (MidiEvenT->Label->Now) { SetEvent(signalling_object0); }
 
 #define MyMacro0 \
- if       (SneakPending >= 3 && V0 != Label0->Idx && !((V0^Label0->Idx)&0xfff)) { Label3 = Label2 = Label1 = Label0 = &Labels[V0];  SneakPending  = 0; }\
+ if       (SneakPending >= 3 && V0 != Label0->Idx && !((V0^Label0->Idx)&0xfff)) { Label3 = Label2 = Label1 = Label0 = &Labels[V0]; SneakPending = 0; }\
   else if (SneakPending      && (MidiEvenT->Label->Idx&~0xfff) != Var) { V0 = (Var = Var1 = Var0 = MidiEvenT->Label->Idx&~0xfff) | V0&0xfff; SneakPending |= 2; }\
  if (V0 < LabelNum && Labels[V0].Event) {\
   if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvenT->Label->Ret || IRQ) { Label3 = Label2 = Label1 = Label0;                      IRQ = 0x10; MyMacro1 }}\
@@ -564,7 +564,7 @@ while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInf
  if (MidiEvents[i].EventData == 0x3412f4) { MidiEvents[i].MsgCtl = 0; }
  }
 
-MidiEvenT = MidiEvent = EntryLabel->Event = &MidiEvents[0]; EntryLabel->ReT = ExitLabel->ReT = 8; if (!(args[9] & 0xf000f0)) { EntryLabel->Now = ExitLabel->Now = 1; } AlignLabels(Labels);
+MidiEvenT = MidiEvent = EntryLabel->Event = &MidiEvents[0]; EntryLabel->ReT = ExitLabel->ReT = 8; if (!(args[9] & ~0x8000)) { EntryLabel->Now = ExitLabel->Now = 1; } AlignLabels(Labels);
 
 for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { if (Labels[i].Event->FlwCtl == 4) { j = Labels[i].Event-MidiEvents;
  k = 0; while (MidiEvents[j+k+1].EventData && (MidiEvents[j+k+1].event_time == MidiEvents[j].event_time)) { k++; }
