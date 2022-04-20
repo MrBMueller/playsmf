@@ -33,6 +33,9 @@
    else if (Label0->Ret) { if (!MidiEvenT->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvenT->Label->Idx&0xfff]; } Label1 = Label0->Ret&1 ? Label3 : Label2; Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1  }\
    else                  { i = Label0->Idx; Label3 = Label2 = Label1 = Label0 = &Labels[V0]; if (!IRQ) { IRQ = 0x18^Label0->ReT; } if (Label0->ReT) { MyMacro1 } else if (!((V0^i)&~0xfff)) { SneakPending = 1; }}}
 
+#define Record     if (            MidiEvent->Rec) { RecEvent->event_time = current_time+t; RecEvent->Event = MidiEvent;                                 RecEvent = RecEvent->NextEvent; }
+#define Record1(a) if (LatestPendingO->Event->Rec) { RecEvent->event_time = current_time+t; RecEvent->Event = LatestPendingO->Event; RecEvent->from = a; RecEvent = RecEvent->NextEvent; }
+
 struct MidiEvent { unsigned long     event_time;
                    unsigned long     Track;
                    unsigned long     EventData, OffMsg;
@@ -50,6 +53,7 @@ struct MidiEvent { unsigned long     event_time;
 
 struct RecEvent  { unsigned long     event_time;
                    struct MidiEvent *Event;
+                   unsigned char     from;
                    struct RecEvent  *NextEvent; };
 
 struct RecEvent0 { unsigned long     event_time;
@@ -220,18 +224,33 @@ return; }
 
 //----------------------------------------------------------------------------//
 
-static void saveMidiEventsToFile(signed long *args, unsigned long PPQ, unsigned long Tempo, unsigned long TimeSig, unsigned long KeySig, struct RecEvent *RecEvents, struct RecEvent *RecEvent, struct RecEvent0 *RecEvents0, struct RecEvent0 *RecEvent0, unsigned char ExitVal, struct Label *Label0) {
+static void saveMidiEventsToFile(signed long *args, struct Key Keys[][128], signed char InOfs, MidiFile_t SMF, unsigned long Tempo, unsigned long TimeSig, unsigned long KeySig, struct RecEvent *RecEvents, struct RecEvent *RecEvent, struct RecEvent0 *RecEvents0, struct RecEvent0 *RecEvent0, unsigned char ExitVal, struct Label *Label0) {
 SYSTEMTIME    current_time;
-unsigned char filename[1024], tempo[] = {(Tempo>>16)&0xff, (Tempo>>8)&0xff, (Tempo>>0)&0xff}, timeSig[] = {(TimeSig>>24)&0xff, (TimeSig>>16)&0xff, (TimeSig>>8)&0xff, (TimeSig>>0)&0x7f}, keySig[] = {(KeySig>>8)&0xff, (KeySig>>0)&0xff};
-unsigned long PPQc = PPQ*1000, RecNum = 0, MinEventTime = -1;
+unsigned char buf[1024], tempo[] = {(Tempo>>16)&0xff, (Tempo>>8)&0xff, (Tempo>>0)&0xff}, timeSig[] = {(TimeSig>>24)&0xff, (TimeSig>>16)&0xff, (TimeSig>>8)&0xff, (TimeSig>>0)&0x7f}, keySig[] = {(KeySig>>8)&0xff, (KeySig>>0)&0xff};
+unsigned long PPQ = MidiFile_getResolution(SMF), PPQc = PPQ*1000, RecNum = 0, MinEventTime = -1, i;
 float         c = (float)PPQc/(float)(Tempo&0xffffff);
 
-MidiFile_t midi_file = MidiFile_new(1, MIDI_FILE_DIVISION_TYPE_PPQ, PPQ);
+MidiFile_t midi_file = MidiFile_new(1, MIDI_FILE_DIVISION_TYPE_PPQ, PPQ); MidiFileTrack_t track0, trackP, trackP0, trackP1, trackP2, trackP3, trackP4;
 
-MidiFileTrack_t track0 = MidiFile_createTrack(midi_file), track1 = MidiFile_createTrack(midi_file);
+for (i=0; i < 1+MidiFile_getNumberOfTracks(SMF)+6; i++) { MidiFile_createTrack(midi_file); }
 
-MidiFileTrack_createMetaEvent(track0, 0, 0x03, sizeof("SMF")-1, "SMF");
-MidiFileTrack_createMetaEvent(track1, 0, 0x03, sizeof("SMF/primary")-1, "SMF/primary");
+track0  = MidiFile_getTrackByNumber(midi_file, 0, 0);
+trackP  = MidiFile_getTrackByNumber(midi_file, MidiFile_getNumberOfTracks(midi_file)-6, 0);
+trackP2 = MidiFile_getTrackByNumber(midi_file, MidiFile_getNumberOfTracks(midi_file)-5, 0);
+trackP4 = MidiFile_getTrackByNumber(midi_file, MidiFile_getNumberOfTracks(midi_file)-4, 0);
+trackP3 = MidiFile_getTrackByNumber(midi_file, MidiFile_getNumberOfTracks(midi_file)-3, 0);
+trackP1 = MidiFile_getTrackByNumber(midi_file, MidiFile_getNumberOfTracks(midi_file)-2, 0);
+trackP0 = MidiFile_getTrackByNumber(midi_file, MidiFile_getNumberOfTracks(midi_file)-1, 0);
+
+sprintf(buf, "Conductor"); MidiFileTrack_createMetaEvent(track0 , 0, 0x03, strlen(buf), buf);
+sprintf(buf, "Primary"  ); MidiFileTrack_createMetaEvent(trackP , 0, 0x03, strlen(buf), buf);
+sprintf(buf, "Pri-Var"  ); MidiFileTrack_createMetaEvent(trackP2, 0, 0x03, strlen(buf), buf);
+sprintf(buf, "Pri-Mute" ); MidiFileTrack_createMetaEvent(trackP4, 0, 0x03, strlen(buf), buf);
+sprintf(buf, "Pri-Mutes"); MidiFileTrack_createMetaEvent(trackP3, 0, 0x03, strlen(buf), buf);
+sprintf(buf, "Pri-Chord"); MidiFileTrack_createMetaEvent(trackP1, 0, 0x03, strlen(buf), buf);
+sprintf(buf, "Pri-Other"); MidiFileTrack_createMetaEvent(trackP0, 0, 0x03, strlen(buf), buf);
+
+for (i=1; i < 1+MidiFile_getNumberOfTracks(SMF); i++) { sprintf(buf, "SMF %2d", i-1); MidiFileTrack_createMetaEvent(MidiFile_getTrackByNumber(midi_file, i, 0), 0, 0x03, strlen(buf), buf); }
 
 MidiFileTrack_createMetaEvent(track0, 0, 0x02, strlen(GetCommandLineA()), GetCommandLineA());
 MidiFileTrack_createMetaEvent(track0, 0, 0x51, 3, tempo);
@@ -242,53 +261,56 @@ if (!RecEvent->Event && RecEvents[0].Event) { MinEventTime = RecEvents[0].event_
 if (!RecEvent0->EventData && RecEvents0[0].EventData && RecEvents0[0].event_time < MinEventTime) { MinEventTime = RecEvents0[0].event_time; }
 
 if (!RecEvent->Event) { unsigned long i = -1;
- while (RecEvents[++i].Event) { unsigned long t = (RecEvents[i].event_time-MinEventTime)*c, EventData = RecEvents[i].Event->EventData;
+ while (RecEvents[++i].Event) { unsigned long t = (RecEvents[i].event_time-MinEventTime)*c, EventData = RecEvents[i].Event->EventData; MidiFileTrack_t track = MidiFile_getTrackByNumber(midi_file, RecEvents[i].Event->Track+1, 0);
+  if (RecEvents[i].from) { EventData = RecEvents[i].Event->OffMsg; }
   if (RecEvents[i].Event->data_buffer && (EventData & 0xf0) >= 0x80 && (EventData & 0xf0) <= 0xe0) { EventData = 0x77; }
   if (EventData == 0x2f7f) { EventData = 0x7f7f; }
   switch (EventData & 0xf0) {
-   case 0x80: MidiFileTrack_createNoteOffEvent(        track1, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
-   case 0x90: MidiFileTrack_createNoteOnEvent(         track1, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
-   case 0xa0: MidiFileTrack_createKeyPressureEvent(    track1, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
-   case 0xb0: MidiFileTrack_createControlChangeEvent(  track1, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
-   case 0xc0: MidiFileTrack_createProgramChangeEvent(  track1, t, EventData&0xf, (EventData>>8)&0x007f                       ); break;
-   case 0xd0: MidiFileTrack_createChannelPressureEvent(track1, t, EventData&0xf, (EventData>>8)&0x007f                       ); break;
-   case 0xe0: MidiFileTrack_createPitchWheelEvent(     track1, t, EventData&0xf, (EventData>>9)&0x3f80 | (EventData>> 8)&0x7f); break;
+   case 0x80: MidiFileTrack_createNoteOffEvent(        track, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
+   case 0x90: MidiFileTrack_createNoteOnEvent(         track, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
+   case 0xa0: MidiFileTrack_createKeyPressureEvent(    track, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
+   case 0xb0: MidiFileTrack_createControlChangeEvent(  track, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
+   case 0xc0: MidiFileTrack_createProgramChangeEvent(  track, t, EventData&0xf, (EventData>>8)&0x007f                       ); break;
+   case 0xd0: MidiFileTrack_createChannelPressureEvent(track, t, EventData&0xf, (EventData>>8)&0x007f                       ); break;
+   case 0xe0: MidiFileTrack_createPitchWheelEvent(     track, t, EventData&0xf, (EventData>>9)&0x3f80 | (EventData>> 8)&0x7f); break;
    default:
    switch (EventData & 0xff) {
-    case 0x7f: MidiFileTrack_createMetaEvent( track0, t, EventData>>8, RecEvents[i].Event->data_length  , RecEvents[i].Event->data_buffer  ); break;
-    case 0x70: MidiFileTrack_createSysexEvent(track0, t,               RecEvents[i].Event->data_length  , RecEvents[i].Event->data_buffer  ); break;
-    default  : MidiFileTrack_createSysexEvent(track0, t,               RecEvents[i].Event->data_length+1, RecEvents[i].Event->data_buffer-1); } break;
+    case 0x7f: MidiFileTrack_createMetaEvent( track, t, EventData>>8, RecEvents[i].Event->data_length  , RecEvents[i].Event->data_buffer  ); break;
+    case 0x70: MidiFileTrack_createSysexEvent(track, t,               RecEvents[i].Event->data_length  , RecEvents[i].Event->data_buffer  ); break;
+    default  : MidiFileTrack_createSysexEvent(track, t,               RecEvents[i].Event->data_length+1, RecEvents[i].Event->data_buffer-1); } break;
    }
   }
  }
 
 if (!RecEvent0->EventData) { unsigned long i = -1, data_length = 0, t0; unsigned char data_buffer[1024];
  while (!(ExitVal&4) && (RecEvent0-- > RecEvents0) && ((RecEvent0->EventData & 0xe0) == 0x80) && (((RecEvent0->EventData>>8) & 0x7f) == (Label0->Idx&0xfff))) { RecEvent0->EventData = 0x00000000; }
- while (RecEvents0[++i].EventData) { unsigned long t = (RecEvents0[i].event_time-MinEventTime)*c, EventData = RecEvents0[i].EventData; RecNum++;
+ while (RecEvents0[++i].EventData) { unsigned long t = (RecEvents0[i].event_time-MinEventTime)*c, EventData = RecEvents0[i].EventData; MidiFileTrack_t track = trackP; RecNum++;
+  switch (Keys[EventData & 0xf][(EventData>>8 & 0x7f)+InOfs & 0x7f].Zone) {
+   case 0: track = trackP0; break; case 1: track = trackP1; break; case 2: track = trackP2; break; case 4: track = trackP3; break; case 8: track = trackP4; }
   switch (EventData & 0xf0) {
-   case 0x80: MidiFileTrack_createNoteOffEvent(        track1, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
-   case 0x90: MidiFileTrack_createNoteOnEvent(         track1, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
-   case 0xa0: MidiFileTrack_createKeyPressureEvent(    track1, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
-   case 0xb0: MidiFileTrack_createControlChangeEvent(  track1, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
-   case 0xc0: MidiFileTrack_createProgramChangeEvent(  track1, t, EventData&0xf, (EventData>>8)&0x007f                       ); break;
-   case 0xd0: MidiFileTrack_createChannelPressureEvent(track1, t, EventData&0xf, (EventData>>8)&0x007f                       ); break;
-   case 0xe0: MidiFileTrack_createPitchWheelEvent(     track1, t, EventData&0xf, (EventData>>9)&0x3f80 | (EventData>> 8)&0x7f); break;
+   case 0x80: MidiFileTrack_createNoteOffEvent(        track , t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
+   case 0x90: MidiFileTrack_createNoteOnEvent(         track , t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
+   case 0xa0: MidiFileTrack_createKeyPressureEvent(    trackP, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
+   case 0xb0: MidiFileTrack_createControlChangeEvent(  trackP, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
+   case 0xc0: MidiFileTrack_createProgramChangeEvent(  trackP, t, EventData&0xf, (EventData>>8)&0x007f                       ); break;
+   case 0xd0: MidiFileTrack_createChannelPressureEvent(trackP, t, EventData&0xf, (EventData>>8)&0x007f                       ); break;
+   case 0xe0: MidiFileTrack_createPitchWheelEvent(     trackP, t, EventData&0xf, (EventData>>9)&0x3f80 | (EventData>> 8)&0x7f); break;
    default:
    switch (EventData & 0xff) {
-    case 0xf0: if ((EventData>>8) == 0xf0) { if (data_length) { MidiFileTrack_createSysexEvent(track1, t0, data_length, data_buffer); } data_length = 0; }
+    case 0xf0: if ((EventData>>8) == 0xf0) { if (data_length) { MidiFileTrack_createSysexEvent(trackP, t0, data_length, data_buffer); } data_length = 0; }
                if (!data_length) { t0 = t; } if (data_length < sizeof(data_buffer)) { data_buffer[data_length++] = EventData>>8; }
-               if ((EventData>>8) == 0xf7) {                    MidiFileTrack_createSysexEvent(track1, t0, data_length, data_buffer);   data_length = 0; } break;
+               if ((EventData>>8) == 0xf7) {                    MidiFileTrack_createSysexEvent(trackP, t0, data_length, data_buffer);   data_length = 0; } break;
     case 0xf1:
-    case 0xf3: { unsigned char b[5] = {0xf7, EventData, EventData>>8, EventData>>16, EventData>>24}; MidiFileTrack_createSysexEvent(track1, t, 2+1, b); } break;
-    case 0xf2: { unsigned char b[5] = {0xf7, EventData, EventData>>8, EventData>>16, EventData>>24}; MidiFileTrack_createSysexEvent(track1, t, 2+2, b); } break;
-    default  : { unsigned char b[5] = {0xf7, EventData, EventData>>8, EventData>>16, EventData>>24}; MidiFileTrack_createSysexEvent(track1, t, 2  , b); }}
+    case 0xf3: { unsigned char b[5] = {0xf7, EventData, EventData>>8, EventData>>16, EventData>>24}; MidiFileTrack_createSysexEvent(trackP, t, 2+1, b); } break;
+    case 0xf2: { unsigned char b[5] = {0xf7, EventData, EventData>>8, EventData>>16, EventData>>24}; MidiFileTrack_createSysexEvent(trackP, t, 2+2, b); } break;
+    default  : { unsigned char b[5] = {0xf7, EventData, EventData>>8, EventData>>16, EventData>>24}; MidiFileTrack_createSysexEvent(trackP, t, 2  , b); }}
    }
   }
- if (data_length) { MidiFileTrack_createSysexEvent(track1, t0, data_length, data_buffer); } //write incomplete sysex w/o f7 termination (should not happen)
+ if (data_length) { MidiFileTrack_createSysexEvent(trackP, t0, data_length, data_buffer); } //write incomplete sysex w/o f7 termination (should not happen)
  }
 
-GetLocalTime(&current_time); sprintf(filename, "MyMid%d%02d%02d%02d%02d%02d.mid", current_time.wYear, current_time.wMonth, current_time.wDay, current_time.wHour, current_time.wMinute, current_time.wSecond);
-if (args[8] != 0x0ff && (ExitVal >= 3 || RecNum)) { MidiFile_save(midi_file, filename); } MidiFile_free(midi_file); return; }
+GetLocalTime(&current_time); sprintf(buf, "MyMid%d%02d%02d%02d%02d%02d.mid", current_time.wYear, current_time.wMonth, current_time.wDay, current_time.wHour, current_time.wMinute, current_time.wSecond);
+if (args[8] != 0x0ff && (ExitVal >= 3 || RecNum)) { MidiFile_save(midi_file, buf); } MidiFile_free(midi_file); return; }
 
 //----------------------------------------------------------------------------//
 
@@ -306,7 +328,7 @@ static struct MidiIn   Port2In[  256];
 static struct MidiOut  Port2Out[ 256];
 static unsigned char   Port2Port[256], FlwMsk;
 static MidiFileEvent_t midi_file_event;
-static unsigned long   start_time, WatchDogTimeOut, MutesNum, tick, tempo_event_tick, MutesInv, MutesRet, MutesInv1, MutesInv2, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0;
+static unsigned long   start_time, current_time, t, WatchDogTimeOut, MutesNum, tick, tempo_event_tick, MutesInv, MutesRet, MutesInv1, MutesInv2, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0;
 static   signed long   i, j, k, l, *args, TimeOut, DefIDev, DefODev;
 static struct PNoteO   *PendingEventsO, *PendingO, *LatestPendingO;
 static float           Speed, tempo_event_time;
@@ -428,7 +450,7 @@ for (i=0; i<(_msize(TrkInfo       )/sizeof(struct MidiEvent* )); i++) { TrkInfo[
 for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI     )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel = 0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = (i%12)+1; } LatestPendingI = NULL;
 for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO     )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Cnt = 0; PendingEventsO[i].Event = NULL;                               } LatestPendingO = NULL;
 for (i=0; i<(_msize(Mutes         )/sizeof(unsigned char     )); i++) { Mutes[i] = 0; }
-for (i=0; i<(_msize(RecEvents     )/sizeof(struct RecEvent   )); i++) { RecEvents[i].NextEvent = &RecEvents[i+1]; RecEvents[i].Event = NULL; } RecEvent = RecEvents[i-1].NextEvent = &RecEvents[0];
+for (i=0; i<(_msize(RecEvents     )/sizeof(struct RecEvent   )); i++) { RecEvents[i].NextEvent = &RecEvents[i+1]; RecEvents[i].Event = NULL; RecEvents[i].from = 0; } RecEvent = RecEvents[i-1].NextEvent = &RecEvents[0];
 for (i=0; i<(_msize(RecEvents0    )/sizeof(struct RecEvent0  )); i++) { RecEvents0[i].NextEvent = &RecEvents0[i+1]; RecEvents0[i].EventData = 0; } RecEvent0 = RecEvents0[i-1].NextEvent = &RecEvents0[0];
 for (i=0; i<(_msize(Thrus[0]      )/sizeof(struct MidiEvent**)); i++) { Thrus[0][i] = NULL; }
 for (i=0; i<(_msize(MidiEvents    )/sizeof(struct MidiEvent  )); i++) { MidiEvents[i].NextEvent = &MidiEvents[i+1]; MidiEvents[i].FlwCtl = MidiEvents[i].MsgCtl = MidiEvents[i].Rec = 0; }
@@ -586,43 +608,42 @@ Key0 = Key1 = &Keys[0x0][0x00]; SneakPending = FlwMsk = IRQ = ExitVal = 0; Activ
 if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeBeginPeriod(args[2]&0xff); } LastTime = WatchDogTimeOut = start_time = timeGetTime(); WatchDogTimeOut += args[5]; if ((TimeOut = args[5]) < 0) { TimeOut = WatchDogTimeOut = -1; }
 
 SetConsoleCtrlHandler(HandlerRoutine, TRUE); for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStart(Port2In[i].h); }} printf("%d %d:%02d:%03d %.2f (%s%.2f %s%d/%d) playing ...", ExitLabel->Event-MidiEvent, ExitLabel->Event->event_time/(1000*60), (ExitLabel->Event->event_time/1000)%60, ExitLabel->Event->event_time%1000, (float)ExitLabel->Event->event_time*1000*(1<<(TimeSig0>>16&0xff))/(((Tempo0&0xffffff)<<2)*(TimeSig0>>24&0xff)), Tempo0&0x1000000?"-":"", (float)60000000/(Tempo0&0xffffff), TimeSig0&0x80?"-":"", TimeSig0>>24&0xff, 1<<(TimeSig0>>16&0xff));
-while (MidiEvent->EventData) { register unsigned long t = MidiEvent->event_time*Speed, current_time = timeGetTime(); if (!start_time) { start_time = current_time-t; }
- if ((signed long)(t += start_time-current_time) > 0) { WaitForSingleObject(signalling_object0, t); }
+while (MidiEvent->EventData) { t = MidiEvent->event_time*Speed; if (start_time) { current_time = timeGetTime(); } else { start_time = current_time-t; }
+ if ((signed long)(t += start_time-current_time) > 0 && !WaitForSingleObject(signalling_object0, t)) { current_time = timeGetTime(); t = 0; }
 
  switch ((*(MidiEvent->TrkInfo) = MidiEvenT = MidiEvent)->FlwCtl^FlwMsk | IRQ) {
   case 0x09: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f: case 0x11: case 0x13: case 0x14: case 0x16:
-   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
-   if ((MidiEvent = Label0->Event       )->FlwCtl > 2) { FlwMsk = MidiEvent->FlwCtl^1; } IRQ = start_time = 0; Mute = Mute0 = Mute2; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
+   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; Record1(1) } LatestPendingO = LatestPendingO->Prev; }
+   if ((MidiEvent = Label0->Event       )->FlwCtl > 2) { FlwMsk = MidiEvent->FlwCtl^1; } IRQ = start_time = 0; current_time += t; Mute = Mute0 = Mute2; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x02: case 0x03: case 0x05: case 0x06: case 0x07: case 0x0a: case 0x12: case 0x1a: case 0x1b: case 0x1d:
-   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
-   if ((MidiEvent = MidiEvent->JumpEvent)->FlwCtl > 2) { FlwMsk = MidiEvent->FlwCtl^1; }       start_time = 0; Mute = Mute0 = Mute1; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
+   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; Record1(1) } LatestPendingO = LatestPendingO->Prev; }
+   if ((MidiEvent = MidiEvent->JumpEvent)->FlwCtl > 2) { FlwMsk = MidiEvent->FlwCtl^1; }       start_time = 0; current_time += t; Mute = Mute0 = Mute1; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x04: case 0x1c:
-   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
-   if ((MidiEvent = Label1->Event       )->FlwCtl > 2) { FlwMsk = MidiEvent->FlwCtl^1; }       start_time = 0; Mute = Mute0 = Mute3; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
+   while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; Record1(1) } LatestPendingO = LatestPendingO->Prev; }
+   if ((MidiEvent = Label1->Event       )->FlwCtl > 2) { FlwMsk = MidiEvent->FlwCtl^1; }       start_time = 0; current_time += t; Mute = Mute0 = Mute3; Mute3 = Mute2 = Mute1 = Mute11; Speed = Speed0; continue;
   case 0x1e: case 0x1f: IRQ = 0; case 0x01: case 0x15: case 0x17: case 0x19: Mute = Mute0; }
-
- if (MidiEvent->Rec) { RecEvent->event_time = timeGetTime(); RecEvent->Event = MidiEvent; RecEvent = RecEvent->NextEvent; }
 
  switch (MidiEvent->MsgCtl | Mute[MidiEvent->Track]) {
   case 0x4:           midiOutShortMsg(MidiEvent->midi_out, MidiEvent->EventData); if (!(PendingO = MidiEvent->EventIdx)->Cnt) { PendingO->Event = MidiEvent;
-                      if (LatestPendingO) { LatestPendingO->Next = PendingO; } PendingO->Prev = LatestPendingO; (LatestPendingO = PendingO)->Next = NULL; } PendingO->Cnt++; break;
-  case 0x3: case 0xb: if ((PendingO = MidiEvent->EventIdx)->Cnt) { midiOutShortMsg(MidiEvent->midi_out, MidiEvent->EventData); PendingO->Cnt--; if (!PendingO->Cnt) {
+                      if (LatestPendingO) { LatestPendingO->Next = PendingO; } PendingO->Prev = LatestPendingO; (LatestPendingO = PendingO)->Next = NULL; } PendingO->Cnt++; Record break;
+  case 0x3: case 0xb: if ((PendingO = MidiEvent->EventIdx)->Cnt) { midiOutShortMsg(MidiEvent->midi_out, MidiEvent->EventData); PendingO->Cnt--; Record if (!PendingO->Cnt) {
                       if (PendingO->Prev) { PendingO->Prev->Next = PendingO->Next; }
                       if (PendingO->Next) { PendingO->Next->Prev = PendingO->Prev; } else { LatestPendingO = PendingO->Prev; }}} break;
-  case 0x2:           midiOutShortMsg(MidiEvent->midi_out, MidiEvent->EventData); break;
+  case 0x2:           midiOutShortMsg(MidiEvent->midi_out, MidiEvent->EventData); Record break;
   case 0x1:           midi_message_header.lpData         = MidiEvent->data_buffer;
                       midi_message_header.dwBufferLength = MidiEvent->data_length;
                       midi_message_header.dwFlags        = 0;
                       midiOutPrepareHeader(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR));
-                      midiOutLongMsg(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR)); if (WaitForSingleObject(signalling_object1, TimeOut)) { goto Exit2; }
-                      midiOutUnprepareHeader(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR)); }
+                      midiOutLongMsg(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR)); Record if (WaitForSingleObject(signalling_object1, TimeOut)) { goto Exit2; }
+                      midiOutUnprepareHeader(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR)); break;
+  case 0x0: case 0x8: Record }
 
  MidiEvent = MidiEvent->NextEvent; FlwMsk = 0; if (current_time+t > WatchDogTimeOut) { WatchDogTimeOut = current_time+t+TimeOut; if (Dead) { goto Exit0; } Dead = 1; }
  }
 ExitVal |= 1; Exit2: ExitVal |= 2; Exit0: printf(" done. (%x)\n", ExitVal); Active = 0; for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStop(Port2In[i].h); }} if (ExitVal < 8) { SetConsoleCtrlHandler(HandlerRoutine, FALSE); } if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeEndPeriod(args[2]&0xff); }
 
-while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
-while (LatestPendingI) {                                                                                                                                         LatestPendingI = LatestPendingI->Prev; }
+while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); LatestPendingO->Cnt--; Record1(1) } LatestPendingO = LatestPendingO->Prev; }
+while (LatestPendingI) {                                                                                                                                                    LatestPendingI = LatestPendingI->Prev; }
 
 for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { for (k=12; k<_msize(args)/sizeof(signed long); k++) { if (((args[k]>>24) == 2) || ((args[k]>>24) == 3)) {
  unsigned long a = args[k] & 0xf, b = 0xf; if ((args[k] & 0xf0) >= 0xf0) { b = a = args[k] & 0xf; } for (j=a; j<=b; j++) { midiOutShortMsg(Port2Out[i].h, args[k]&0xfffff0 | j); }
@@ -630,7 +651,7 @@ for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h)
 
 for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInReset(Port2In[i].h); for (j=0; j<sizeof(Port2In[i].b)/sizeof(struct MidiBuf); j++) { midiInUnprepareHeader(Port2In[i].h, &Port2In[i].b[j].h, sizeof(MIDIHDR)); } midiInClose(Port2In[i].h); }} if (ExitVal < 3) { Sleep(TimeOut); } //goto start;
 
-CloseHandle(signalling_object0); CloseHandle(signalling_object1); saveMidiEventsToFile(args, MidiFile_getResolution(midi_file), Tempo0, TimeSig0, KeySig0, RecEvents, RecEvent, RecEvents0, RecEvent0, ExitVal, Label0);
+CloseHandle(signalling_object0); CloseHandle(signalling_object1); saveMidiEventsToFile(args, Keys, InOfs, midi_file, Tempo0, TimeSig0, KeySig0, RecEvents, RecEvent, RecEvents0, RecEvent0, ExitVal, Label0);
 
                                                                                      i = 0;   //regular
 if       ( ExitVal & 8                                                           ) { i = 6; } //close
