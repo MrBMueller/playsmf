@@ -177,7 +177,7 @@ static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long
 
 //----------------------------------------------------------------------------//
 
-static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent0->event_time = timeGetTime(); if (dwCtrlType) { V0 = ExitLabel->Idx; ExitVal |= 4; } else { V0 = EntryLabel->Idx; } V1 = -1; SneakPending = 0; MyMacro0 RecEvent0->EventData = 0x78563412; RecEvent0 = RecEvent0->NextEvent; if (dwCtrlType >= 2) { ExitVal |= 8; Sleep(4000); return(FALSE); } return(TRUE); }
+static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { RecEvent0->event_time = timeGetTime(); if (dwCtrlType) { V0 = ExitLabel->Idx; ExitVal |= 4; } else { V0 = EntryLabel->Idx; } V1 = -1; SneakPending = 0; MyMacro0 RecEvent0->EventData = 7-dwCtrlType; RecEvent0 = RecEvent0->NextEvent; if (dwCtrlType >= 2) { ExitVal |= 8; Sleep(4000); return(FALSE); } return(TRUE); }
 
 //----------------------------------------------------------------------------//
 
@@ -291,9 +291,8 @@ while (i) { unsigned long t = (RecEvent->event_time-MinEventTime)*c, EventData =
 l = 0; i = RecEvent0-RecEvents0;
 if (!(ExitVal&4)) {
  while (l < (RecEvent0->EventData?_msize(RecEvents0)/sizeof(struct RecEvent0):RecEvent0-RecEvents0)
-  && (RecEvents0[i=(i?i:_msize(RecEvents0)/sizeof(struct RecEvent0))-1].EventData == 0x78563412 || (RecEvents0[i].EventData & 0xe0) == 0x80 && (RecEvents0[i].EventData>>8 & 0x7f) == (Label0->Idx&0xfff))) { l++; }}
- else { while (l < (RecEvent0->EventData?_msize(RecEvents0)/sizeof(struct RecEvent0):RecEvent0-RecEvents0) && RecEvents0[i=(i?i:_msize(RecEvents0)/sizeof(struct RecEvent0))-1].EventData == 0x78563412) { l++; }}
-
+  && (RecEvents0[i=(i?i:_msize(RecEvents0)/sizeof(struct RecEvent0))-1].EventData < 7 || (RecEvents0[i].EventData & 0xe0) == 0x80 && (RecEvents0[i].EventData>>8 & 0x7f) == (Label0->Idx&0xfff))) { l++; }}
+ else { while (l < (RecEvent0->EventData?_msize(RecEvents0)/sizeof(struct RecEvent0):RecEvent0-RecEvents0) && RecEvents0[i=(i?i:_msize(RecEvents0)/sizeof(struct RecEvent0))-1].EventData < 7) { l++; }}
 i = (RecEvent0->EventData?_msize(RecEvents0)/sizeof(struct RecEvent0):RecEvent0-RecEvents0)-l; RecEvent0 = RecEvent0->EventData?RecEvent0:RecEvents0;
 
 l = 0;
@@ -301,6 +300,7 @@ while (i) { unsigned long t = (RecEvent0->event_time-MinEventTime)*c, EventData 
  switch (Keys[EventData & 0xf][(EventData>>8 & 0x7f)+InOfs & 0x7f].Zone) {
   case 0: track = trackP0; break; case 1: track = trackP1; break; case 2: track = trackP2; break; case 4: track = trackP3; break; case 8: track = trackP4; }
  switch (EventData & 0xf0) {
+  case 0x00: MidiFileTrack_createMetaEvent(           trackP, t, 0x7f, sizeof(EventData), &(unsigned char)EventData         ); break;
   case 0x80: MidiFileTrack_createNoteOffEvent(        track , t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
   case 0x90: MidiFileTrack_createNoteOnEvent(         track , t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
   case 0xa0: MidiFileTrack_createKeyPressureEvent(    trackP, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
