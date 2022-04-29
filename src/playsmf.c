@@ -300,7 +300,7 @@ while (i) { unsigned long t = (RecEvent0->event_time-MinEventTime)*c, EventData 
  switch (Keys[EventData & 0xf][(EventData>>8 & 0x7f)+InOfs & 0x7f].Zone) {
   case 0: track = trackP0; break; case 1: track = trackP1; break; case 2: track = trackP2; break; case 4: track = trackP3; break; case 8: track = trackP4; }
  switch (EventData & 0xf0) {
-  case 0x00: MidiFileTrack_createMetaEvent(           trackP, t, 0x7f, sizeof(EventData), &(unsigned char)EventData         ); break;
+  case 0x00: { unsigned char b[14]; sprintf(b, "CTRL+%x", EventData); MidiFileTrack_createMetaEvent(track0, t, 0x06, strlen(b), b); } break;
   case 0x80: MidiFileTrack_createNoteOffEvent(        track , t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
   case 0x90: MidiFileTrack_createNoteOnEvent(         track , t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
   case 0xa0: MidiFileTrack_createKeyPressureEvent(    trackP, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
