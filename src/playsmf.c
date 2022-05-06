@@ -110,7 +110,7 @@ static struct MidiEvent *MidiEvents, *MidiEvent, *MidiEvenT, **TrkInfo, ***Thrus
 static float            Speed0;
 static signed char      InOfs;
 
-static unsigned char Inversions[12] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x10, 0x10, 0x10, 0x00, 0x30, 0x30};
+static unsigned char Inversions[] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x10, 0x10, 0x10, 0x00, 0x30, 0x30};
 
 //============================================================================//
 
@@ -231,6 +231,7 @@ SYSTEMTIME    current_time;
 unsigned char b[1024], tempo[] = {(Tempo>>16)&0xff, (Tempo>>8)&0xff, (Tempo>>0)&0xff}, timeSig[] = {(TimeSig>>24)&0xff, (TimeSig>>16)&0xff, (TimeSig>>8)&0xff, (TimeSig>>0)&0x7f}, keySig[] = {(KeySig>>8)&0xff, (KeySig>>0)&0xff};
 unsigned long PPQ = MidiFile_getResolution(SMF), PPQc = PPQ*1000, RecNum = 0, MinEventTime = -1, i, l, t0;
 float         c = (float)PPQc/(float)(Tempo&0xffffff);
+struct Label  *Label = NULL;
 
 MidiFile_t midi_file = MidiFile_new(1, MIDI_FILE_DIVISION_TYPE_PPQ, PPQ); MidiFileTrack_t track0, trackP, trackP0, trackP1, trackP2, trackP3, trackP4;
 
@@ -265,6 +266,7 @@ if (RecEvents0->EventData && (RecEvent0->EventData?RecEvent0:RecEvents0)->event_
 i = RecEvent->Event?_msize(RecEvents)/sizeof(struct RecEvent):RecEvent-RecEvents; RecEvent = RecEvent->Event?RecEvent:RecEvents;
 
 while (i) { unsigned long t = (RecEvent->event_time-MinEventTime)*c, EventData = RecEvent->Event->EventData; MidiFileTrack_t track = MidiFile_getTrackByNumber(midi_file, RecEvent->Event->Track+1, 0);
+ if (RecEvent->Event->Label != Label) { unsigned char b[12]; sprintf(b, "L0x%x", RecEvent->Event->Label->Idx); MidiFileTrack_createMetaEvent(track0, t, 0x06, strlen(b), b); Label = RecEvent->Event->Label; }
  if (RecEvent->Event->midi_out != (HMIDIOUT)TrkInfo[RecEvent->Event->Track]) { unsigned long ID;
   if (midiOutGetID(RecEvent->Event->midi_out, &ID)) { ID = -1; } else { MidiFileTrack_createMetaEvent(track, TrkInfo[RecEvent->Event->Track]?t:0, 0x09, strlen(Port2Out[ID].c.szPname), Port2Out[ID].c.szPname); }
   MidiFileTrack_createMetaEvent(track, TrkInfo[RecEvent->Event->Track]?t:0, 0x21, 1, &(unsigned char)ID); } TrkInfo[RecEvent->Event->Track] = (struct MidiEvent*)RecEvent->Event->midi_out;
@@ -327,8 +329,38 @@ if (args[8] != 0x0ff && (ExitVal >= 3 || RecNum)) { MidiFile_save(midi_file, b);
 
 //----------------------------------------------------------------------------//
 
-unsigned long GetIDev(char *n, unsigned long d) { unsigned long i; MIDIINCAPS  c; for (i = 0; i < midiInGetNumDevs();  i++) { midiInGetDevCaps( i, &c, sizeof(c)); if (strstr(c.szPname, n)) { return(i); }} return(d); }
-unsigned long GetODev(char *n, unsigned long d) { unsigned long i; MIDIOUTCAPS c; for (i = 0; i < midiOutGetNumDevs(); i++) { midiOutGetDevCaps(i, &c, sizeof(c)); if (strstr(c.szPname, n)) { return(i); }} return(d); }
+static unsigned long GetIDev(char *n, unsigned long d) { unsigned long i; for (i = 0; i < midiInGetNumDevs();  i++) { MIDIINCAPS  c; midiInGetDevCaps( i, &c, sizeof(MIDIINCAPS )); if (strstr(c.szPname, n)) { return(i); }} return(d); }
+static unsigned long GetODev(char *n, unsigned long d) { unsigned long i; for (i = 0; i < midiOutGetNumDevs(); i++) { MIDIOUTCAPS c; midiOutGetDevCaps(i, &c, sizeof(MIDIOUTCAPS)); if (strstr(c.szPname, n)) { return(i); }} return(d); }
+
+//----------------------------------------------------------------------------//
+
+static void SetPorts(signed long argc, unsigned char **argv, MIDIINCAPS *SelIDev, MIDIOUTCAPS *SelODev) {
+
+if (argc > 3 && !strlen(argv[3]) || argc > 4 && !strlen(argv[4])) { signed long ni, no, n, mli, mlo, i, j;
+
+ unsigned char map0[256]; signed short map1[256]; for (i=0; i<=255; i++) { map0[i] = i; map1[i] = -3; }
+
+ for (i=0; i<= 9; i++) { map0[   i] = 48+i; map1[48+i] =    i; }
+ for (i=0; i<=25; i++) { map0[10+i] = 97+i; map1[97+i] = 10+i; map0[36+i] = 65+i; map1[65+i] = 36+i; } map1[13] = -2; map1[32] = -1;
+
+ list: ni = midiInGetNumDevs(); no = midiOutGetNumDevs(); n = ni>no?ni:no; mli = 0; mlo = 0;
+
+ for (i = 0; i < ni; i++) { MIDIINCAPS  c; midiInGetDevCaps( i, &c, sizeof(MIDIINCAPS )); if (strlen(c.szPname) > mli) { mli = strlen(c.szPname); }}
+ for (i = 0; i < no; i++) { MIDIOUTCAPS c; midiOutGetDevCaps(i, &c, sizeof(MIDIOUTCAPS)); if (strlen(c.szPname) > mlo) { mlo = strlen(c.szPname); }}
+
+ for (i = 0; i < n; i++) { unsigned long nci = mli, nco = mlo; printf("%*d '%c' |", n<=10?1:n<=100?2:3, i, map0[i]);
+  if (ni) { printf(" "); if (i < ni) { MIDIINCAPS  c; midiInGetDevCaps( i, &c, sizeof(MIDIINCAPS )); printf("'%s'", c.szPname); nci -= strlen(c.szPname); } else { nci += 2; } while (nci--) { printf(" "); } printf(" "); } printf("|");
+  if (no) { printf(" "); if (i < no) { MIDIOUTCAPS c; midiOutGetDevCaps(i, &c, sizeof(MIDIOUTCAPS)); printf("'%s'", c.szPname); nco -= strlen(c.szPname); } else { nci += 2; } while (nco--) { printf(" "); } printf(" "); }
+  printf("|\n");
+  }
+
+ j = 0;
+ if (argc > 4 && !strlen(argv[4]) && ni) { printf("%*si:", j, ""); while ((i = map1[getch()%256]) < -2 || i >= ni) {} if (i == -1) { printf("\n"); goto list; } if (i >= 0) { midiInGetDevCaps( i, SelIDev, sizeof(MIDIINCAPS));  argv[4] = SelIDev->szPname; } j++; printf("'%s';", argv[4]); }
+ if (argc > 3 && !strlen(argv[3]) && no) { printf("%*so:", j, ""); while ((i = map1[getch()%256]) < -2 || i >= no) {} if (i == -1) { printf("\n"); goto list; } if (i >= 0) { midiOutGetDevCaps(i, SelODev, sizeof(MIDIOUTCAPS)); argv[3] = SelODev->szPname; } j++; printf("'%s';", argv[3]); }
+ if (j) { printf("\n"); }
+ }
+
+return; }
 
 //============================================================================//
 
@@ -377,7 +409,7 @@ static   signed long   DefArgs[] = {0, 0, -1, 0, 0, -1, -1, 0, 0x0ff, 0x00008000
 
 static unsigned long ProcessPrios[] = {IDLE_PRIORITY_CLASS, BELOW_NORMAL_PRIORITY_CLASS, NORMAL_PRIORITY_CLASS, ABOVE_NORMAL_PRIORITY_CLASS, HIGH_PRIORITY_CLASS, REALTIME_PRIORITY_CLASS, PROCESS_MODE_BACKGROUND_BEGIN, PROCESS_MODE_BACKGROUND_END};
 
-MidiFile_t midi_file = NULL; if (argc < 2) { printf("Usage: %s <filename.mid>\n" Msg0, argv[0]); return(1); }
+MidiFile_t midi_file = NULL; MIDIINCAPS SelIDev; MIDIOUTCAPS SelODev; if (argc < 2) { printf("Usage: %s <filename.mid>\n" Msg0, argv[0]); return(1); } SetPorts(argc, argv, &SelIDev, &SelODev);
 
 i = j = sizeof(DefArgs)/sizeof(signed long); if (argc > i) { i = argc; } args = malloc(i*sizeof(signed long)); for (i=0; i<j; i++) { args[i] = DefArgs[i]; }
 
@@ -504,12 +536,12 @@ for (i=0; i<=15; i++) {
 
 k = DefIDev;
 Port2In[k].s = midiInOpen(&Port2In[k].h, k, (unsigned long)MidiInProc , (unsigned long)NULL, CALLBACK_FUNCTION | MIDI_IO_STATUS);
-strcpy(Port2In[k].c.szPname, ""); midiInGetDevCaps(k, &Port2In[k].c, sizeof(Port2In[k].c)); printf("i%2d %x '%s'\n", k, Port2In[k].s, Port2In[k].c.szPname);
+strcpy(Port2In[k].c.szPname, ""); midiInGetDevCaps(k, &Port2In[k].c, sizeof(MIDIINCAPS)); printf("i%2d %x '%s'\n", k, Port2In[k].s, Port2In[k].c.szPname);
 for (j=0; j<sizeof(Port2In[k].b)/sizeof(struct MidiBuf); j++) { midiInPrepareHeader(Port2In[k].h, &Port2In[k].b[j].h, sizeof(MIDIHDR)); midiInAddBuffer(Port2In[k].h, &Port2In[k].b[j].h, sizeof(MIDIHDR)); }
 
 for (i=12; i<_msize(args)/sizeof(signed long); i++) { if (i<argc && strlen(argv[i])) { args[i] |= GetIDev(argv[i], midiInGetNumDevs()); } if ((((args[i]>>16) == 2) && (!Port2In[k = args[i]&0xff].h) || ((args[i]>>16) == 4) && (!Port2In[k = midiInGetNumDevs()-1-args[i]&0xff].h)) && (k < midiInGetNumDevs())) { InPortOrder[k] = (args[i]>>8)&0xff;
 Port2In[k].s = midiInOpen(&Port2In[k].h, k, (unsigned long)MidiInProc1, (unsigned long)NULL, CALLBACK_FUNCTION | MIDI_IO_STATUS);
-strcpy(Port2In[k].c.szPname, ""); midiInGetDevCaps(k, &Port2In[k].c, sizeof(Port2In[k].c)); printf("i%2d %x '%s'\n", k, Port2In[k].s, Port2In[k].c.szPname);
+strcpy(Port2In[k].c.szPname, ""); midiInGetDevCaps(k, &Port2In[k].c, sizeof(MIDIINCAPS)); printf("i%2d %x '%s'\n", k, Port2In[k].s, Port2In[k].c.szPname);
 for (j=0; j<sizeof(Port2In[k].b)/sizeof(struct MidiBuf); j++) { midiInPrepareHeader(Port2In[k].h, &Port2In[k].b[j].h, sizeof(MIDIHDR)); midiInAddBuffer(Port2In[k].h, &Port2In[k].b[j].h, sizeof(MIDIHDR)); }}}
 
 for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_file_event = MidiFileEvent_getNextEventInFile(midi_file_event)) {
@@ -576,7 +608,7 @@ ExpandLabels(Labels); k = 0;
 while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInfo = &TrkInfo[MidiEvents[i].Track]; MidiEvents[i].Ch = (unsigned long)MidiEvents[i].midi_out^0x10;
  j = 2; while (j--) { unsigned long p = (unsigned long)MidiEvents[i].midi_out>>8;
  if (Port2Out[p].s == -1) { Port2Out[p].s = midiOutOpen(&Port2Out[p].h, p, (unsigned long)MidiOutProc, (unsigned long)NULL, CALLBACK_FUNCTION);
-  strcpy(Port2Out[p].c.szPname, ""); midiOutGetDevCaps(p, &Port2Out[p].c, sizeof(Port2Out[p].c)); printf("o%2d %x '%s'\n", p, Port2Out[p].s, Port2Out[p].c.szPname);
+  strcpy(Port2Out[p].c.szPname, ""); midiOutGetDevCaps(p, &Port2Out[p].c, sizeof(MIDIOUTCAPS)); printf("o%2d %x '%s'\n", p, Port2Out[p].s, Port2Out[p].c.szPname);
   } if (Port2Out[p].s) { MidiEvents[i].midi_out = (HMIDIOUT)(DefODev << 8); }}
  MidiEvents[i].midi_out = Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].h;
  if (MidiEvents[i].FlwCtl & 2) { MidiEvents[i].FlwCtl &= ~4; MidiEvents[i].FlwCtl |= 1;
@@ -616,7 +648,7 @@ FirstMute = EntryMute = &Mutes[(MutesNum-2)*(TrkNum+1)+1]; if (MutesNum > 2) { F
 
 Key0 = Key1 = &Keys[0x0][0x00]; SneakPending = FlwMsk = IRQ = ExitVal = 0; Active = Dead = 1; Speed = Speed0 = 1; ThruE1 = EntryLabel->Event;
 
-if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeBeginPeriod(args[2]&0xff); } LastTime = WatchDogTimeOut = start_time = timeGetTime(); WatchDogTimeOut += args[5]; if ((TimeOut = args[5]) < 0) { TimeOut = WatchDogTimeOut = -1; }
+if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeBeginPeriod(args[2]&0xff); } LastTime = WatchDogTimeOut = start_time = timeGetTime(); WatchDogTimeOut += TimeOut = abs(args[5]); if (args[5] == -1) { TimeOut = WatchDogTimeOut = -1; }
 
 SetConsoleCtrlHandler(HandlerRoutine, TRUE); for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStart(Port2In[i].h); }} printf("%d %d:%02d:%03d %.2f (%s%.2f %s%d/%d) playing ...", ExitLabel->Event-MidiEvent, ExitLabel->Event->event_time/(1000*60), (ExitLabel->Event->event_time/1000)%60, ExitLabel->Event->event_time%1000, (float)ExitLabel->Event->event_time*1000*(1<<(TimeSig0>>16&0xff))/(((Tempo0&0xffffff)<<2)*(TimeSig0>>24&0xff)), Tempo0&0x1000000?"-":"", (float)60000000/(Tempo0&0xffffff), TimeSig0&0x80?"-":"", TimeSig0>>24&0xff, 1<<(TimeSig0>>16&0xff));
 while (MidiEvent->EventData) { t = MidiEvent->event_time*Speed; if (start_time) { current_time = timeGetTime(); } else { start_time = current_time-t; }
@@ -664,9 +696,7 @@ for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { 
 
 saveMidiEventsToFile(args, Keys, InOfs, midi_file, Tempo0, TimeSig0, KeySig0, RecEvents, RecEvent, RecEvents0, RecEvent0, ExitVal, Label0, TrkInfo, Port2Out);
 
-for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { midiOutClose(Port2Out[i].h); }} if (ExitVal < 3) { Sleep(TimeOut); } //goto start;
-
-CloseHandle(signalling_object0); CloseHandle(signalling_object1);
+for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { midiOutClose(Port2Out[i].h); }}
 
                                                                                      i = 0;   //regular
 if       ( ExitVal & 8                                                           ) { i = 6; } //close
@@ -674,6 +704,10 @@ if       ( ExitVal & 8                                                          
  else if ((ExitVal & 3) < 3                                                      ) { i = 2; } //timeout
  else if (Label0->Event != EntryLabel->Event && Label0->Event == ExitLabel->Event) { i = 4; } //exit
  else if (Label0->Event != EntryLabel->Event && Label0->Event == LastLabel->Event) { i = 5; } //last
+
+if (i == 2) { Sleep(TimeOut); if (args[5] <= 0) { goto start; }}
+
+CloseHandle(signalling_object0); CloseHandle(signalling_object1);
 
 for (k=0; k<TrkNum; k++) { if (cmap[k] != cmap[TrkNum]) { free(cmap[k]); } if (cmap1[k] != cmap1[TrkNum]) { free(cmap1[k]); }} free(cmap[TrkNum]); free(cmap); free(cmap1[TrkNum]); free(cmap1);
 
