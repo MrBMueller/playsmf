@@ -334,7 +334,27 @@ static unsigned long GetODev(char *n, unsigned long d) { unsigned long i; for (i
 
 //----------------------------------------------------------------------------//
 
-static void SetPorts(signed long argc, unsigned char **argv, MIDIINCAPS *SelIDev, MIDIOUTCAPS *SelODev) {
+static unsigned long GetCh() { unsigned long r = getch(); switch (r) { case 0: case 224: getch(); } return(r); }
+
+//----------------------------------------------------------------------------//
+
+static void GetStr(unsigned char *b, unsigned long s) { unsigned long j = 0;
+
+while ((b[j] = GetCh()) != 13) { switch (b[j]) { case 0: case 224: break; case 8: if (j) { printf("\b \b"); j--; } break; default: if (j < s-1) { printf("%c", b[j++]); }}}
+
+b[j] = 0; return; }
+
+//----------------------------------------------------------------------------//
+
+static unsigned long GetArg(signed long d) { unsigned long r, i; unsigned char b[64] = "0", *a = b;
+
+while (strlen(b) && a == b) { GetStr(b, sizeof(b)); r = strtol(b, &a, 0); i = strlen(b); while (i--) { printf("\b \b"); }}
+
+if (!strlen(b)) { r = d; } return(r); }
+
+//----------------------------------------------------------------------------//
+
+static unsigned long SetPorts(signed long argc, unsigned char **argv, MIDIINCAPS *SelIDev, MIDIOUTCAPS *SelODev) {
 
 if (argc > 3 && !strlen(argv[3]) || argc > 4 && !strlen(argv[4])) { signed long ni, no, n, mli, mlo, i, j;
 
@@ -355,12 +375,18 @@ if (argc > 3 && !strlen(argv[3]) || argc > 4 && !strlen(argv[4])) { signed long 
   }
 
  j = 0;
- if (argc > 4 && !strlen(argv[4]) && ni) { printf("%*si:", j, ""); while ((i = map1[getch()%256]) < -2 || i >= ni) {} if (i == -1) { printf("\n"); goto list; } if (i >= 0) { midiInGetDevCaps( i, SelIDev, sizeof(MIDIINCAPS));  argv[4] = SelIDev->szPname; } j++; printf("'%s';", argv[4]); }
- if (argc > 3 && !strlen(argv[3]) && no) { printf("%*so:", j, ""); while ((i = map1[getch()%256]) < -2 || i >= no) {} if (i == -1) { printf("\n"); goto list; } if (i >= 0) { midiOutGetDevCaps(i, SelODev, sizeof(MIDIOUTCAPS)); argv[3] = SelODev->szPname; } j++; printf("'%s';", argv[3]); }
- if (j) { printf("\n"); }
+ if (argc > 4 && !strlen(argv[4]) && ni) { printf("%*si:", j, "");
+  if (ni < 62) { while ((i = map1[GetCh()]) < -2 || i >= ni) {}} else { while ((i = GetArg(-2)) < -2 || i >= ni) {}} if (i == -1) { printf("\n"); goto list; }
+  if (i >= 0) { midiInGetDevCaps( i, SelIDev, sizeof(MIDIINCAPS));  argv[4] = SelIDev->szPname; } j = 1; printf("'%s';", argv[4]); }
+
+ if (argc > 3 && !strlen(argv[3]) && no) { printf("%*so:", j, "");
+  if (no < 62) { while ((i = map1[GetCh()]) < -2 || i >= no) {}} else { while ((i = GetArg(-2)) < -2 || i >= no) {}} if (i == -1) { printf("\n"); goto list; }
+  if (i >= 0) { midiOutGetDevCaps(i, SelODev, sizeof(MIDIOUTCAPS)); argv[3] = SelODev->szPname; } j = 1; printf("'%s';", argv[3]); }
+
+ return(j);
  }
 
-return; }
+return(0); }
 
 //============================================================================//
 
@@ -409,11 +435,13 @@ static   signed long   DefArgs[] = {0, 0, -1, 0, 0, -1, -1, 0, 0x0ff, 0x00008000
 
 static unsigned long ProcessPrios[] = {IDLE_PRIORITY_CLASS, BELOW_NORMAL_PRIORITY_CLASS, NORMAL_PRIORITY_CLASS, ABOVE_NORMAL_PRIORITY_CLASS, HIGH_PRIORITY_CLASS, REALTIME_PRIORITY_CLASS, PROCESS_MODE_BACKGROUND_BEGIN, PROCESS_MODE_BACKGROUND_END};
 
-MidiFile_t midi_file = NULL; MIDIINCAPS SelIDev; MIDIOUTCAPS SelODev; if (argc < 2) { printf("Usage: %s <filename.mid>\n" Msg0, argv[0]); return(1); } SetPorts(argc, argv, &SelIDev, &SelODev);
+MidiFile_t midi_file = NULL; MIDIINCAPS SelIDev; MIDIOUTCAPS SelODev; if (argc < 2) { printf("Usage: %s <filename.mid>\n" Msg0, argv[0]); return(1); }
 
-i = j = sizeof(DefArgs)/sizeof(signed long); if (argc > i) { i = argc; } args = malloc(i*sizeof(signed long)); for (i=0; i<j; i++) { args[i] = DefArgs[i]; }
+i = j = sizeof(DefArgs)/sizeof(signed long); if (argc > i) { i = argc; } args = malloc(i*sizeof(signed long)); for (i=0; i<j; i++) { args[i] = DefArgs[i]; } j = SetPorts(argc, argv, &SelIDev, &SelODev);
 
-for (i=2; i<argc; i++) { unsigned char *a = argv[i]; args[i] = strtol(argv[i], &a, 0); if ((i<3 || i>4) && a == argv[i]) { printf("Error in argument %d: \"%s\".\n", i, argv[i]); free(args); return(1); } if (i<3 || i>4 || !strlen(a)) { argv[i] = a; }}
+for (i=2; i<argc; i++) { unsigned char *a; args[i] = strtol(argv[i], &a, 0); if ((i<3 || i>4) && a == argv[i]) { printf("%*sa%d:", j, "", i); printf("%d (0x%x);", args[i] = GetArg(i<14?DefArgs[i]:0), args[i]); j = 1; } if (i<3 || i>4 || !strlen(a)) { argv[i] = a; }}
+
+if (j) { printf("\n"); }
 
 if (args[2] < -1                     ) { SetPriorityClass(GetCurrentProcess(), ProcessPrios[abs(args[2]    +2)&7]); }
 if (args[2] >= 0 && (args[2] & 0xf00)) { SetPriorityClass(GetCurrentProcess(), ProcessPrios[  ((args[2]>>8)-2)&7]); }
