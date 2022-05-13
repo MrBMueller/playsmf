@@ -87,7 +87,7 @@ struct Key       { unsigned char     Zone;
 struct MidiBuf   { MIDIHDR           h;
                    unsigned char     b[512]; };
 
-struct MidiIn    { unsigned long     s;
+struct MidiIn    { unsigned long     s, StartTime;
                    HMIDIIN           h;
                    MIDIINCAPS        c;
                    struct MidiBuf    b[2]; };
@@ -116,7 +116,7 @@ static unsigned char Inversions[] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x10, 0
 
 static void CALLBACK MidiInProc(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { switch (wMsg) { case MIM_DATA: switch (dwParam1 & 0xf0) {
 
-case 0x90: RecEvent0->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { Dead = 0; return; } Key1 = &Keys[dwParam1 & 0xf][V0]; i = -1;
+case 0x90: V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { Dead = 0; return; } Key1 = &Keys[dwParam1 & 0xf][V0]; i = -1;
  while ((Thru = &Key1->Thrus[++i])->Trk) { if ((ThruE = *Thru->Trk) && ThruE->Ch < 16) { if (Thru->Delay) { Sleep(Thru->Delay); }
   midiOutShortMsg(ThruE->midi_out, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); Thru->Pending = ThruE; }}
  if (!(PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel = V1;
@@ -129,27 +129,27 @@ case 0x90: RecEvent0->event_time = timeGetTime(); V1 = dwParam1>>16; if (!V1) { 
            else                                         { Mute1 = Mute3 = Mute2; if (!Mute[-1]) { Mute0 = Mute11 = Mute; }} V0 |= Var; break;
   case 8: Mute[Key1->Val] ^= 0x08;                                                                                          V0 |= Var; break;
   default: V0 |= Var; }
- MyMacro0 } RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return;
+ MyMacro0 } RecEvent0->event_time = dwParam2; RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return;
 
-case 0x80: RecEvent0->event_time = timeGetTime(); V1 = dwParam1>>16;                            L0x80:   if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { Dead = 0; return; } Key0 = &Keys[dwParam1 & 0xf][V0]; i = -1;
+case 0x80: V1 = dwParam1>>16;                            L0x80:   if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { Dead = 0; return; } Key0 = &Keys[dwParam1 & 0xf][V0]; i = -1;
  while ((Thru = &Key0->Thrus[++i])->Trk) { if (ThruE = Thru->Pending) { midiOutShortMsg(ThruE->midi_out, Thru->v0[V1]<<16 | Thru->k<<8 | 0x80 | ThruE->Ch); } Thru->Pending = NULL; }
  if ( (PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel =  0;
  switch (Key0->Zone) { case 1: if (PendingI->Prev) { PendingI->Prev->Next = PendingI->Next; } if (PendingI->Next) { PendingI->Next->Prev = PendingI->Prev; } else { LatestPendingI = PendingI->Prev; }
   if (!LatestPendingI && (Label0->Idx & 0xf00) && !(Label0->Idx & 0x80)) { V0 = Label0->Idx & 0xfff; }}
  V0 |= Var | 0x80;
- MyMacro0 } RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return;
+ MyMacro0 } RecEvent0->event_time = dwParam2; RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return;
 
-case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: RecEvent0->event_time = timeGetTime(); i = -1;
+case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: i = -1;
  switch (dwParam1 & 0x7ff0) { case 0x40b0: case 0x42b0: case 0x43b0: while (Thrus[c=dwParam1&0xf][++i]     ) { if ((ThruE = *Thrus[c][i]) && ThruE->Ch < 16 && (v = cmap[ThruE->Track][dwParam1>>9&0x3f80 | dwParam1>>8&0x7f | dwParam1<<10&0x1c000])) { midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); }} break;
                               default:                               while ((Thru = &Key1->Thrus[++i])->Trk) { if ((ThruE = *Thru->Trk  ) && ThruE->Ch < 16 && (v = cmap[ThruE->Track][dwParam1>>9&0x3f80 | dwParam1>>8&0x7f | dwParam1<<10&0x1c000])) { midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); }} }
- RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return;
+ RecEvent0->event_time = dwParam2; RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return;
 
 default: switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: Dead = 0; return; }
 
-} RecEvent0->event_time = timeGetTime(); printf(" \n0%x", dwParam1); RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return; //switch dwParam1 // MIM_DATA fallthru
+} printf(" \n0%x", dwParam1); RecEvent0->event_time = dwParam2; RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return; //switch dwParam1 // MIM_DATA fallthru
 
-case MIM_LONGDATA: V0 = timeGetTime(); i = -1;
- while (++i < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { RecEvent0->event_time = V0; RecEvent0->EventData = (*(((MIDIHDR*)dwParam1)->lpData+i)&0xff)<<8 | 0xf0; RecEvent0 = RecEvent0->NextEvent; }
+case MIM_LONGDATA: i = -1;
+ while (++i < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { RecEvent0->event_time = dwParam2; RecEvent0->EventData = (*(((MIDIHDR*)dwParam1)->lpData+i)&0xff)<<8 | 0xf0; RecEvent0 = RecEvent0->NextEvent; }
  if (((MIDIHDR*)dwParam1)->dwBytesRecorded && Active) { midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } Dead = 0; return; // MIM_LONGDATA
 case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
@@ -226,7 +226,7 @@ return; }
 
 //----------------------------------------------------------------------------//
 
-static void saveMidiEventsToFile(signed long *args, struct Key Keys[][128], signed char InOfs, MidiFile_t SMF, unsigned long Tempo, unsigned long TimeSig, unsigned long KeySig, struct RecEvent *RecEvents, struct RecEvent *RecEvent, struct RecEvent0 *RecEvents0, struct RecEvent0 *RecEvent0, unsigned char ExitVal, struct Label *Label0, struct MidiEvent **TrkInfo, struct MidiOut *Port2Out) {
+static void saveMidiEventsToFile(signed long *args, struct Key Keys[][128], signed char InOfs, MidiFile_t SMF, unsigned long Tempo, unsigned long TimeSig, unsigned long KeySig, struct RecEvent *RecEvents, struct RecEvent *RecEvent, struct RecEvent0 *RecEvents0, struct RecEvent0 *RecEvent0, unsigned char ExitVal, struct Label *Label0, struct MidiEvent **TrkInfo, struct MidiIn *Port2In, struct MidiOut *Port2Out) {
 SYSTEMTIME    current_time;
 unsigned char b[1024], tempo[] = {(Tempo>>16)&0xff, (Tempo>>8)&0xff, (Tempo>>0)&0xff}, timeSig[] = {(TimeSig>>24)&0xff, (TimeSig>>16)&0xff, (TimeSig>>8)&0xff, (TimeSig>>0)&0x7f}, keySig[] = {(KeySig>>8)&0xff, (KeySig>>0)&0xff};
 unsigned long PPQ = MidiFile_getResolution(SMF), PPQc = PPQ*1000, RecNum = 0, MinEventTime = -1, i, l, t0;
@@ -259,6 +259,8 @@ MidiFileTrack_createMetaEvent(track0, 0, 0x02, strlen(GetCommandLineA()), GetCom
 MidiFileTrack_createMetaEvent(track0, 0, 0x51, 3, tempo);
 if (!(TimeSig & 0x00000080)) { MidiFileTrack_createMetaEvent(track0, 0, 0x58, 4, timeSig); }
 if (!(KeySig  & 0x00010000)) { MidiFileTrack_createMetaEvent(track0, 0, 0x59, 2, keySig ); }
+
+for (i=0; i<(_msize(RecEvents0)/sizeof(struct RecEvent0)); i++) { if (RecEvents0[i].EventData >= 0x80) { RecEvents0[i].event_time += Port2In[0].StartTime; }}
 
 if (RecEvents->Event) { MinEventTime = (RecEvent->Event?RecEvent:RecEvents)->event_time - (RecEvent->Event?RecEvent:RecEvents)->Event->event_time; }
 if (RecEvents0->EventData && (RecEvent0->EventData?RecEvent0:RecEvents0)->event_time < MinEventTime) { MinEventTime = (RecEvent0->EventData?RecEvent0:RecEvents0)->event_time; }
@@ -678,7 +680,9 @@ Key0 = Key1 = &Keys[0x0][0x00]; SneakPending = FlwMsk = IRQ = ExitVal = 0; Activ
 
 if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeBeginPeriod(args[2]&0xff); } LastTime = WatchDogTimeOut = start_time = timeGetTime(); WatchDogTimeOut += TimeOut = abs(args[5]); if (args[5] == -1) { TimeOut = WatchDogTimeOut = -1; }
 
-SetConsoleCtrlHandler(HandlerRoutine, TRUE); for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStart(Port2In[i].h); }} printf("%d %d:%02d:%03d %.2f (%s%.2f %s%d/%d) playing ...", ExitLabel->Event-MidiEvent, ExitLabel->Event->event_time/(1000*60), (ExitLabel->Event->event_time/1000)%60, ExitLabel->Event->event_time%1000, (float)ExitLabel->Event->event_time*1000*(1<<(TimeSig0>>16&0xff))/(((Tempo0&0xffffff)<<2)*(TimeSig0>>24&0xff)), Tempo0&0x1000000?"-":"", (float)60000000/(Tempo0&0xffffff), TimeSig0&0x80?"-":"", TimeSig0>>24&0xff, 1<<(TimeSig0>>16&0xff));
+SetConsoleCtrlHandler(HandlerRoutine, TRUE); for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { for (;;) { Port2In[i].StartTime = timeGetTime(); midiInStart(Port2In[i].h); if (timeGetTime() == Port2In[i].StartTime) { break; }}}}
+
+printf("%d %d:%02d:%03d %.2f (%s%.2f %s%d/%d) playing ...", ExitLabel->Event-MidiEvent, ExitLabel->Event->event_time/(1000*60), (ExitLabel->Event->event_time/1000)%60, ExitLabel->Event->event_time%1000, (float)ExitLabel->Event->event_time*1000*(1<<(TimeSig0>>16&0xff))/(((Tempo0&0xffffff)<<2)*(TimeSig0>>24&0xff)), Tempo0&0x1000000?"-":"", (float)60000000/(Tempo0&0xffffff), TimeSig0&0x80?"-":"", TimeSig0>>24&0xff, 1<<(TimeSig0>>16&0xff));
 while (MidiEvent->EventData) { t = MidiEvent->event_time*Speed; if (start_time) { current_time = timeGetTime(); } else { start_time = current_time-t; }
  if ((signed long)(t += start_time-current_time) > 0 && !WaitForSingleObject(signalling_object0, t)) { current_time = timeGetTime(); t = 0; }
 
@@ -722,7 +726,7 @@ for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h)
 
 for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInReset(Port2In[i].h); for (j=0; j<sizeof(Port2In[i].b)/sizeof(struct MidiBuf); j++) { midiInUnprepareHeader(Port2In[i].h, &Port2In[i].b[j].h, sizeof(MIDIHDR)); } midiInClose(Port2In[i].h); }}
 
-saveMidiEventsToFile(args, Keys, InOfs, midi_file, Tempo0, TimeSig0, KeySig0, RecEvents, RecEvent, RecEvents0, RecEvent0, ExitVal, Label0, TrkInfo, Port2Out);
+saveMidiEventsToFile(args, Keys, InOfs, midi_file, Tempo0, TimeSig0, KeySig0, RecEvents, RecEvent, RecEvents0, RecEvent0, ExitVal, Label0, TrkInfo, Port2In, Port2Out);
 
 for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { midiOutClose(Port2Out[i].h); }}
 
