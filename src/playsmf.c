@@ -102,15 +102,13 @@ static struct Key       Keys[16][128], *Key0, *Key1;
 static struct Thru     *Thru;
 static struct PNoteI    PendingEventsI[128], *PendingI, *LatestPendingI;
 static struct Chord     Chords[0xcccc+1];
-static struct RecEvent  *RecEvents, *RecEvent;
-static struct RecEvent0 *RecEvents0, *RecEvent0;
+static struct RecEvent0 *RecEvent0;
 static unsigned char    IRQ, *Mutes, *Mute, *Mute0, *Mute1, *Mute2, *Mute3, *Mute11, *EntryMute, *FirstMute, *MuteA, *MuteB, Dead, Active, ExitVal, InPortOrder[256], SneakPending;
 static unsigned long    V0, V1, c, v, i, i1, LastTime, LabelNum, TrkNum, Var, Var0, Var1, **cmap, **cmap1, v1;
-static struct MidiEvent *MidiEvents, *MidiEvent, *MidiEvenT, **TrkInfo, ***Thrus[16], *ThruE, *ThruE1;
+static struct MidiEvent *MidiEvents, *MidiEvenT, **TrkInfo, ***Thrus[16], *ThruE, *ThruE1;
 static float            Speed0;
 static signed char      InOfs;
-static struct MidiIn    Port2In[ 256];
-static struct MidiOut   Port2Out[256];
+static struct MidiIn    Port2In[256];
 
 static unsigned char Inversions[] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x10, 0x10, 0x10, 0x00, 0x30, 0x30};
 
@@ -397,12 +395,17 @@ return(0); }
 signed long main(signed long argc, unsigned char **argv) {
 static TIMECAPS        time_caps;
 static MIDIHDR         midi_message_header;
+static struct MidiOut  Port2Out[ 256];
 static unsigned char   Port2Port[256], FlwMsk;
 static MidiFileEvent_t midi_file_event;
 static unsigned long   start_time, current_time, t, WatchDogTimeOut, MutesNum, tick, tempo_event_tick, MutesInv, MutesRet, MutesInv1, MutesInv2, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0;
 static   signed long   i, j, k, l, *args, TimeOut, DefIDev, DefODev;
 static struct PNoteO   *PendingEventsO, *PendingO, *LatestPendingO;
 static float           Speed, tempo_event_time;
+static struct MidiEvent *MidiEvent;
+static struct RecEvent  *RecEvents, *RecEvent;
+static struct RecEvent0 *RecEvents0;
+
 static unsigned char   Permutations0[][1] = {{0}};
 static unsigned char   Permutations1[][2] = {{0,1},{1,0}};
 static unsigned char   Permutations2[][3] = {{0,1,2},{0,2,1},{1,0,2},{1,2,0},{2,0,1},{2,1,0}};
