@@ -613,7 +613,7 @@ for (i=0; i<=15; i++) {
  for (j=0; j<=127; j++) { signed long a = -1;
   while (Keys[i][j].Thrus[++a].Trk) { signed long L = -1; while (Thrus[i][++L] && Thrus[i][L]->Trk != Keys[i][j].Thrus[a].Trk) {}
    if (!k       || (signed long)Keys[i][j].Thrus[a].Pending > 127) { if (!Thrus[i][L]) { Thrus[i][L] = &Keys[i][j].Thrus[a]; }}
-   if ( k > 128 && (signed long)Keys[i][j].Thrus[a].Pending > 127) { Keys[i][j].Thrus[a].Trk = NULL; }
+   if ( k > 128 && (signed long)Keys[i][j].Thrus[a].Pending > 127) { Keys[i][j].Thrus[a].m = 0; }
    Keys[i][j].Thrus[a].Pending = NULL;
    }
   }
