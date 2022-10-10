@@ -260,9 +260,8 @@ while (Thrus && (Thru->Trk = Thrus[Ch][++i]) || Key && (Thru = &Key->Thrus[++i])
  if ((m || Thru->m) && ThruE && ThruE->Ch < 16) { signed long ID, IDt = -1; MidiFileEvent_t midi_file_event; if (midiOutGetID(ThruE->midi_out, &ID)) { ID = -1; } d += Thru->Delay;
 
   for (midi_file_event = MidiFileTrack_getFirstEvent(track); midi_file_event; midi_file_event = MidiFileEvent_getNextEventInTrack(midi_file_event)) {
-   if (MidiFileEvent_getType(midi_file_event) == MIDI_FILE_EVENT_TYPE_META) {
-    if (MidiFileMetaEvent_getNumber(midi_file_event) == 0x21 && MidiFileMetaEvent_getDataLength(midi_file_event)) { IDt = MidiFileMetaEvent_getData(midi_file_event)[0]; }
-    }
+   if (MidiFileEvent_getType(midi_file_event) == MIDI_FILE_EVENT_TYPE_META && MidiFileMetaEvent_getNumber(midi_file_event) == 0x21 && MidiFileMetaEvent_getDataLength(midi_file_event)) {
+    IDt = MidiFileMetaEvent_getData(midi_file_event)[0]; }
    }
 
   if (IDt < 0 || ID != IDt) { if (ID >= 0) { MidiFileTrack_createMetaEvent(track, IDt<0?0:t*c, 0x09, strlen(Port2Out[ID].c.szPname), Port2Out[ID].c.szPname); }
@@ -289,7 +288,7 @@ struct Key    *Key1 = &Keys[0x0][0x00];
 
 MidiFile_t midi_file = MidiFile_new(1, MIDI_FILE_DIVISION_TYPE_PPQ, PPQ); MidiFileTrack_t track0, trackP, trackP0, trackP1, trackP2, trackP3, trackP4;
 
-signed long Zones = 0; i = 12; while (i+6 < _msize(args)/sizeof(signed long) && abs(args[i+6]) < 0x10000) { i += 7; Zones++; while (i < _msize(args)/sizeof(signed long) && abs(args[i]) >= 0x10000) { i++; }}
+signed long Zones = 0; i = 12; while (i+6 < _msize(args)/sizeof(signed long) && abs(args[i+6]) < 0x10000) { Zones++; i += 7; while (i < _msize(args)/sizeof(signed long) && abs(args[i]) >= 0x10000) { i++; }}
 
 for (i=0; i < 1+MidiFile_getNumberOfTracks(SMF)+6+Zones; i++) { MidiFile_createTrack(midi_file); }
 
