@@ -134,7 +134,7 @@ case 0x90: V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwP
  MyMacro0 } RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return;
 
 case 0x80: V1 = dwParam1>>16;                            L0x80:   if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { Dead = 0; return; } Key0 = &Keys[dwParam1 & 0xf][V0]; i = -1;
- while ((Thru = &Key0->Thrus[++i])->Trk) { if (ThruE = Thru->Pending) { midiOutShortMsg(ThruE->midi_out, Thru->v0[V1]<<16 | Thru->k<<8 | 0x80 | ThruE->Ch); } Thru->Pending = NULL; }
+ while ((Thru = &Key0->Thrus[++i])->Trk) { if (ThruE = Thru->Pending) { midiOutShortMsg(ThruE->midi_out, Thru->v0[V1]<<16 | Thru->k<<8 | 0x80 | ThruE->Ch); Thru->Pending = NULL; }}
  RecEvent0->event_time = dwParam2; if ( (PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel =  0;
  switch (Key0->Zone) { case 1: if (PendingI->Prev) { PendingI->Prev->Next = PendingI->Next; } if (PendingI->Next) { PendingI->Next->Prev = PendingI->Prev; } else { LatestPendingI = PendingI->Prev; }
   if (!LatestPendingI && (Label0->Idx & 0xf00) && !(Label0->Idx & 0x80)) { V0 = Label0->Idx & 0xfff; }}
@@ -244,9 +244,9 @@ return; }
 //----------------------------------------------------------------------------//
 
 static void WriteThrus(signed long *args, unsigned long m, struct MidiEvent ***Thrus[], struct Key *Key, struct MidiEvent **TrkInfo, struct RecEvent0 *RecEvent0, MidiFile_t midi_file, MidiFile_t SMF, unsigned long MinEventTime, float c, struct MidiOut *Port2Out, unsigned long **cmap) {
-signed long C = args[6], Ch = RecEvent0->EventData & 0xf, i = -1, d = 0, V0 = (RecEvent0->EventData>>8)&0x7f, V1 = (RecEvent0->EventData>>16)&0x7f, t = RecEvent0->event_time-MinEventTime, TrkNum = MidiFile_getNumberOfTracks(SMF); struct Thru ThruO; struct Thru *Thru = &ThruO;
+signed long C = args[6], EventData = (RecEvent0->EventData & 0x7f00f0) == 0x90 ? RecEvent0->EventData^0x10 | 0x400000 : RecEvent0->EventData, Ch = EventData & 0xf, i = -1, d = 0, V0 = (EventData>>8)&0x7f, V1 = (EventData>>16)&0x7f, t = RecEvent0->event_time-MinEventTime, TrkNum = MidiFile_getNumberOfTracks(SMF); struct Thru ThruO; struct Thru *Thru = &ThruO;
 
-while (Thrus && (Thru->Trk = Thrus[Ch][++i]) || Key && (Thru = &Key->Thrus[++i])->Trk) { MidiFileTrack_t track; struct MidiEvent *ThruE; unsigned long TrkID = Thru->Trk-TrkInfo; ThruE = TrkInfo[TrkID];
+while (Thrus && (Thru->Trk = Thrus[Ch][++i]) || Key && (Thru = &Key->Thrus[++i])->Trk) { MidiFileTrack_t track; unsigned long TrkID = Thru->Trk-TrkInfo; struct MidiEvent *ThruE = (EventData & 0xe0) == 0x80 && Thru->Pending ? Thru->Pending : TrkInfo[TrkID];
 
  if (Thru == &ThruO) { signed long z = -1, k = 12;
   while (k+6 < _msize(args)/sizeof(signed long) && abs(args[k+6]) < 0x10000) { signed long T = args[k+2]; z++; if (T < 0) { T = TrkNum-abs(T); }
@@ -267,10 +267,10 @@ while (Thrus && (Thru->Trk = Thrus[Ch][++i]) || Key && (Thru = &Key->Thrus[++i])
   if (IDt < 0 || ID != IDt) { if (ID >= 0) { MidiFileTrack_createMetaEvent(track, IDt<0?0:t*c, 0x09, strlen(Port2Out[ID].c.szPname), Port2Out[ID].c.szPname); }
    MidiFileTrack_createMetaEvent(track, IDt<0?0:t*c, 0x21, 1, &(unsigned char)ID); }
 
-  switch (RecEvent0->EventData & 0xf0) {
-   case 0x80: MidiFileTrack_createShortMsg(track, (t+d)*c, Thru->v0[V1]<<16 | Thru->k<<8 | 0x80 | ThruE->Ch); break;
-   case 0x90: MidiFileTrack_createShortMsg(track, (t+d)*c, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); break;
-   default: { unsigned long v; if (v = cmap[TrkID][RecEvent0->EventData>>9&0x3f80 | RecEvent0->EventData>>8&0x7f | RecEvent0->EventData<<10&0x1c000]) { MidiFileTrack_createShortMsg(track, t*c, v | ThruE->Ch); }}}
+  switch (EventData & 0xf0) {
+   case 0x80: MidiFileTrack_createShortMsg(track, (t+d)*c, Thru->v0[V1]<<16 | Thru->k<<8 | 0x80 | ThruE->Ch); Thru->Pending = NULL;  break;
+   case 0x90: MidiFileTrack_createShortMsg(track, (t+d)*c, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); Thru->Pending = ThruE; break;
+   default: { unsigned long v; if (v = cmap[TrkID][EventData>>9&0x3f80 | EventData>>8&0x7f | EventData<<10&0x1c000]) { MidiFileTrack_createShortMsg(track, t*c, v | ThruE->Ch); }}}
   }
  }
 
@@ -289,6 +289,8 @@ struct Key    *Key1 = &Keys[0x0][0x00];
 MidiFile_t midi_file = MidiFile_new(1, MIDI_FILE_DIVISION_TYPE_PPQ, PPQ); MidiFileTrack_t track0, trackP, trackP0, trackP1, trackP2, trackP3, trackP4;
 
 signed long Zones = 0; i = 12; while (i+6 < _msize(args)/sizeof(signed long) && abs(args[i+6]) < 0x10000) { Zones++; i += 7; while (i < _msize(args)/sizeof(signed long) && abs(args[i]) >= 0x10000) { i++; }}
+
+for (i=0; i<16; i++) { for (j=0; j<128; j++) { l = -1; while (Keys[i][j].Thrus[++l].Trk) { Keys[i][j].Thrus[l].Pending = NULL; }}}
 
 for (i=0; i < 1+MidiFile_getNumberOfTracks(SMF)+6+Zones; i++) { MidiFile_createTrack(midi_file); }
 
