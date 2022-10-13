@@ -281,7 +281,7 @@ return; }
 static void saveMidiEventsToFile(signed long *args, struct Key Keys[][128], signed char InOfs, MidiFile_t SMF, unsigned long Tempo, unsigned long TimeSig, unsigned long KeySig, struct RecEvent *RecEvents, struct RecEvent *RecEvent, struct RecEvent0 *RecEvents0, struct RecEvent0 *RecEvent0, unsigned char ExitVal, struct Label *Label0, struct MidiEvent **TrkInfo, struct MidiIn *Port2In, struct MidiOut *Port2Out, struct MidiEvent ***Thrus[], unsigned long **cmap) {
 SYSTEMTIME    current_time;
 unsigned char b[1024], tempo[] = {(Tempo>>16)&0xff, (Tempo>>8)&0xff, (Tempo>>0)&0xff}, timeSig[] = {(TimeSig>>24)&0xff, (TimeSig>>16)&0xff, (TimeSig>>8)&0xff, (TimeSig>>0)&0x7f}, keySig[] = {(KeySig>>8)&0xff, (KeySig>>0)&0xff};
-unsigned long PPQ = MidiFile_getResolution(SMF), PPQc = PPQ*1000, RecNum = 0, MinEventTime = -1, i, j, l, t0;
+unsigned long PPQ = MidiFile_getResolution(SMF), PPQc = PPQ*1000, RecNum = 0, MinEventTime = -1, i, j, l, t0, TrkNum = MidiFile_getNumberOfTracks(SMF);
 float         c = (float)PPQc/(float)(Tempo&0xffffff);
 struct Label  *Label = NULL;
 struct Key    *Key1 = &Keys[0x0][0x00];
@@ -292,27 +292,19 @@ signed long Zones = 0; i = 12; while (i+6 < _msize(args)/sizeof(signed long) && 
 
 for (i=0; i<16; i++) { for (j=0; j<128; j++) { l = -1; while (Keys[i][j].Thrus[++l].Trk) { Keys[i][j].Thrus[l].Pending = NULL; }}}
 
-for (i=0; i < 1+MidiFile_getNumberOfTracks(SMF)+6+Zones; i++) { MidiFile_createTrack(midi_file); }
+for (i=0; i < 1+TrkNum+6+Zones; i++) { MidiFile_createTrack(midi_file); }
 
-track0  = MidiFile_getTrackByNumber(midi_file, 0, 0);
-trackP  = MidiFile_getTrackByNumber(midi_file, MidiFile_getNumberOfTracks(midi_file)-Zones-6, 0);
-trackP2 = MidiFile_getTrackByNumber(midi_file, MidiFile_getNumberOfTracks(midi_file)-Zones-5, 0);
-trackP4 = MidiFile_getTrackByNumber(midi_file, MidiFile_getNumberOfTracks(midi_file)-Zones-4, 0);
-trackP3 = MidiFile_getTrackByNumber(midi_file, MidiFile_getNumberOfTracks(midi_file)-Zones-3, 0);
-trackP1 = MidiFile_getTrackByNumber(midi_file, MidiFile_getNumberOfTracks(midi_file)-Zones-2, 0);
-trackP0 = MidiFile_getTrackByNumber(midi_file, MidiFile_getNumberOfTracks(midi_file)-Zones-1, 0);
+sprintf(b, "Conductor"); MidiFileTrack_createMetaEvent(track0  = MidiFile_getTrackByNumber(midi_file, 0         , 0), 0, 0x03, strlen(b), b);
+sprintf(b, "Primary"  ); MidiFileTrack_createMetaEvent(trackP  = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+0, 0), 0, 0x03, strlen(b), b);
+sprintf(b, "Pri-Var"  ); MidiFileTrack_createMetaEvent(trackP2 = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+1, 0), 0, 0x03, strlen(b), b);
+sprintf(b, "Pri-Mute" ); MidiFileTrack_createMetaEvent(trackP4 = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+2, 0), 0, 0x03, strlen(b), b);
+sprintf(b, "Pri-Mutes"); MidiFileTrack_createMetaEvent(trackP3 = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+3, 0), 0, 0x03, strlen(b), b);
+sprintf(b, "Pri-Chord"); MidiFileTrack_createMetaEvent(trackP1 = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+4, 0), 0, 0x03, strlen(b), b);
+sprintf(b, "Pri-Other"); MidiFileTrack_createMetaEvent(trackP0 = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+5, 0), 0, 0x03, strlen(b), b);
 
-sprintf(b, "Conductor"); MidiFileTrack_createMetaEvent(track0 , 0, 0x03, strlen(b), b);
-sprintf(b, "Primary"  ); MidiFileTrack_createMetaEvent(trackP , 0, 0x03, strlen(b), b);
-sprintf(b, "Pri-Var"  ); MidiFileTrack_createMetaEvent(trackP2, 0, 0x03, strlen(b), b);
-sprintf(b, "Pri-Mute" ); MidiFileTrack_createMetaEvent(trackP4, 0, 0x03, strlen(b), b);
-sprintf(b, "Pri-Mutes"); MidiFileTrack_createMetaEvent(trackP3, 0, 0x03, strlen(b), b);
-sprintf(b, "Pri-Chord"); MidiFileTrack_createMetaEvent(trackP1, 0, 0x03, strlen(b), b);
-sprintf(b, "Pri-Other"); MidiFileTrack_createMetaEvent(trackP0, 0, 0x03, strlen(b), b);
+for (i=0; i < TrkNum; i++) { TrkInfo[i] = NULL; sprintf(b, "SMF %d", i); MidiFileTrack_createMetaEvent(MidiFile_getTrackByNumber(midi_file, 1+i, 0), 0, 0x03, strlen(b), b); }
 
-for (i=1; i < MidiFile_getNumberOfTracks(midi_file)-Zones-6; i++) { TrkInfo[i-1] = NULL; sprintf(b, "SMF %d", i-1); MidiFileTrack_createMetaEvent(MidiFile_getTrackByNumber(midi_file, i, 0), 0, 0x03, strlen(b), b); }
-
-for (i=MidiFile_getNumberOfTracks(midi_file)-Zones; i < MidiFile_getNumberOfTracks(midi_file); i++) { sprintf(b, "Zone %d", i-(1+MidiFile_getNumberOfTracks(SMF)+6)); MidiFileTrack_createMetaEvent(MidiFile_getTrackByNumber(midi_file, i, 0), 0, 0x03, strlen(b), b); }
+for (i=0; i < Zones; i++) { sprintf(b, "Zone %d", i); MidiFileTrack_createMetaEvent(MidiFile_getTrackByNumber(midi_file, 1+TrkNum+6+i, 0), 0, 0x03, strlen(b), b); }
 
 MidiFileTrack_createMetaEvent(track0, 0, 0x02, strlen(GetCommandLineA()), GetCommandLineA());
 MidiFileTrack_createMetaEvent(track0, 0, 0x51, 3, tempo);
@@ -347,6 +339,8 @@ while (i) { unsigned long t = (RecEvent->event_time-MinEventTime)*c, EventData =
   }
  RecEvent = RecEvent->NextEvent; i--;
  }
+
+for (i=0; i < TrkNum; i++) { TrkInfo[i] = NULL; }
 
 l = 0; i = RecEvent0-RecEvents0;
 if (!(ExitVal&4)) {
