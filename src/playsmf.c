@@ -391,7 +391,7 @@ j = RecEvent->Event?_msize(RecEvents)/sizeof(struct RecEvent):RecEvent-RecEvents
 l = 0;
 while (i) { unsigned long t = (RecEvent1->event_time-MinEventTime)*c, EventData = RecEvent1->EventData, TrkID = InPortOrder[EventData>>24] + (EventData & 0xf); MidiFileTrack_t track = MidiFile_getTrackByNumber(midi_file, 1+TrkID, 0); 
  while (j && RecEvent->event_time <= RecEvent1->event_time) { TrkInfo[RecEvent->Event->Track] = RecEvent->Event; RecEvent = RecEvent->NextEvent; j--; }
- trackP = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+6+Zones+(Port2In[EventData>>24].z-1), 0);
+ trackP = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+6+Zones+(Port2In[EventData>>24].z-1), 0); EventData &= 0xffffff;
  switch (EventData & 0xf0) {
   case 0x80: case 0x90: case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: if (TrkID < TrkNum && TrkInfo[TrkID] && TrkInfo[TrkID]->Ch < 16) { MidiFileTrack_createShortMsg(track, t, EventData & 0xfffff0 | TrkInfo[TrkID]->Ch); } break;
   default:
