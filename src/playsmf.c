@@ -384,7 +384,7 @@ while (i) { unsigned long t = (RecEvent0->event_time-MinEventTime)*c, EventData 
  }
 if (l) { MidiFileTrack_createSysexEvent(trackP, t0, l, b); } //write incomplete sysex w/o f7 termination (should not happen)
 
-for (i=0; i < TrkNum; i++) { TrkInfo[i] = NULL; } while (j) { RecEvent = RecEvent->NextEvent; j--; }
+while (j) { RecEvent = RecEvent->NextEvent; j--; } for (i=0; i < TrkNum; i++) { TrkInfo[i] = NULL; }
 i = (RecEvent1->EventData?_msize(RecEvents1)/sizeof(struct RecEvent0):RecEvent1-RecEvents1); RecEvent1 = RecEvent1->EventData?RecEvent1:RecEvents1;
 j = RecEvent->Event?_msize(RecEvents)/sizeof(struct RecEvent):RecEvent-RecEvents; RecEvent = RecEvent->Event?RecEvent:RecEvents;
 
