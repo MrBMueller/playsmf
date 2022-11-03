@@ -290,9 +290,7 @@ struct Key    *Key1 = &Keys[0x0][0x00];
 
 MidiFile_t midi_file = MidiFile_new(1, MIDI_FILE_DIVISION_TYPE_PPQ, PPQ); MidiFileTrack_t track0, trackP, trackP0, trackP1, trackP2, trackP3, trackP4;
 
-signed long Zones = -1, SPs = 0;
-
-for (i=0; i<16; i++) { for (j=0; j<128; j++) { l = -1; while (Keys[i][j].Thrus[++l].Trk) { if (Keys[i][j].Thrus[l].z > Zones) { Zones = Keys[i][j].Thrus[l].z; } Keys[i][j].Thrus[l].Pending = NULL; }}} Zones++;
+signed long Zones = 0, SPs = 0; i = 12; while (i+6 < _msize(args)/sizeof(signed long) && abs(args[i+6]) < 0x10000) { Zones++; i += 7; while (i < _msize(args)/sizeof(signed long) && abs(args[i]) >= 0x10000) { i++; }}
 
 for (i=0; i<256; i++) { if (i != DefIDev && Port2In[i].h) { SPs++; }}
 
