@@ -280,7 +280,7 @@ return; }
 
 //----------------------------------------------------------------------------//
 
-static void saveMidiEventsToFile(signed long *args, struct Key Keys[][128], signed char InOfs, MidiFile_t SMF, unsigned long Tempo, unsigned long TimeSig, unsigned long KeySig, struct RecEvent *RecEvents, struct RecEvent *RecEvent, struct RecEvent0 *RecEvents0, struct RecEvent0 *RecEvent0, struct RecEvent0 *RecEvents1, struct RecEvent0 *RecEvent1, unsigned char ExitVal, struct Label *Label0, struct MidiEvent **TrkInfo, struct MidiIn *Port2In, struct MidiOut *Port2Out, struct MidiEvent ***Thrus[], unsigned long **cmap, unsigned char InPortOrder[], signed long DefIDev) {
+static void saveMidiEventsToFile(signed long *args, struct Key Keys[][128], signed char InOfs, MidiFile_t SMF, unsigned long Tempo, unsigned long TimeSig, unsigned long KeySig, struct RecEvent *RecEvents, struct RecEvent *RecEvent, struct RecEvent0 *RecEvents0, struct RecEvent0 *RecEvent0, struct RecEvent0 *RecEvents1, struct RecEvent0 *RecEvent1, unsigned char ExitVal, struct Label *Label0, struct MidiEvent **TrkInfo, struct MidiIn *Port2In, struct MidiOut *Port2Out, struct MidiEvent ***Thrus[], unsigned long **cmap, unsigned long **cmap1, unsigned char InPortOrder[], signed long DefIDev) {
 SYSTEMTIME    current_time;
 unsigned char b[1024], tempo[] = {(Tempo>>16)&0xff, (Tempo>>8)&0xff, (Tempo>>0)&0xff}, timeSig[] = {(TimeSig>>24)&0xff, (TimeSig>>16)&0xff, (TimeSig>>8)&0xff, (TimeSig>>0)&0x7f}, keySig[] = {(KeySig>>8)&0xff, (KeySig>>0)&0xff};
 unsigned long PPQ = MidiFile_getResolution(SMF), PPQc = PPQ*1000, RecNum = 0, MinEventTime = -1, i, j, l, t0, TrkNum = MidiFile_getNumberOfTracks(SMF);
@@ -387,11 +387,11 @@ i = (RecEvent1->EventData?_msize(RecEvents1)/sizeof(struct RecEvent0):RecEvent1-
 j = RecEvent->Event?_msize(RecEvents)/sizeof(struct RecEvent):RecEvent-RecEvents; RecEvent = RecEvent->Event?RecEvent:RecEvents;
 
 l = 0;
-while (i) { unsigned long t = (RecEvent1->event_time-MinEventTime)*c, EventData = RecEvent1->EventData, TrkID = InPortOrder[EventData>>24] + (EventData & 0xf); MidiFileTrack_t track = MidiFile_getTrackByNumber(midi_file, 1+TrkID, 0); 
+while (i) { unsigned long v, t = (RecEvent1->event_time-MinEventTime)*c, EventData = RecEvent1->EventData, TrkID = InPortOrder[EventData>>24] + (EventData & 0xf); MidiFileTrack_t track = MidiFile_getTrackByNumber(midi_file, 1+TrkID, 0); 
  while (j && RecEvent->event_time <= RecEvent1->event_time) { TrkInfo[RecEvent->Event->Track] = RecEvent->Event; RecEvent = RecEvent->NextEvent; j--; }
  trackP = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+6+Zones+(Port2In[EventData>>24].z-1), 0); EventData &= 0xffffff;
  switch (EventData & 0xf0) {
-  case 0x80: case 0x90: case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: if (TrkID < TrkNum && TrkInfo[TrkID] && TrkInfo[TrkID]->Ch < 16) { MidiFileTrack_createShortMsg(track, t, EventData & 0xfffff0 | TrkInfo[TrkID]->Ch); } break;
+  case 0x80: case 0x90: case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: if (TrkID < TrkNum && TrkInfo[TrkID] && TrkInfo[TrkID]->Ch < 16 && (v = cmap1[TrkID][EventData>>9&0x3f80 | EventData>>8&0x7f | EventData<<10&0x1c000])) { MidiFileTrack_createShortMsg(track, t, v | TrkInfo[TrkID]->Ch); } break;
   default:
   switch (EventData & 0xff) {
    case 0xf0: if ((EventData>>8) == 0xf0) { if (l) { MidiFileTrack_createSysexEvent(trackP, t0, l, b); } l = 0; }
@@ -816,7 +816,7 @@ for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h)
 
 for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInReset(Port2In[i].h); for (j=0; j<sizeof(Port2In[i].b)/sizeof(struct MidiBuf); j++) { midiInUnprepareHeader(Port2In[i].h, &Port2In[i].b[j].h, sizeof(MIDIHDR)); } midiInClose(Port2In[i].h); }}
 
-saveMidiEventsToFile(args, Keys, InOfs, midi_file, Tempo0, TimeSig0, KeySig0, RecEvents, RecEvent, RecEvents0, RecEvent0, RecEvents1, RecEvent1, ExitVal, Label0, TrkInfo, Port2In, Port2Out, Thrus, cmap, InPortOrder, DefIDev);
+saveMidiEventsToFile(args, Keys, InOfs, midi_file, Tempo0, TimeSig0, KeySig0, RecEvents, RecEvent, RecEvents0, RecEvent0, RecEvents1, RecEvent1, ExitVal, Label0, TrkInfo, Port2In, Port2Out, Thrus, cmap, cmap1, InPortOrder, DefIDev);
 
 for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { midiOutClose(Port2Out[i].h); }}
 
