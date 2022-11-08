@@ -246,7 +246,7 @@ return; }
 //----------------------------------------------------------------------------//
 
 static void WriteThrus(signed long *args, unsigned long m, struct MidiEvent ***Thrus[], struct Key *Key, struct MidiEvent **TrkInfo, struct RecEvent0 *RecEvent0, MidiFile_t midi_file, MidiFile_t SMF, unsigned long MinEventTime, float c, struct MidiOut *Port2Out, unsigned long **cmap) {
-signed long C = args[6], EventData = (RecEvent0->EventData & 0x7f00f0) == 0x90 ? RecEvent0->EventData^0x10 | 0x400000 : RecEvent0->EventData, Ch = EventData & 0xf, i = -1, d = 0, V0 = (EventData>>8)&0x7f, V1 = (EventData>>16)&0x7f, t = RecEvent0->event_time-MinEventTime, TrkNum = MidiFile_getNumberOfTracks(SMF); struct Thru ThruO; struct Thru *Thru = &ThruO;
+signed long C = args[6], EventData = (RecEvent0->EventData & 0x7f00f0) == 0x90 ? RecEvent0->EventData^0x10 | 0x400000 : RecEvent0->EventData, Ch = EventData & 0xf, i = -1, d = 0, V0 = (EventData>>8)&0x7f, V1 = (EventData>>16)&0x7f, t = RecEvent0->event_time-MinEventTime, TrkNum = MidiFile_getNumberOfTracks(SMF); struct Thru ThruO, *Thru = &ThruO; Thru->Pending = NULL;
 
 while (Thrus && (Thru->Trk = Thrus[Ch][++i]) || Key && (Thru = &Key->Thrus[++i])->Trk) { MidiFileTrack_t track; unsigned long TrkID = Thru->Trk-TrkInfo; struct MidiEvent *ThruE = (EventData & 0xe0) == 0x80 && Thru->Pending ? Thru->Pending : TrkInfo[TrkID];
 
@@ -348,12 +348,7 @@ while (i) { unsigned long t = (RecEvent->event_time-MinEventTime)*c, EventData =
 
 for (i=0; i < TrkNum; i++) { TrkInfo[i] = NULL; }
 
-l = 0; i = RecEvent0-RecEvents0;
-if (!(ExitVal&4)) {
- while (l < (RecEvent0->EventData?_msize(RecEvents0)/sizeof(struct RecEvent0):RecEvent0-RecEvents0)
-  && (RecEvents0[i=(i?i:_msize(RecEvents0)/sizeof(struct RecEvent0))-1].EventData < 7 || (RecEvents0[i].EventData & 0xe0) == 0x80 && (RecEvents0[i].EventData>>8 & 0x7f) == (Label0->Idx&0xfff))) { l++; }}
- else { while (l < (RecEvent0->EventData?_msize(RecEvents0)/sizeof(struct RecEvent0):RecEvent0-RecEvents0) && RecEvents0[i=(i?i:_msize(RecEvents0)/sizeof(struct RecEvent0))-1].EventData < 7) { l++; }}
-i = (RecEvent0->EventData?_msize(RecEvents0)/sizeof(struct RecEvent0):RecEvent0-RecEvents0)-l; RecEvent0 = RecEvent0->EventData?RecEvent0:RecEvents0;
+i = (RecEvent0->EventData?_msize(RecEvents0)/sizeof(struct RecEvent0):RecEvent0-RecEvents0); RecEvent0 = RecEvent0->EventData?RecEvent0:RecEvents0;
 j = RecEvent->Event?_msize(RecEvents)/sizeof(struct RecEvent):RecEvent-RecEvents; RecEvent = RecEvent->Event?RecEvent:RecEvents;
 
 l = 0;
