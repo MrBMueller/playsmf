@@ -346,7 +346,7 @@ while (i) { unsigned long t = (RecEvent->event_time-MinEventTime)*c, EventData =
  RecEvent = RecEvent->NextEvent; i--;
  }
 
-for (i=0; i < TrkNum; i++) { TrkInfo[i] = NULL; }
+for (i=0; i < TrkNum; i++) { TrkInfo[i] = NULL; } for (i=0; i<16; i++) { for (j=0; j<128; j++) { l = -1; while (Keys[i][j].Thrus[++l].Trk) { Keys[i][j].Thrus[l].Pending = NULL; }}}
 
 i = (RecEvent0->EventData?_msize(RecEvents0)/sizeof(struct RecEvent0):RecEvent0-RecEvents0); RecEvent0 = RecEvent0->EventData?RecEvent0:RecEvents0;
 j = RecEvent->Event?_msize(RecEvents)/sizeof(struct RecEvent):RecEvent-RecEvents; RecEvent = RecEvent->Event?RecEvent:RecEvents;
