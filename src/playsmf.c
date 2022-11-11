@@ -248,7 +248,7 @@ return; }
 static void WriteThrus(signed long *args, unsigned long m, struct MidiEvent ***Thrus[], struct Key *Key, struct MidiEvent **TrkInfo, struct RecEvent0 *RecEvent0, MidiFile_t midi_file, MidiFile_t SMF, unsigned long MinEventTime, float c, struct MidiOut *Port2Out, unsigned long **cmap) {
 signed long C = args[6], EventData = (RecEvent0->EventData & 0x7f00f0) == 0x90 ? RecEvent0->EventData^0x10 | 0x400000 : RecEvent0->EventData, Ch = EventData & 0xf, i = -1, d = 0, V0 = (EventData>>8)&0x7f, V1 = (EventData>>16)&0x7f, t = RecEvent0->event_time-MinEventTime, TrkNum = MidiFile_getNumberOfTracks(SMF); struct Thru ThruO, *Thru = &ThruO; Thru->Pending = NULL;
 
-while (Thrus && (Thru->Trk = Thrus[Ch][++i]) || Key && (Thru = &Key->Thrus[++i])->Trk) { MidiFileTrack_t track; unsigned long TrkID = Thru->Trk-TrkInfo; struct MidiEvent *ThruE = (EventData & 0xe0) == 0x80 && Thru->Pending ? Thru->Pending : TrkInfo[TrkID];
+while (Thrus && (Thru->Trk = Thrus[Ch][++i]) || Key && (Thru = &Key->Thrus[++i])->Trk) { MidiFileTrack_t track; unsigned long TrkID = Thru->Trk-TrkInfo; struct MidiEvent *ThruE = (EventData & 0xf0) == 0x80 ? Thru->Pending : TrkInfo[TrkID];
 
  if (Thru == &ThruO) { signed long z = -1, k = 12;
   while (k+6 < _msize(args)/sizeof(signed long) && abs(args[k+6]) < 0x10000) { signed long T = args[k+2]; z++; if (T < 0) { T = TrkNum-abs(T); }
