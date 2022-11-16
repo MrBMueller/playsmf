@@ -451,18 +451,18 @@ if (argc > 3 && !strlen(argv[3]) || argc > 4 && !strlen(argv[4])) { signed long 
  for (i = 0; i < ni; i++) { MIDIINCAPS  c; midiInGetDevCaps( i, &c, sizeof(MIDIINCAPS )); if (strlen(c.szPname) > mli) { mli = strlen(c.szPname); }}
  for (i = 0; i < no; i++) { MIDIOUTCAPS c; midiOutGetDevCaps(i, &c, sizeof(MIDIOUTCAPS)); if (strlen(c.szPname) > mlo) { mlo = strlen(c.szPname); }}
 
- for (i = 0; n > 1 && i < n; i++) { unsigned long nci = mli, nco = mlo; printf("%*d '%c' |", n<=10?1:n<=100?2:3, i, map0[i]);
+ for (i = 0; i < n; i++) { unsigned long nci = mli, nco = mlo; printf("%*d '%c' |", n<=10?1:n<=100?2:3, i, map0[i]);
   if (ni) { printf(" "); if (i < ni) { MIDIINCAPS  c; midiInGetDevCaps( i, &c, sizeof(MIDIINCAPS )); printf("'%s'", c.szPname); nci -= strlen(c.szPname); } else { nci += 2; } while (nci--) { printf(" "); } printf(" "); } printf("|");
   if (no) { printf(" "); if (i < no) { MIDIOUTCAPS c; midiOutGetDevCaps(i, &c, sizeof(MIDIOUTCAPS)); printf("'%s'", c.szPname); nco -= strlen(c.szPname); } else { nci += 2; } while (nco--) { printf(" "); } printf(" "); }
   printf("|\n");
   }
 
  j = 0;
- if (argc > 4 && !strlen(argv[4]) && ni > 1) { printf("%*si:", j, "");
+ if (argc > 4 && !strlen(argv[4]) && ni) { printf("%*si:", j, "");
   if (ni < 62) { while ((i = map1[GetCh()]) < -2 || i >= ni) {}} else { while ((i = GetArg(-2)) < -2 || i >= ni) {}} if (i == -1) { printf("\n"); goto list; }
   if (i >= 0) { midiInGetDevCaps( i, SelIDev, sizeof(MIDIINCAPS));  argv[4] = SelIDev->szPname; } j = 1; printf("'%s';", argv[4]); }
 
- if (argc > 3 && !strlen(argv[3]) && no > 1) { printf("%*so:", j, "");
+ if (argc > 3 && !strlen(argv[3]) && no) { printf("%*so:", j, "");
   if (no < 62) { while ((i = map1[GetCh()]) < -2 || i >= no) {}} else { while ((i = GetArg(-2)) < -2 || i >= no) {}} if (i == -1) { printf("\n"); goto list; }
   if (i >= 0) { midiOutGetDevCaps(i, SelODev, sizeof(MIDIOUTCAPS)); argv[3] = SelODev->szPname; } j = 1; printf("'%s';", argv[3]); }
 
