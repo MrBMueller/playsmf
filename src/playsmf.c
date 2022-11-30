@@ -112,6 +112,7 @@ static float            Speed0;
 static signed char      InOfs;
 static struct MidiIn    Port2In[256];
 static signed long      DefIDev;
+static MIDIHDR          midi_message_header;
 
 static unsigned char Inversions[] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x10, 0x10, 0x10, 0x00, 0x30, 0x30};
 
@@ -177,7 +178,7 @@ case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
 //----------------------------------------------------------------------------//
 
-static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { SetEvent(signalling_object1); }
+static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { if (wMsg == MOM_DONE && dwParam1 == (unsigned long)&midi_message_header) { SetEvent(signalling_object1); }}
 
 //----------------------------------------------------------------------------//
 
@@ -475,7 +476,6 @@ return(0); }
 
 signed long main(signed long argc, unsigned char **argv) {
 static TIMECAPS        time_caps;
-static MIDIHDR         midi_message_header;
 static struct MidiOut  Port2Out[ 256];
 static unsigned char   Port2Port[256], FlwMsk;
 static MidiFileEvent_t midi_file_event;
@@ -762,6 +762,8 @@ for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } if (!FirstLabel) { FirstLabel = 
 FirstMute = EntryMute = &Mutes[(MutesNum-2)*(TrkNum+1)+1]; if (MutesNum > 2) { FirstMute = &Mutes[(0)*(TrkNum+1)+1]; } Mute = SetEntryMute
 
 Key0 = Key1 = &Keys[0x0][0x00]; LastTime = SneakPending = FlwMsk = IRQ = ExitVal = 0; Active = Dead = 1; Speed = Speed0 = 1; ThruE1 = EntryLabel->Event;
+
+ResetEvent(signalling_object0); ResetEvent(signalling_object1);
 
 if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeBeginPeriod(args[2]&0xff); } Port2In[DefIDev].StartTime = WatchDogTimeOut = start_time = timeGetTime(); WatchDogTimeOut += TimeOut = abs(args[5]); if (args[5] == -1) { TimeOut = WatchDogTimeOut = -1; }
 
