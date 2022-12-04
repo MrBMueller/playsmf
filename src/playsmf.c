@@ -260,7 +260,7 @@ while (Thrus && (Thru->Trk = Thrus[Ch][++i]) || Key && (Thru = &Key->Thrus[++i])
 
  track = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+6+Thru->z, 0);
 
- if ((m || Thru->m) && ThruE && ThruE->Ch < 16) { signed long ID, IDt = -1; MidiFileEvent_t midi_file_event; if (midiOutGetID(ThruE->midi_out, &ID)) { ID = -1; } d += Thru->Delay;
+ if ((m || Thru->m) && ThruE && ThruE->Ch < 16) { signed long ID, IDt = -1; MidiFileEvent_t midi_file_event; if (midiOutGetID(ThruE->midi_out, &ID)) { ID = -2; } else { ID++; } d += Thru->Delay;
 
   for (midi_file_event = MidiFileTrack_getFirstEvent(track); midi_file_event; midi_file_event = MidiFileEvent_getNextEventInTrack(midi_file_event)) {
    if (MidiFileEvent_getType(midi_file_event) == MIDI_FILE_EVENT_TYPE_META && MidiFileMetaEvent_getNumber(midi_file_event) == 0x21 && MidiFileMetaEvent_getDataLength(midi_file_event)) {
@@ -332,7 +332,7 @@ i = RecEvent->Event?_msize(RecEvents)/sizeof(struct RecEvent):RecEvent-RecEvents
 while (i) { unsigned long t = (RecEvent->event_time-MinEventTime)*c, EventData = RecEvent->Event->EventData; MidiFileTrack_t track = MidiFile_getTrackByNumber(midi_file, RecEvent->Event->Track+1, 0);
  if (RecEvent->Event->Label != Label) { unsigned char b[12]; sprintf(b, "L0x%x", RecEvent->Event->Label->Idx); MidiFileTrack_createMetaEvent(track0, t, 0x06, strlen(b), b); Label = RecEvent->Event->Label; }
  if (!TrkInfo[RecEvent->Event->Track] || RecEvent->Event->midi_out != TrkInfo[RecEvent->Event->Track]->midi_out) { signed long ID;
-  if (midiOutGetID(RecEvent->Event->midi_out, &ID)) { ID = -1; } else { MidiFileTrack_createMetaEvent(track, TrkInfo[RecEvent->Event->Track]?t:0, 0x09, strlen(Port2Out[ID].c.szPname), Port2Out[ID].c.szPname); }
+  if (midiOutGetID(RecEvent->Event->midi_out, &ID)) { ID = -2; } else { ID++; MidiFileTrack_createMetaEvent(track, TrkInfo[RecEvent->Event->Track]?t:0, 0x09, strlen(Port2Out[ID].c.szPname), Port2Out[ID].c.szPname); }
   MidiFileTrack_createMetaEvent(track, TrkInfo[RecEvent->Event->Track]?t:0, 0x21, 1, &(unsigned char)ID); } TrkInfo[RecEvent->Event->Track] = RecEvent->Event;
  if (RecEvent->from) { EventData = RecEvent->Event->OffMsg; }
  if (RecEvent->Event->data_buffer && (EventData & 0xf0) >= 0x80 && (EventData & 0xf0) <= 0xe0) { EventData = 0x77; }
