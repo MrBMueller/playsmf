@@ -718,7 +718,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
 MidiEvents[i].event_time = MidiEvents[i].EventData = 0; if (i) { MidiEvents[i].event_time = MidiEvents[i-1].event_time; } MidiEvents[i].midi_out = NULL;
 (MidiEvents[i].Label = ExitLabel)->Event = &MidiEvents[i]; MidiEvents[i].Tempo = Tempo & 0xffffff; MidiEvents[i].TimeSigN = TimeSig >> 24; MidiEvents[i].TimeSigD = TimeSig >> 16;
 
-ExpandLabels(Labels); k = 0;
+MidiEvenT = MidiEvent = EntryLabel->Event = &MidiEvents[0]; ExpandLabels(Labels); k = 0;
 
 while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInfo = &TrkInfo[MidiEvents[i].Track]; MidiEvents[i].Ch = (unsigned long)MidiEvents[i].midi_out^0x10;
  j = 2; while (j--) { unsigned long p = (unsigned long)MidiEvents[i].midi_out>>8;
@@ -744,7 +744,7 @@ while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInf
  if (MidiEvents[i].EventData == 0x3412f4) { MidiEvents[i].MsgCtl = 0; }
  }
 
-MidiEvenT = MidiEvent = EntryLabel->Event = &MidiEvents[0]; EntryLabel->ReT = ExitLabel->ReT = 8; if (!(args[9] & ~0x8000)) { EntryLabel->Now = ExitLabel->Now = 1; } AlignLabels(Labels);
+EntryLabel->ReT = ExitLabel->ReT = 8; if (!(args[9] & ~0x8000)) { EntryLabel->Now = ExitLabel->Now = 1; } AlignLabels(Labels);
 
 for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { if (Labels[i].Event->FlwCtl == 4) { j = Labels[i].Event-MidiEvents;
  k = 0; while (MidiEvents[j+k+1].EventData && (MidiEvents[j+k+1].event_time == MidiEvents[j].event_time)) { k++; }
