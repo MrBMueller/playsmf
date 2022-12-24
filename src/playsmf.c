@@ -190,7 +190,9 @@ static unsigned long IntLabel(unsigned long i) { unsigned long a, b, c, z = 0; i
 
 for (b = 0x00; b <= 0x80; b += 0x80) { if (i >= (b|0x00) && i <= (b|0x7f)) { z |= 1; }
 
- for (a = 0x100; a <= 0x600; a += 0x100) { for (c = 0x00; c <= 0x20; c += 0x10) { if (i >= (a|b|c|0x0) && i <= (a|b|c|0xb)) { z |= 1; }}}
+ for (a = 0x100; a <= 0x100; a += 0x100) { for (c = 0x00; c <= 0x10; c += 0x10) { if (i >= (a|b|c|0x0) && i <= (a|b|c|0xb)) { z |= 1; }}}
+ for (a = 0x120; a <= 0x120; a += 0x100) { for (c = 0x00; c <= 0x00; c += 0x10) { if (i >= (a|b|c|0x0) && i <= (a|b|c|0xb)) { z |= 1; }}}
+ for (a = 0x200; a <= 0x600; a += 0x100) { for (c = 0x00; c <= 0x20; c += 0x10) { if (i >= (a|b|c|0x0) && i <= (a|b|c|0xb)) { z |= 1; }}}
  for (a = 0x700; a <= 0xa00; a += 0x100) { for (c = 0x00; c <= 0x30; c += 0x10) { if (i >= (a|b|c|0x0) && i <= (a|b|c|0xb)) { z |= 1; }}}
  }
 
@@ -214,7 +216,7 @@ for (i=0; i<LabelNum; i++) { if (!Labels[i].Event) { unsigned long j = (i>>8)&0x
  if (j == 0x8 || j == 0xa) { Labels[i].Event = Labels[i&~0xf00|0x300].Event; }
  }}
 
-for (i=0; i<LabelNum ; i++) { if (!Labels[i].Event && Labels[i&0xfff].Event) { Labels[i].Event = Labels[i&0xfff].Event; }}
+for (i=0; i<LabelNum; i++) { if (!Labels[i].Event) { Labels[i].Event = Labels[i&0xfff].Event; }}
 
 return; }
 
