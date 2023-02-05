@@ -212,8 +212,8 @@ for (i=0; i<LabelNum; i++) { if (!Labels[i].Event) { unsigned long j = (i>>8)&0x
  }}
 
 for (i=0; i<LabelNum; i++) { if (!Labels[i].Event) { unsigned long j = (i>>8)&0xf, k = (i>>4)&0x3, l = i&0xf;
- if (j == 0x7 || j == 0x9) { Labels[i].Event = Labels[i&~0xf00|0x200].Event; }
- if (j == 0x8 || j == 0xa) { Labels[i].Event = Labels[i&~0xf00|0x300].Event; }
+ if (j == 0x3 || j == 0x7 || j == 0x9) { Labels[i].Event = Labels[i&~0xf00|0x200].Event; }
+ if (j == 0x2 || j == 0x8 || j == 0xa) { Labels[i].Event = Labels[i&~0xf00|0x300].Event; }
  }}
 
 for (i=0; i<LabelNum; i++) { if (!Labels[i].Event) { Labels[i].Event = Labels[i&0xfff].Event; }}
