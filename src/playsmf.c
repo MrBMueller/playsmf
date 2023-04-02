@@ -22,7 +22,7 @@
  if       (Label0->Event == MidiEvents || Label0->Event == LastLabel->Event)                                                    { SetEntryMute i = -2;                      c = Mute0[0]; }\
   else if (Mute == EntryMute && (MidiEvenT->Label->Event == EntryLabel->Event || MidiEvenT->Label->Event == FirstLabel->Event)) { SetFirstMute i =  0;                      c = Mute0[0]; }\
   else                                                                                                                          {              i = (Mute-Mutes)/(TrkNum+1); c = Mute[ 0]; }\
- printf(" \n%4.2f -> %d %3d %4x %4x %4x %2d %d %d %2d %d %02x => %6.2f (%6.2f %d/%d) -> %6.2f (%6.2f %d/%d)", (float)(RecEvent0->event_time-LastTime)*1000*(1<<MidiEvenT->TimeSigD)/((MidiEvenT->Tempo<<2)*MidiEvenT->TimeSigN)/Speed0, SneakPending, V1, MidiEvenT->Label->Idx, Label0->Idx, Label1->Idx, (signed char)Label0->Ret, Label0->Now, Label0->ReT, i, c, IRQ,\
+ printf("%s \n%4.2f -> %d %3d %4x %4x %4x %2d %d %d %2d %d %02x => %6.2f (%6.2f %d/%d) -> %6.2f (%6.2f %d/%d)", EscPre, (float)(RecEvent0->event_time-LastTime)*1000*(1<<MidiEvenT->TimeSigD)/((MidiEvenT->Tempo<<2)*MidiEvenT->TimeSigN)/Speed0, SneakPending, V1, MidiEvenT->Label->Idx, Label0->Idx, Label1->Idx, (signed char)Label0->Ret, Label0->Now, Label0->ReT, i, c, IRQ,\
   (float)MidiEvenT->event_time*1000*(1<<MidiEvenT->TimeSigD)/((MidiEvenT->Tempo<<2)*MidiEvenT->TimeSigN), (float)60000000/MidiEvenT->Tempo/Speed0, MidiEvenT->TimeSigN, 1<<MidiEvenT->TimeSigD, (float)Label0->Event->event_time*1000*(1<<Label0->Event->TimeSigD)/((Label0->Event->Tempo<<2)*Label0->Event->TimeSigN), (float)60000000/Label0->Event->Tempo/Speed0, Label0->Event->TimeSigN, 1<<Label0->Event->TimeSigD);\
  SneakPending = 0; LastTime = RecEvent0->event_time; if (MidiEvenT->Label->Now) { SetEvent(signalling_object0); }
 
@@ -114,7 +114,7 @@ static struct MidiIn    Port2In[256];
 static signed long      DefIDev;
 static MIDIHDR          midi_message_header;
 
-static unsigned char Inversions[] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x10, 0x10, 0x10, 0x00, 0x30, 0x30};
+static unsigned char Inversions[] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x10, 0x10, 0x10, 0x00, 0x30, 0x30}, EscPre[5] = "";
 
 //============================================================================//
 
@@ -752,10 +752,10 @@ while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInf
  if (MidiEvents[i].Label->Now && !MidiEvents[i].FlwCtl) { MidiEvents[i].FlwCtl = 1; }
  if ((MidiEvents[i].EventData & (args[8]>>16)) == (args[8] & 0x7fff)) { MidiEvents[i].Rec |= 1; MidiEvents[i].MsgCtl *= (args[8]>>15) & 1; }
  if (MidiEvents[i].EventData == 0x3412f4) { MidiEvents[i].MsgCtl = 0; }
- if (MidiEvents[i].MsgCtl == 5 && strstr(MidiEvents[i].data_buffer, "\x1b")) { HANDLE h = GetStdHandle(-11); GetConsoleMode(h, &j); if ((j&5) != 5) { SetConsoleMode(h, j|5); }}
+ if (MidiEvents[i].MsgCtl == 5 && strstr(MidiEvents[i].data_buffer, "\x1b")) { strcpy(EscPre, "\x1b[0m"); }
  }
 
-AlignLabels(Labels);
+AlignLabels(Labels); if (strlen(EscPre)) { HANDLE h = GetStdHandle(-11); GetConsoleMode(h, &i); SetConsoleMode(h, i|5); GetConsoleMode(h, &i); if ((i&5)!=5) { strcpy(EscPre, ""); }}
 
 for (i=0; i<LabelNum; i++) { if (Labels[i].Event && Labels[i].Event->FlwCtl == 4) { j = Labels[i].Event-MidiEvents;
  k = 0; while (MidiEvents[j+k+1].EventData && (MidiEvents[j+k+1].event_time == MidiEvents[j].event_time)) { k++; }
@@ -814,7 +814,7 @@ while (MidiEvent->EventData) { t = MidiEvent->event_time*Speed; if (start_time) 
 
  MidiEvent = MidiEvent->NextEvent; FlwMsk = 0; if (current_time+t > WatchDogTimeOut) { WatchDogTimeOut = current_time+t+TimeOut; if (Dead) { goto Exit0; } Dead = 1; }
  }
-ExitVal |= 1; Exit2: ExitVal |= 2; Exit0: GetConsoleMode(GetStdHandle(-11), &i); if ((i&5)==5) { printf("\x1b[0m"); } printf(" done. (%x)\n", ExitVal); Active = 0; for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStop(Port2In[i].h); }} if (ExitVal < 8) { SetConsoleCtrlHandler(HandlerRoutine, FALSE); } if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeEndPeriod(args[2]&0xff); }
+ExitVal |= 1; Exit2: ExitVal |= 2; Exit0: printf("%s done. (%x)\n", EscPre, ExitVal); Active = 0; for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStop(Port2In[i].h); }} if (ExitVal < 8) { SetConsoleCtrlHandler(HandlerRoutine, FALSE); } if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeEndPeriod(args[2]&0xff); }
 
 while (LatestPendingO) { while (LatestPendingO->Cnt) { midiOutShortMsg(LatestPendingO->Event->midi_out, LatestPendingO->Event->OffMsg); Record1(1) LatestPendingO->Cnt--; } LatestPendingO = LatestPendingO->Prev; }
 while (LatestPendingI) {                                                                                                                                                    LatestPendingI = LatestPendingI->Prev; }
