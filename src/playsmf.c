@@ -809,7 +809,7 @@ while (MidiEvent->EventData) { t = MidiEvent->event_time*Speed; if (start_time) 
                       midiOutPrepareHeader(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR));
                       midiOutLongMsg(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR)); Record if (WaitForSingleObject(signalling_object1, TimeOut)) { goto Exit2; }
                       midiOutUnprepareHeader(MidiEvent->midi_out, &midi_message_header, sizeof(MIDIHDR)); break;
-  case 0x5:           printf("%s", MidiEvent->data_buffer); Record break;
+  case 0x5:           printf(MidiEvent->data_buffer); Record break;
   case 0x0: case 0x8: Record }
 
  MidiEvent = MidiEvent->NextEvent; FlwMsk = 0; if (current_time+t > WatchDogTimeOut) { WatchDogTimeOut = current_time+t+TimeOut; if (Dead) { goto Exit0; } Dead = 1; }
