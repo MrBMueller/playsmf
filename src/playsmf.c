@@ -812,7 +812,7 @@ while (MidiEvent->EventData) { t = MidiEvent->event_time*Speed; if (start_time) 
   case 0x5:           printf(MidiEvent->data_buffer); Record break;
   case 0x0: case 0x8: Record }
 
- MidiEvent = MidiEvent->NextEvent; FlwMsk = 0; if (current_time+t > WatchDogTimeOut) { WatchDogTimeOut = current_time+t+TimeOut; if (Dead) { goto Exit0; } Dead = 1; }
+ MidiEvent = MidiEvent->NextEvent; FlwMsk = 0; if (current_time+t >= WatchDogTimeOut) { WatchDogTimeOut = current_time+t+TimeOut; if (Dead) { goto Exit0; } Dead = 1; }
  }
 ExitVal |= 1; Exit2: ExitVal |= 2; Exit0: printf("%s done. (%x)\n", EscPre, ExitVal); Active = 0; for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStop(Port2In[i].h); }} if (ExitVal < 8) { SetConsoleCtrlHandler(HandlerRoutine, FALSE); } if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeEndPeriod(args[2]&0xff); }
 
