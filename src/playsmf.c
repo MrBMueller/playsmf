@@ -485,7 +485,7 @@ static TIMECAPS        time_caps;
 static struct MidiOut  Port2Out[ 256];
 static unsigned char   Port2Port[256], FlwMsk;
 static MidiFileEvent_t midi_file_event;
-static unsigned long   start_time, current_time, t, WatchDogTimeOut, MutesNum, tick, tempo_event_tick, MutesInv, MutesRet, MutesInv1, MutesInv2, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0;
+static unsigned long   start_time, current_time, t, WatchDogTimeOut, MutesNum, tick, tempo_event_tick, MutesInv, MutesRet, MutesInv1, MutesInv2, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0, PrintTxt;
 static   signed long   i, j, k, l, *args, TimeOut, DefODev;
 static struct PNoteO   *PendingEventsO, *PendingO, *LatestPendingO;
 static float           Speed, tempo_event_time;
@@ -594,7 +594,7 @@ for (i=0; i<=11; i++) { unsigned char m;
  for (j=0; j<=23; j++) { for (m=0; m<sizeof(Intervals3)/5/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=3; k++) { l = (l<<4) + (i+Intervals3[m][Permutations3[j][k]+1])%12 + 1; } if (Chords[l].Type < 0) { Chords[l].Type = Intervals3[m][0] | (Chords[l].Root = i); }}}
  }
 
-for (i=0; i<(sizeof(Port2Port)/sizeof(unsigned char)); i++) { Port2Port[i] = i; }
+for (i=0; i<(sizeof(Port2Port)/sizeof(unsigned char)); i++) { Port2Port[i] = i; } PrintTxt = 0; for (i=12; i<_msize(args)/sizeof(signed long); i++) { if ((args[i]>>16) == 5) { PrintTxt = args[i] & 0xffff; }}
 
 start: timeGetDevCaps(&time_caps, sizeof(TIMECAPS));
 printf("[%d:%d] [%d:%d] %d %d %d %d %d %x %x:%x:%x %4.2f %4.2f\n", time_caps.wPeriodMin, time_caps.wPeriodMax, midiInGetNumDevs()-1, midiOutGetNumDevs(), _msize(args)/sizeof(signed long), MidiFile_getResolution(midi_file), MidiFile_getFileFormat(midi_file), TrkNum, _msize(MidiEvents)/sizeof(struct MidiEvent)-1, LabelNum-1, MutesNum-2, MutesInv, MutesRet, (float)_msize(MidiEvents)/(1024*1024), (float)_msize(Labels)/(1024*1024));
@@ -711,7 +711,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   MidiEvents[i].EventData = (unsigned long)MidiFileVoiceEvent_getData(midi_file_event); MidiEvents[i].data_length = 0; MidiEvents[i].data_buffer = NULL;
   }
  for (k=j; k<=i; k++) { MidiEvents[k].Label = LastLabel?LastLabel:EntryLabel; MidiEvents[k].Tempo = Tempo & 0xffffff; MidiEvents[k].TimeSigN = TimeSig >> 24; MidiEvents[k].TimeSigD = TimeSig >> 16; }
- if (MidiEvents[i].EventData == 0x057f || MidiEvents[i].EventData == 0x017f && MidiEvents[i].event_time >= (Tempo0&0xffffff)/250*(TimeSig0>>24&0xff)/(1<<(TimeSig0>>16&0xff))) { MidiEvents[i].MsgCtl = 5; }
+ if ((MidiEvents[i].EventData & 0xff) == 0x7f && (PrintTxt >> (MidiEvents[i].EventData >> 8))&1) { MidiEvents[i].MsgCtl = 5; }
  if       (((MidiEvents[i].EventData & 0xf0) == 0x80) || ((MidiEvents[i].EventData & 0x7f00f0) == 0x90)) { MidiEvents[i].MsgCtl += 1; }
   else if ( (MidiEvents[i].EventData & 0xf0) == 0x90                                                   ) { MidiEvents[i].MsgCtl += 2; }
  //MidiEvents[i].MsgCtl += 1*((MidiEvents[i].EventData & 0x407ff0) == 0x0040b0);
