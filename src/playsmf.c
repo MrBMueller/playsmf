@@ -75,7 +75,7 @@ struct Label     { unsigned long     Idx;
                    struct MidiEvent *Event;
                    unsigned char     Ret, Now, ReT; };
 
-struct Chord     {   signed short    Type;
+struct Chord     { unsigned short    Type;
                    unsigned char     Root, Num; };
 
 struct Thru      { struct MidiEvent  **Trk, *Pending;
