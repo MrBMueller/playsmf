@@ -485,7 +485,8 @@ if (j) { printf("\n"); } return; }
 
 static void argv2arg(unsigned char **argv, signed long *args, signed long i) {
 
-if (argv[i] && strlen(argv[i])) { unsigned char *a; signed long v = strtol(argv[i], &a, 0); if (a != argv[i] || i<5 && i!=2) { args[i] = v; if (!strlen(a) || i==2 || i>4) { argv[i] = a; }} else { argv[i] = NULL; }} else { argv[i] = NULL; }
+if (argv[i] && strlen(argv[i])) { unsigned char *a; signed long v = strtol(argv[i], &a, 0); if (a == argv[i] && (i==2 || i>4)) { argv[i] = argv[i]+strlen(argv[i]); return; }
+ if (a != argv[i] || i!=2 && i<5) { args[i] = v; if (!strlen(a) || i==2 || i>4) { argv[i] = a; }} else { argv[i] = NULL; }} else { argv[i] = NULL; }
 
 return; }
 
