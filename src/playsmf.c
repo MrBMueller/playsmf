@@ -182,7 +182,7 @@ static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long
 
 //----------------------------------------------------------------------------//
 
-static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { unsigned long register V0, V1; RecEvent0->event_time = timeGetTime()-Port2In[DefIDev].StartTime; if (dwCtrlType) { V0 = ExitLabel->Idx; ExitVal |= 4; } else { V0 = EntryLabel->Idx; } V1 = -1; SneakPending = 0; MyMacro0 RecEvent0->EventData = 7-dwCtrlType; RecEvent0 = RecEvent0->NextEvent; if (dwCtrlType >= 2) { ExitVal |= 8; Sleep(4000); return(FALSE); } return(TRUE); }
+static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { unsigned long register V0, V1, i, c; RecEvent0->event_time = timeGetTime()-Port2In[DefIDev].StartTime; if (dwCtrlType) { V0 = ExitLabel->Idx; ExitVal |= 4; } else { V0 = EntryLabel->Idx; } V1 = -1; SneakPending = 0; MyMacro0 RecEvent0->EventData = 7-dwCtrlType; RecEvent0 = RecEvent0->NextEvent; if (dwCtrlType >= 2) { ExitVal |= 8; Sleep(4000); return(FALSE); } return(TRUE); }
 
 //----------------------------------------------------------------------------//
 
