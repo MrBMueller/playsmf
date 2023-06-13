@@ -288,10 +288,14 @@ return; }
 static void saveMidiEventsToFile(signed long *args, struct Key Keys[][128], signed char InOfs, MidiFile_t SMF, unsigned long Tempo, unsigned long TimeSig, unsigned long KeySig, struct RecEvent *RecEvents, struct RecEvent *RecEvent, struct RecEvent0 *RecEvents0, struct RecEvent0 *RecEvent0, struct RecEvent0 *RecEvents1, struct RecEvent0 *RecEvent1, struct RecEvent0 *RecEvents2, struct RecEvent0 *RecEvent2, unsigned char ExitVal, struct Label *Label0, struct MidiEvent **TrkInfo, struct MidiIn *Port2In, struct MidiOut *Port2Out, struct MidiEvent ***Thrus[], unsigned long **cmap, unsigned long **cmap1, unsigned char InPortOrder[], signed long DefIDev) {
 SYSTEMTIME    current_time;
 unsigned char b[1024], tempo[] = {(Tempo>>16)&0xff, (Tempo>>8)&0xff, (Tempo>>0)&0xff}, timeSig[] = {(TimeSig>>24)&0xff, (TimeSig>>16)&0xff, (TimeSig>>8)&0xff, (TimeSig>>0)&0x7f}, keySig[] = {(KeySig>>8)&0xff, (KeySig>>0)&0xff};
-unsigned long PPQ = MidiFile_getResolution(SMF), PPQc = PPQ*1000, RecNum = 0, MinEventTime = -1, i, j, l, t0, TrkNum = MidiFile_getNumberOfTracks(SMF);
+unsigned long PPQ = MidiFile_getResolution(SMF), PPQc = PPQ*1000, RecNum = 0, MinEventTime = -1, i, j, l, t0, TrkNum = MidiFile_getNumberOfTracks(SMF),
+BSz = _msize(RecEvents)/sizeof(struct RecEvent), BSz0 = _msize(RecEvents0)/sizeof(struct RecEvent0), BSz1 = _msize(RecEvents1)/sizeof(struct RecEvent0), BSz2 = _msize(RecEvents2)/sizeof(struct RecEvent0),
+RSz = RecEvent->Event?BSz:RecEvent-RecEvents, RSz0 = RecEvent0->EventData?BSz0:RecEvent0-RecEvents0, RSz1 = RecEvent1->EventData?BSz1:RecEvent1-RecEvents1, RSz2 = RecEvent2->EventData?BSz2:RecEvent2-RecEvents2,
+OverFlow = (RSz2>=BSz2)<<3 | (RSz1>=BSz1)<<2 | (RSz0>=BSz0)<<1 | (RSz>=BSz)<<0;
 float         c = (float)PPQc/(float)(Tempo&0xffffff);
 struct Label  *Label = NULL;
 struct Key    *Key1 = &Keys[0x0][0x00];
+struct RecEvent *RE = RSz>=BSz?RecEvent:RecEvents; struct RecEvent0 *RE0 = RSz0>=BSz0?RecEvent0:RecEvents0, *RE1 = RSz1>=BSz1?RecEvent1:RecEvents1, *RE2 = RSz2>=BSz2?RecEvent2:RecEvents2;
 
 MidiFile_t midi_file = MidiFile_new(1, MIDI_FILE_DIVISION_TYPE_PPQ, PPQ); MidiFileTrack_t track0, trackP, trackP0, trackP1, trackP2, trackP3, trackP4;
 
@@ -320,29 +324,25 @@ MidiFileTrack_createMetaEvent(track0, 0, 0x51, 3, tempo);
 if (!(TimeSig & 0x00000080)) { MidiFileTrack_createMetaEvent(track0, 0, 0x58, 4, timeSig); }
 if (!(KeySig  & 0x00010000)) { MidiFileTrack_createMetaEvent(track0, 0, 0x59, 2, keySig ); }
 
-b[0] = 0x00; b[1] = 0x2b; b[2] = 0x4d; b[3] = 0x00; b[4] = 0x00; b[5] = 0x00; b[6] = 0x00; b[7] = 0x00;
-//for (i=0; i<_msize(args)/sizeof(signed long); i++) { b[8+i*4] = args[i]>>24; b[9+i*4] = args[i]>>16; b[10+i*4] = args[i]>>8; b[11+i*4] = args[i]; }
-//MidiFileTrack_createMetaEvent(track0, 0, 0x7f, 8+(_msize(args)/sizeof(signed long))*4, b);
+for (i=0; i<BSz0; i++) { RecEvents0[i].event_time += Port2In[DefIDev].StartTime; }
+for (i=0; i<BSz2; i++) { RecEvents2[i].event_time += Port2In[DefIDev].StartTime; }
+for (i=0; i<BSz1; i++) { RecEvents1[i].event_time += Port2In[RecEvents1[i].EventData >> 24].StartTime; }
 
-for (i=0; i<(_msize(RecEvents0)/sizeof(struct RecEvent0)); i++) { RecEvents0[i].event_time += Port2In[DefIDev].StartTime; }
-for (i=0; i<(_msize(RecEvents2)/sizeof(struct RecEvent0)); i++) { RecEvents2[i].event_time += Port2In[DefIDev].StartTime; }
-for (i=0; i<(_msize(RecEvents1)/sizeof(struct RecEvent0)); i++) { RecEvents1[i].event_time += Port2In[RecEvents1[i].EventData >> 24].StartTime; }
+if (RecEvents->Event) { MinEventTime = RE->event_time - RE->Event->event_time; }
+if (RecEvents0->EventData && RE0->event_time < MinEventTime) { MinEventTime = RE0->event_time; }
+if (RecEvents1->EventData && RE1->event_time < MinEventTime) { MinEventTime = RE1->event_time; }
+if (RecEvents2->EventData && RE2->event_time < MinEventTime) { MinEventTime = RE2->event_time; }
 
-if (RecEvents->Event) { MinEventTime = (RecEvent->Event?RecEvent:RecEvents)->event_time - (RecEvent->Event?RecEvent:RecEvents)->Event->event_time; }
-if (RecEvents0->EventData && (RecEvent0->EventData?RecEvent0:RecEvents0)->event_time < MinEventTime) { MinEventTime = (RecEvent0->EventData?RecEvent0:RecEvents0)->event_time; }
-if (RecEvents1->EventData && (RecEvent1->EventData?RecEvent1:RecEvents1)->event_time < MinEventTime) { MinEventTime = (RecEvent1->EventData?RecEvent1:RecEvents1)->event_time; }
-if (RecEvents2->EventData && (RecEvent2->EventData?RecEvent2:RecEvents2)->event_time < MinEventTime) { MinEventTime = (RecEvent2->EventData?RecEvent2:RecEvents2)->event_time; }
+RecEvent2 = RE2;
 
-i = (RecEvent2->EventData?_msize(RecEvents2)/sizeof(struct RecEvent0):RecEvent2-RecEvents2); RecEvent2 = RecEvent2->EventData?RecEvent2:RecEvents2;
-
-while (i) { unsigned long t = (RecEvent2->event_time-MinEventTime)*c, EventData = RecEvent2->EventData;
+for (i=0; i<RSz2; i++) { unsigned long t = (RecEvent2->event_time-MinEventTime)*c, EventData = RecEvent2->EventData;
  unsigned char b[14]; sprintf(b, "CTRL+%x", EventData); MidiFileTrack_createMetaEvent(track0, t, 0x06, strlen(b), b);
- RecEvent2 = RecEvent2->NextEvent; i--;
+ RecEvent2 = RecEvent2->NextEvent;
  }
 
-i = RecEvent->Event?_msize(RecEvents)/sizeof(struct RecEvent):RecEvent-RecEvents; RecEvent = RecEvent->Event?RecEvent:RecEvents;
+RecEvent = RE;
 
-while (i) { unsigned long t = (RecEvent->event_time-MinEventTime)*c, EventData = RecEvent->Event->EventData; MidiFileTrack_t track = MidiFile_getTrackByNumber(midi_file, RecEvent->Event->Track+1, 0);
+for (i=0; i<RSz; i++) { unsigned long t = (RecEvent->event_time-MinEventTime)*c, EventData = RecEvent->Event->EventData; MidiFileTrack_t track = MidiFile_getTrackByNumber(midi_file, RecEvent->Event->Track+1, 0);
  if (RecEvent->Event->Label != Label) { unsigned char b[12]; sprintf(b, "L0x%x", RecEvent->Event->Label->Idx); MidiFileTrack_createMetaEvent(track0, t, 0x06, strlen(b), b); Label = RecEvent->Event->Label; }
  if (!TrkInfo[RecEvent->Event->Track] || RecEvent->Event->midi_out != TrkInfo[RecEvent->Event->Track]->midi_out) { signed long ID;
   if (midiOutGetID(RecEvent->Event->midi_out, &ID)) { ID = -2; } else { ID++; MidiFileTrack_createMetaEvent(track, TrkInfo[RecEvent->Event->Track]?t:0, 0x09, strlen(Port2Out[ID].c.szPname), Port2Out[ID].c.szPname); }
@@ -357,16 +357,14 @@ while (i) { unsigned long t = (RecEvent->event_time-MinEventTime)*c, EventData =
    case 0x70: MidiFileTrack_createSysexEvent(track, t,               RecEvent->Event->data_length  , RecEvent->Event->data_buffer  ); break;
    default  : MidiFileTrack_createSysexEvent(track, t,               RecEvent->Event->data_length+1, RecEvent->Event->data_buffer-1); } break;
   }
- RecEvent = RecEvent->NextEvent; i--;
+ RecEvent = RecEvent->NextEvent;
  }
 
-for (i=0; i < TrkNum; i++) { TrkInfo[i] = NULL; } for (i=0; i<16; i++) { for (j=0; j<128; j++) { l = -1; while (Keys[i][j].Thrus[++l].Trk) { Keys[i][j].Thrus[l].Pending = NULL; }}}
+for (i=0; i<16; i++) { for (j=0; j<128; j++) { l = -1; while (Keys[i][j].Thrus[++l].Trk) { Keys[i][j].Thrus[l].Pending = NULL; }}}
 
-i = (RecEvent0->EventData?_msize(RecEvents0)/sizeof(struct RecEvent0):RecEvent0-RecEvents0); RecEvent0 = RecEvent0->EventData?RecEvent0:RecEvents0;
-j = RecEvent->Event?_msize(RecEvents)/sizeof(struct RecEvent):RecEvent-RecEvents; RecEvent = RecEvent->Event?RecEvent:RecEvents;
+for (i=0; i < TrkNum; i++) { TrkInfo[i] = NULL; } RecEvent0 = RE0; j = RSz; RecEvent = RE; l = 0;
 
-l = 0;
-while (i) { unsigned long t = (RecEvent0->event_time-MinEventTime)*c, EventData = RecEvent0->EventData; MidiFileTrack_t track = trackP; struct Key *Key; RecNum++;
+for (i=0; i<RSz0; i++) { unsigned long t = (RecEvent0->event_time-MinEventTime)*c, EventData = RecEvent0->EventData; MidiFileTrack_t track = trackP; struct Key *Key; RecNum++;
  while (j && RecEvent->event_time <= RecEvent0->event_time) { TrkInfo[RecEvent->Event->Track] = RecEvent->Event; RecEvent = RecEvent->NextEvent; j--; }
  switch ((Key = &Keys[EventData & 0xf][(EventData>>8 & 0x7f)+InOfs & 0x7f])->Zone) {
   case 0: track = trackP0; break; case 1: track = trackP1; break; case 2: track = trackP2; break; case 4: track = trackP3; break; case 8: track = trackP4; }
@@ -386,16 +384,13 @@ while (i) { unsigned long t = (RecEvent0->event_time-MinEventTime)*c, EventData 
    case 0xf2: { unsigned char b[5] = {0xf7, EventData, EventData>>8, EventData>>16, EventData>>24}; MidiFileTrack_createSysexEvent(trackP, t, 2+2, b); } break;
    default  : { unsigned char b[5] = {0xf7, EventData, EventData>>8, EventData>>16, EventData>>24}; MidiFileTrack_createSysexEvent(trackP, t, 2  , b); }}
   }
- RecEvent0 = RecEvent0->NextEvent; i--;
+ RecEvent0 = RecEvent0->NextEvent;
  }
 if (l) { MidiFileTrack_createSysexEvent(trackP, t0, l, b); } //write incomplete sysex w/o f7 termination (should not happen)
 
-while (j) { RecEvent = RecEvent->NextEvent; j--; } for (i=0; i < TrkNum; i++) { TrkInfo[i] = NULL; }
-i = (RecEvent1->EventData?_msize(RecEvents1)/sizeof(struct RecEvent0):RecEvent1-RecEvents1); RecEvent1 = RecEvent1->EventData?RecEvent1:RecEvents1;
-j = RecEvent->Event?_msize(RecEvents)/sizeof(struct RecEvent):RecEvent-RecEvents; RecEvent = RecEvent->Event?RecEvent:RecEvents;
+for (i=0; i < TrkNum; i++) { TrkInfo[i] = NULL; } RecEvent1 = RE1; j = RSz; RecEvent = RE; l = 0;
 
-l = 0;
-while (i) { unsigned long v, t = (RecEvent1->event_time-MinEventTime)*c, EventData = RecEvent1->EventData, TrkID = InPortOrder[EventData>>24] + (EventData & 0xf); MidiFileTrack_t track = MidiFile_getTrackByNumber(midi_file, 1+TrkID, 0); RecNum++;
+for (i=0; i<RSz1; i++) { unsigned long v, t = (RecEvent1->event_time-MinEventTime)*c, EventData = RecEvent1->EventData, TrkID = InPortOrder[EventData>>24] + (EventData & 0xf); MidiFileTrack_t track = MidiFile_getTrackByNumber(midi_file, 1+TrkID, 0); RecNum++;
  while (j && RecEvent->event_time <= RecEvent1->event_time) { TrkInfo[RecEvent->Event->Track] = RecEvent->Event; RecEvent = RecEvent->NextEvent; j--; }
  trackP = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+6+Zones+(Port2In[EventData>>24].z-1), 0); EventData &= 0xffffff;
  switch (EventData & 0xf0) {
@@ -410,7 +405,7 @@ while (i) { unsigned long v, t = (RecEvent1->event_time-MinEventTime)*c, EventDa
    case 0xf2: { unsigned char b[5] = {0xf7, EventData, EventData>>8, EventData>>16, EventData>>24}; MidiFileTrack_createSysexEvent(trackP, t, 2+2, b); } break;
    default  : { unsigned char b[5] = {0xf7, EventData, EventData>>8, EventData>>16, EventData>>24}; MidiFileTrack_createSysexEvent(trackP, t, 2  , b); }}
   }
- RecEvent1 = RecEvent1->NextEvent; i--;
+ RecEvent1 = RecEvent1->NextEvent;
  }
 if (l) { MidiFileTrack_createSysexEvent(trackP, t0, l, b); } //write incomplete sysex w/o f7 termination (should not happen)
 
@@ -420,7 +415,7 @@ do { j = 0;
   }
  } while (j);
 
-GetLocalTime(&current_time); sprintf(b, "MyMid%d%02d%02d%02d%02d%02d.mid", current_time.wYear, current_time.wMonth, current_time.wDay, current_time.wHour, current_time.wMinute, current_time.wSecond);
+GetLocalTime(&current_time); sprintf(b, "MyMid%d%02d%02d%02d%02d%02d", current_time.wYear, current_time.wMonth, current_time.wDay, current_time.wHour, current_time.wMinute, current_time.wSecond); if (OverFlow) { sprintf(b+strlen(b), "_%x", OverFlow); } sprintf(b+strlen(b), ".mid");
 if (args[8] != 0x0ff && (ExitVal >= 3 || RecNum)) { MidiFile_save(midi_file, b); } MidiFile_free(midi_file); return; }
 
 //----------------------------------------------------------------------------//
