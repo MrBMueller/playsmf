@@ -43,7 +43,22 @@ The player generally allows to play across multiple output devices simultaneousl
 In addition SMF Meta-Text-Event 0x9 is supported as well for name based port selection, however it is recommented to use device IDs rather than port names for better across system portability.
 
 ### midi recording
-The player generally supports live session smf recording from the primary midi input port. In addition, the software can also record individually selected events directly from the smf input file while playing. This provides a merged output smf storing mixed internal and external recorded data for further offline processing such as live + style smf down-mixing. Recorded data will be stored into a smf named MyMid*RecordTimeStamp*.mid within the current working directory. That way you can record as many takes as required without deleting older ones for further processing.
+The player generally supports full live session recording and captures all data across all sources such as smf-, primary- and secondary inputs at once. This provides a merged smf output for either further offline processing or manual editing and inspection in any sequencer software. The output smf structure is organized in track groups and tracks for each individual data source and their functional split groups. This includes the following output tracks:
+
+ - "conductor" track - contains general SMF setup data such as Tempo, KeySig, TimeSig, etc. and Marker Labels for each individual Label transition. Together with the primary chord track, you can easily follow chord changes respective their triggered sequence transitions.
+ - "SMF*" tracks contain all input SMF data in the same track structure and order as provided by the input SMF
+ - "Primary" - contains all remaining events which are not part of the primary key zones below (mainly all non-key channel, SysEx and system or realtime data)
+ - "Pri-Var" - variation key zone
+ - "Pri-Mute" - single mute key zone
+ - "Pri-Mutes" - mute-set key zone
+ - "Pri-Chord" - chord key zone
+ - "Pri-Other" - all other key events which are not part of the key zones above
+ - "Zone*" - track(s) w/ midi thru data as defined by the zonal key setup per individual thru zone
+ - "Secondary*" - track(s) w/ non-channel data from Seondary input port(s) while channel data get mixed directly into corresponding SMF tracks
+
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img18.png width="100%">
+
+Recorded data will be stored into a smf named MyMid*RecordTimeStamp*.mid within the current working directory. That way you can record as many takes as required without deleting older ones for further processing.
 
 Recording is controlled by command line parameter #8 (0x0ff = off, else enabled). In addition, the parameter controls internal smf recording using a message mask filter scheme in the following binary/hexadecimal format:
 
@@ -55,11 +70,13 @@ Recording is controlled by command line parameter #8 (0x0ff = off, else enabled)
 	e: disable/enable event playing (allows to record internal events w/o playing them)
 
 example argument settings (hex values):
-- 0x1 - record only primary input events
-- 0x7ff040b0 - primary input + internal damper pedal events across all channels w/o playing them
-- 0x7ff0c0b0 - primary input + internal damper pedal events across all channels
-- 0x7fff06ff - primary input + internal marker text events (record meta events)
-- 0xff80f0 - primary input + internal sysex events (maybe used use for sysex data/dump requests)
+- 0x0ff - recording off
+- 0x8000 - record all events across all input sources
+- 0x1 - record only external primary input events
+- 0x7ff040b0 - external input + internal damper pedal events across all channels w/o playing them
+- 0x7ff0c0b0 - external input + internal damper pedal events across all channels
+- 0x7fff06ff - external input + internal marker text events (record meta events)
+- 0xff80f0 - external input + internal sysex events (might be used for sysex data/dump requests)
 
 ### supported midi event types (playing, recording)
 Basically all types of midi events including system common (sysex, time code, song select/position, etc.) and system realtime (start, stop, continue, active sensing) events are supported. Since system common (except sysex) and realtime events are not part of the smf specification, they are typically embedded in escape meta events (0xf7). Since the player generally supports such smf events, it is possible to include for instance time code, active sensing or start/stop/continue transport control events into the song sequence for playback.
