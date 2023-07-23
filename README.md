@@ -42,10 +42,10 @@ Generally there is not much to display since the user should more focus on playi
 The player generally allows to play across multiple output devices simultaneously. Typically devices are chosen by SMF Meta-Event 0x20 (port ID select) at the very beginning of each individual track, but in addition the player also allows switching port IDs while playing at any song position. If port-select events are missing, the player uses the default midi output device provided by command line parameter #3.
 In addition SMF Meta-Text-Event 0x9 is supported as well for name based port selection, however it is recommented to use device IDs rather than port names for better across system portability.
 
-### midi recording
-The player generally supports full live session recording and captures all data across all sources such as smf-, primary- and secondary inputs at once. This provides a merged smf output for either further offline processing or manual editing and inspection in any sequencer software. The output smf structure is organized in track groups and tracks for each individual data source and their functional split groups. This includes the following output tracks:
+### midi smf recording
+The player generally supports full live session recording and captures all data across all sources such as smf-, primary- and secondary inputs at once. This provides a merged smf output for either further offline processing or manual editing and inspection in any sequencer software. The output smf structure is organized in track groups and tracks for each individual data source and their functional data splits. This includes the following output tracks:
 
- - "conductor" track - contains general SMF setup data such as Tempo, KeySig, TimeSig, etc. and Marker Labels for each individual Label transition. Together with the primary chord track, you can easily follow chord changes respective their triggered sequence transitions.
+ - "conductor" track - contains general SMF setup data such as Tempo, Key-Signature, Time-Signature, etc. and Marker Labels for each individual Label transition. Together with the primary chord track, you can easily follow chord changes respective their triggered sequence transitions.
  - "SMF*" tracks contain all input SMF data in the same track structure and order as provided by the input SMF
  - "Primary" - contains all remaining events which are not part of the primary key zones below (mainly all non-key channel, SysEx and system or realtime data)
  - "Pri-Var" - variation key zone
@@ -55,10 +55,14 @@ The player generally supports full live session recording and captures all data 
  - "Pri-Other" - all other key events which are not part of the key zones above
  - "Zone*" - track(s) w/ midi thru data as defined by the zonal key setup per individual thru zone
  - "Secondary*" - track(s) w/ non-channel data from Seondary input port(s) while channel data get mixed directly into corresponding SMF tracks
+ 
+ In addition, PortID and PortName information is stored for each track in case multi port setups are used. So if you replay your recording using playsmf, the right midi output ports should be selected automatically.
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img18.png width="100%">
 
-Recorded data will be stored into a smf named MyMid*RecordTimeStamp*.mid within the current working directory. That way you can record as many takes as required without deleting older ones for further processing.
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img23.png width="100%">
+
+Recorded data will be stored into a smf named MyMid*RecordTimeStamp*.mid within the current working directory. This way you can record as many takes as required without deleting older ones for further processing.
 
 Recording is controlled by command line parameter #8 (0x0ff = off, else enabled). In addition, the parameter controls internal smf recording using a message mask filter scheme in the following binary/hexadecimal format:
 
@@ -80,6 +84,14 @@ example argument settings (hex values):
 
 ### supported midi event types (playing, recording)
 Basically all types of midi events including system common (sysex, time code, song select/position, etc.) and system realtime (start, stop, continue, active sensing) events are supported. Since system common (except sysex) and realtime events are not part of the smf specification, they are typically embedded in escape meta events (0xf7). Since the player generally supports such smf events, it is possible to include for instance time code, active sensing or start/stop/continue transport control events into the song sequence for playback.
+
+SMF text events are typically ignored unless they are explicitly enbaled using argument 0x5xxxx where bits [15:1] represent a mask filter for SMF text meta event types 1 t0 15. If bit 0 is disbaled, text messages within the 1st bar measure are ignored, else everthing gets displayed on the console output including track names, device names, etc. Text messages are simply displayed as they are on the console output screen at the time when they appear in the sequence. This can be used either for simple lyric printing or in combination with style type pattern to display messages on certain timestamps or in combinatio with marker labels for style accompaniement tracking.
+
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img24.png width="100%">
+
+Specifically on Windows10 and 11, the std. console text output supports VT100 terminal ansi escape codes according to the Microsoft VT100 implementation. This allows printing colored text output, changing terminal background colors or user defined console window titles while playing live.
+
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img25.png width="100%">
 
 On the recording side, the player records everything including sysex, system common and system realtime events except midi timecode, timing clock and active sensing. Similar as on the player side, the recorder packs system common and realtime events (which are not part of the smf spec.) into escape meta events. This way you can even record something like start/stop/continue transport control data into the smf.
 
