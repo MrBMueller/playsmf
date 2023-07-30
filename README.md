@@ -83,17 +83,18 @@ example argument settings (hex values):
 - 0xff80f0 - external input + internal sysex events (might be used for sysex data/dump requests)
 
 ### supported midi event types (playing, recording)
-Basically all types of midi events including system common (sysex, time code, song select/position, etc.) and system realtime (start, stop, continue, active sensing) events are supported. Since system common (except sysex) and realtime events are not part of the smf specification, they are typically embedded in escape meta events (0xf7). Since the player generally supports such smf events, it is possible to include for instance time code, active sensing or start/stop/continue transport control events into the song sequence for playback.
+Basically all types of midi events including system common (sysex, time code, song select/position, etc.) and system realtime (start, stop, continue, active sensing) events are supported. Since system common (except sysex) and realtime events are not part of the smf specification, they are typically embedded in escape meta events (0xf7). The player generally supports such events and therfore  it is possible to include for instance time code, active sensing or start/stop/continue transport control events into the song sequence for playback.
 
-SMF text events are typically ignored unless they are explicitly enbaled using argument 0x5xxxx where bits [15:1] represent a mask filter for SMF text meta event types 1 to 15. If bit 0 is disbaled, text messages within the 1st bar measure are ignored, else everthing gets displayed on the console output including track names, device names, etc. Text messages are simply displayed as they are on the console output screen at the time when they appear in the sequence. This can be used either for simple lyric printing or in combination with style type pattern to display messages on certain timestamps or in combinatio with marker labels for style accompaniement tracking.
+On the recording side, the player records everything including sysex, system common and system realtime events except midi timecode, timing clock and active sensing. Similar as on the player side, the recorder packs system common and realtime events (which are not part of the smf spec.) into escape meta events. This way you can also record something like start/stop/continue transport control data into the smf.
+
+### SMF text event support
+SMF text events are typically ignored unless they are explicitly enbaled using argument 0x5xxxx where bits [15:1] represent a mask filter for SMF text meta event types 1 to 15. If bit 0 is disbaled, text messages within the 1st bar measure are ignored, else everthing gets displayed on the console output including track names, device names, etc. Text messages are simply displayed as they are on the console output screen at the time when they appear in the sequence. This can be used either for simple lyric printing or in combination with style type pattern to display messages on certain timestamps or in combination with marker labels for style accompaniement tracking.
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img24.png width="100%">
 
-Specifically on Windows10 and 11, the std. console text output supports VT100 terminal ansi escape codes according to the Microsoft VT100 implementation. This allows printing colored text output, changing terminal background colors or user defined console window titles while playing live.
+Specifically on Windows10 and 11, the std. console text output supports VT100 terminal ansi escape codes according to the Microsoft VT100 implementation. This allows printing colored text output, changing terminal background colors or user defined console window titles in realtime while playing live.
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img25.png width="100%">
-
-On the recording side, the player records everything including sysex, system common and system realtime events except midi timecode, timing clock and active sensing. Similar as on the player side, the recorder packs system common and realtime events (which are not part of the smf spec.) into escape meta events. This way you can even record something like start/stop/continue transport control data into the smf.
 
 ### MIDI-Thru and track-follow mode
 The player generally supports MIDI-Thru functionality with split and multi-layer modes for live sessions. However instead assigning fixed devices/channels to play on, you can assign tracks to follow their current device/channel combinations while playing. This enables dynamic MIDI-Thru (re)assignments during a live session.
