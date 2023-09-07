@@ -35,7 +35,7 @@
    else if (Label0->Ret) { if (!MidiEvenT->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvenT->Label->Idx&0xfff]; } Label1 = Label0->Ret&1 ? Label3 : Label2; Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1(##a)  }\
    else                  { i = Label0->Idx; Label3 = Label2 = Label1 = Label0 = &Labels[V0]; if (!IRQ) { IRQ = 0x18^Label0->ReT; } if (Label0->ReT) { MyMacro1(##a) } else if (!((V0^i)&~0xfff)) { SneakPending = 1; }}}
 
-#define Record     if (            MidiEvent->Rec) { RecEvent->event_time = current_time+t; RecEvent->Event = MidiEvent;                                 RecEvent = RecEvent->NextEvent; }
+#define Record     if (            MidiEvent->Rec) { RecEvent->event_time = current_time+t; RecEvent->Event = MidiEvent;             RecEvent->from = 0; RecEvent = RecEvent->NextEvent; }
 #define Record1(a) if (LatestPendingO->Event->Rec) { RecEvent->event_time = current_time+t; RecEvent->Event = LatestPendingO->Event; RecEvent->from = a; RecEvent = RecEvent->NextEvent; }
 
 struct MidiEvent { unsigned long     event_time;
@@ -623,7 +623,7 @@ for (i=0; i<(_msize(TrkInfo       )/sizeof(void*           )); i++) { TrkInfo[i]
 for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI   )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel = 0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = (i%12)+1; } LatestPendingI = NULL;
 for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO   )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Cnt = 0; PendingEventsO[i].Event = NULL;                               } LatestPendingO = NULL;
 for (i=0; i<(_msize(Mutes         )/sizeof(unsigned char   )); i++) { Mutes[i] = 0; }
-for (i=0; i<(_msize(RecEvents     )/sizeof(struct RecEvent )); i++) { RecEvents[i].NextEvent = &RecEvents[i+1]; RecEvents[i].Event = NULL; RecEvents[i].from = 0; } RecEvent = RecEvents[i-1].NextEvent = &RecEvents[0];
+for (i=0; i<(_msize(RecEvents     )/sizeof(struct RecEvent )); i++) { RecEvents[i].NextEvent = &RecEvents[i+1]; RecEvents[i].Event = NULL; } RecEvent = RecEvents[i-1].NextEvent = &RecEvents[0];
 for (i=0; i<(_msize(RecEvents0    )/sizeof(struct RecEvent0)); i++) { RecEvents0[i].NextEvent = &RecEvents0[i+1]; RecEvents0[i].EventData = 0; } RecEvent0 = RecEvents0[i-1].NextEvent = &RecEvents0[0];
 for (i=0; i<(_msize(RecEvents1    )/sizeof(struct RecEvent0)); i++) { RecEvents1[i].NextEvent = &RecEvents1[i+1]; RecEvents1[i].EventData = 0; } RecEvent1 = RecEvents1[i-1].NextEvent = &RecEvents1[0];
 for (i=0; i<(_msize(RecEvents2    )/sizeof(struct RecEvent0)); i++) { RecEvents2[i].NextEvent = &RecEvents2[i+1]; RecEvents2[i].EventData = 0; } RecEvent2 = RecEvents2[i-1].NextEvent = &RecEvents2[0];
