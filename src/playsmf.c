@@ -75,9 +75,6 @@ struct Label     { unsigned long     Idx;
                    struct MidiEvent *Event;
                    unsigned char     Ret, Now, ReT; };
 
-struct Chord     { unsigned short    Type;
-                   unsigned char     Root, Num; };
-
 struct Thru      { struct MidiEvent  **Trk, *Pending;
                    unsigned short    Delay;
                    unsigned char     k, v0[128], v1[128], z, m; };
@@ -103,7 +100,7 @@ static struct Label    *Labels, *Label0, *Label1, *Label2, *Label3, *FirstLabel,
 static struct Key       Keys[16][128], *Key0, *Key1;
 static struct Thru     *Thru;
 static struct PNoteI    PendingEventsI[128], *PendingI, *LatestPendingI;
-static struct Chord     Chords[0xcccc+1];
+static unsigned short   Chords[12][0xfff+1];
 static struct RecEvent0 *RecEvent0, *RecEvent1, *RecEvent2;
 static unsigned char    IRQ, *Mutes, *Mute, *Mute0, *Mute1, *Mute2, *Mute3, *Mute11, *EntryMute, *FirstMute, *MuteA, *MuteB, Dead, Active, ExitVal, InPortOrder[256], SneakPending;
 static unsigned long    V0, V1, c, v, i, i1, LastTime, LabelNum, TrkNum, Var, Var0, Var1, **cmap, **cmap1, v1;
@@ -114,7 +111,7 @@ static struct MidiIn    Port2In[256];
 static signed long      DefIDev;
 static MIDIHDR          midi_message_header;
 
-static unsigned char Inversions[] = {0x00, 0x00, 0x20, 0x20, 0x20, 0x00, 0x10, 0x10, 0x10, 0x00, 0x30, 0x30}, EscPre[5] = "";
+static unsigned char    n, EscPre[5] = "";
 
 //============================================================================//
 
@@ -129,8 +126,8 @@ case 0x90: V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwP
   midiOutShortMsg(ThruE->midi_out, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); Thru->Pending = ThruE; }}
  RecEvent0->event_time = dwParam2; if (!(PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel = V1;
  switch (Key1->Zone) { case 1: if (LatestPendingI) { LatestPendingI->Next = PendingI; } PendingI->Prev = LatestPendingI; (LatestPendingI = PendingI)->Next = NULL;
-  c = v = 0; i = 127; while (PendingI) { c = c<<4 | PendingI->Note; v += PendingI->Vel; if (PendingI->Key < i) { i = PendingI->Key; } PendingI = PendingI->Prev; }
-  if (c <= 0xcccc && Chords[c].Type && (i = Var | Chords[c].Type | Inversions[(i%12-Chords[c].Root+12)%12]) < LabelNum && Labels[i].Event) { V0 = i; V1 = v / Chords[c].Num; } else { V0 |= Var; } break;
+  c = v = n = 0; i = 127; while (PendingI) { c |= 1 << PendingI->Note; v += PendingI->Vel; n++; if (PendingI->Key < i) { i = PendingI->Key; } PendingI = PendingI->Prev; }
+  if (Chords[i=i%12][c] && (c = Var | Chords[i][c]) < LabelNum && Labels[c].Event) { V0 = c; V1 = v / n; } else { V0 |= Var; } break;
   case 2: if ((i = Key1->Val | Label0->Idx & 0xfff) < LabelNum && !Labels[i].Ret && !MidiEvenT->Label->Ret) { if (Key1->Val == Var0) { Var0 = Var1; } else { Var1 = Var0; Var0 = Key1->Val; } Var = Var0; } else { Var = Key1->Val; }
           V0 = Var | Label2->Idx & 0xfff; if (Var != (Label2->Idx&~0xfff) && MidiEvenT->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label3 = Label2 = Label1 = Label0 = &Labels[i]; V0 = -1; } SneakPending = 0; break;
   case 4: if (!(Mute2 = (unsigned char*)Key1->Val)[-1]) { if (Mute2 == MuteA) { MuteA = MuteB; } else { MuteB = MuteA; MuteA = Mute2; } Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA; }
@@ -508,35 +505,20 @@ static struct MidiEvent *MidiEvent;
 static struct RecEvent  *RecEvents, *RecEvent;
 static struct RecEvent0 *RecEvents0, *RecEvents1, *RecEvents2;
 
-static unsigned char   Permutations0[][1] = {{0}};
-static unsigned char   Permutations1[][2] = {{0,1},{1,0}};
-static unsigned char   Permutations2[][3] = {{0,1,2},{0,2,1},{1,0,2},{1,2,0},{2,0,1},{2,1,0}};
-static unsigned char   Permutations3[][4] = {{0,1,2,3},{0,1,3,2},{0,2,1,3},{0,2,3,1},{0,3,1,2},{0,3,2,1},
-                                             {1,0,2,3},{1,0,3,2},{1,2,0,3},{1,2,3,0},{1,3,0,2},{1,3,2,0},
-                                             {2,0,1,3},{2,0,3,1},{2,1,0,3},{2,1,3,0},{2,3,0,1},{2,3,1,0},
-                                             {3,0,1,2},{3,0,2,1},{3,1,0,2},{3,1,2,0},{3,2,0,1},{3,2,1,0}};
+static unsigned short Crd0[][2] = {{0x120, 0}};
 
-static unsigned short  Intervals0[][2] = {{0x120, 0}};
+static unsigned short Crd1[][3] = {{0x100, 0, 7}};
 
-static unsigned short  Intervals1[][3] = {{0x120, 0, 0},
-                                          {0x100, 0, 7}};
+static unsigned short Crd2[][4] = {{0x200, 0, 7, 4},
+                                   {0x300, 0, 7, 3},
+                                   {0x400, 0, 7, 2},
+                                   {0x500, 0, 6, 3},
+                                   {0x600, 0, 8, 4}};
 
-static unsigned short  Intervals2[][4] = {{0x120, 0, 0, 0},
-                                          {0x100, 0, 0, 7}, {0x100, 0, 7, 7},
-                                          {0x200, 0, 4, 7},
-                                          {0x300, 0, 3, 7},
-                                          {0x400, 0, 2, 7},
-                                          {0x500, 0, 3, 6},
-                                          {0x600, 0, 4, 8}};
-
-static unsigned short  Intervals3[][5] = {{0x120, 0, 0, 0,  0},
-                                          {0x100, 0, 0, 0,  7}, {0x100, 0, 0, 7,  7}, {0x100, 0, 7, 7,  7},
-                                          {0x200, 0, 4, 7,  0}, {0x200, 0, 4, 7,  4}, {0x200, 0, 4, 7,  7},
-                                          {0x300, 0, 3, 7,  0}, {0x300, 0, 3, 7,  3}, {0x300, 0, 3, 7,  7},
-                                          {0x700, 0, 4, 7, 11},
-                                          {0x800, 0, 3, 7, 10},
-                                          {0x900, 0, 4, 7, 10},
-                                          {0xa00, 0, 3, 7, 11}};
+static unsigned short Crd3[][5] = {{0x700, 0, 11, 7, 4},
+                                   {0x800, 0, 10, 7, 3},
+                                   {0x900, 0, 10, 7, 4},
+                                   {0xa00, 0, 11, 7, 3}};
 
 static   signed long   DefArgs[] = {0, 0, -1, 0, 0, -1, -1, 0, 0x0ff, 0x00008000, 21, 22, 36, 59};
 
@@ -595,13 +577,13 @@ RecEvents = malloc((args[8]==0x0ff?1:256*1024)*sizeof(struct RecEvent)); RecEven
 
 EntryLabel = &Labels[args[10]]; ExitLabel = &Labels[args[11]]; signalling_object0 = CreateEvent(NULL, FALSE, FALSE, NULL); signalling_object1 = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-for (i=0; i<(sizeof(Chords)/sizeof(struct Chord)); i++) { Chords[i].Type = 0; Chords[i].Num = 0; j = i; while (j) { if (j&0xf) { Chords[i].Num++; } j >>= 4; }}
+for (i=0; i<=11; i++) { for (j=0; j<=0xfff; j++) { Chords[i][j] = 0; }}
 
 for (i=0; i<=11; i++) { unsigned char m;
- for (j=0; j<= 0; j++) { for (m=0; m<sizeof(Intervals0)/2/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=0; k++) { l = (l<<4) + (i+Intervals0[m][Permutations0[j][k]+1])%12 + 1; } if (!Chords[l].Type) { Chords[l].Type = Intervals0[m][0] | (Chords[l].Root = i); }}}
- for (j=0; j<= 1; j++) { for (m=0; m<sizeof(Intervals1)/3/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=1; k++) { l = (l<<4) + (i+Intervals1[m][Permutations1[j][k]+1])%12 + 1; } if (!Chords[l].Type) { Chords[l].Type = Intervals1[m][0] | (Chords[l].Root = i); }}}
- for (j=0; j<= 5; j++) { for (m=0; m<sizeof(Intervals2)/4/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=2; k++) { l = (l<<4) + (i+Intervals2[m][Permutations2[j][k]+1])%12 + 1; } if (!Chords[l].Type) { Chords[l].Type = Intervals2[m][0] | (Chords[l].Root = i); }}}
- for (j=0; j<=23; j++) { for (m=0; m<sizeof(Intervals3)/5/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=3; k++) { l = (l<<4) + (i+Intervals3[m][Permutations3[j][k]+1])%12 + 1; } if (!Chords[l].Type) { Chords[l].Type = Intervals3[m][0] | (Chords[l].Root = i); }}}
+ for (m=0; m<sizeof(Crd0)/2/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=0; k++) { l |= 1 << (i+Crd0[m][1+k])%12; } for (k=0; k<=0; k++) { if (!Chords[(i+Crd0[m][1+k])%12][l]) { Chords[(i+Crd0[m][1+k])%12][l] = Crd0[m][0]|(k<<4)|i; }}}
+ for (m=0; m<sizeof(Crd1)/3/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=1; k++) { l |= 1 << (i+Crd1[m][1+k])%12; } for (k=0; k<=1; k++) { if (!Chords[(i+Crd1[m][1+k])%12][l]) { Chords[(i+Crd1[m][1+k])%12][l] = Crd1[m][0]|(k<<4)|i; }}}
+ for (m=0; m<sizeof(Crd2)/4/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=2; k++) { l |= 1 << (i+Crd2[m][1+k])%12; } for (k=0; k<=2; k++) { if (!Chords[(i+Crd2[m][1+k])%12][l]) { Chords[(i+Crd2[m][1+k])%12][l] = Crd2[m][0]|(k<<4)|i; }}}
+ for (m=0; m<sizeof(Crd3)/5/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=3; k++) { l |= 1 << (i+Crd3[m][1+k])%12; } for (k=0; k<=3; k++) { if (!Chords[(i+Crd3[m][1+k])%12][l]) { Chords[(i+Crd3[m][1+k])%12][l] = Crd3[m][0]|(k<<4)|i; }}}
  }
 
 for (i=0; i<(sizeof(Port2Port)/sizeof(unsigned char)); i++) { Port2Port[i] = i; } PrintTxt = 0; for (i=12; i<_msize(args)/sizeof(signed long); i++) { if ((args[i]>>16) == 5) { PrintTxt = args[i] & 0xffff; }}
@@ -620,8 +602,8 @@ for (i=12; i<_msize(args)/sizeof(signed long); i++) {
 for (i=0; i<(sizeof(Port2In       )/sizeof(struct MidiIn   )); i++) { Port2In[i].s  = -1; Port2In[i].h  = NULL; for (j=0; j<sizeof(Port2In[i].b)/sizeof(struct MidiBuf); j++) { Port2In[i].b[j].h.lpData = Port2In[i].b[j].b; Port2In[i].b[j].h.dwBufferLength = sizeof(Port2In[i].b[j].b); Port2In[i].b[j].h.dwFlags = 0; }}
 for (i=0; i<(sizeof(Port2Out      )/sizeof(struct MidiOut  )); i++) { Port2Out[i].s = -1; Port2Out[i].h = NULL; }
 for (i=0; i<(_msize(TrkInfo       )/sizeof(void*           )); i++) { TrkInfo[i] = (struct MidiEvent*)(DefODev << 8); }
-for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI   )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel = 0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = (i%12)+1; } LatestPendingI = NULL;
-for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO   )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Cnt = 0; PendingEventsO[i].Event = NULL;                               } LatestPendingO = NULL;
+for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI   )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel = 0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = i%12; } LatestPendingI = NULL;
+for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO   )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Cnt = 0; PendingEventsO[i].Event = NULL;                           } LatestPendingO = NULL;
 for (i=0; i<(_msize(Mutes         )/sizeof(unsigned char   )); i++) { Mutes[i] = 0; }
 for (i=0; i<(_msize(RecEvents     )/sizeof(struct RecEvent )); i++) { RecEvents[i].NextEvent = &RecEvents[i+1]; RecEvents[i].Event = NULL; } RecEvent = RecEvents[i-1].NextEvent = &RecEvents[0];
 for (i=0; i<(_msize(RecEvents0    )/sizeof(struct RecEvent0)); i++) { RecEvents0[i].NextEvent = &RecEvents0[i+1]; RecEvents0[i].EventData = 0; } RecEvent0 = RecEvents0[i-1].NextEvent = &RecEvents0[0];
