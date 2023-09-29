@@ -509,16 +509,16 @@ static unsigned short Crd0[][2] = {{0x120, 0}};
 
 static unsigned short Crd1[][3] = {{0x100, 0, 7}};
 
-static unsigned short Crd2[][4] = {{0x200, 0, 7, 4},
-                                   {0x300, 0, 7, 3},
-                                   {0x400, 0, 7, 2},
-                                   {0x500, 0, 6, 3},
-                                   {0x600, 0, 8, 4}};
+static unsigned short Crd2[][4] = {{0x200, 0, 4, 7},
+                                   {0x300, 0, 3, 7},
+                                   {0x400, 0, 2, 7},
+                                   {0x500, 0, 3, 6},
+                                   {0x600, 0, 4, 8}};
 
-static unsigned short Crd3[][5] = {{0x700, 0, 11, 7, 4},
-                                   {0x800, 0, 10, 7, 3},
-                                   {0x900, 0, 10, 7, 4},
-                                   {0xa00, 0, 11, 7, 3}};
+static unsigned short Crd3[][5] = {{0x700, 0, 4, 7, 11},
+                                   {0x800, 0, 3, 7, 10},
+                                   {0x900, 0, 4, 7, 10},
+                                   {0xa00, 0, 3, 7, 11}};
 
 static   signed long   DefArgs[] = {0, 0, -1, 0, 0, -1, -1, 0, 0x0ff, 0x00008000, 21, 22, 36, 59};
 
