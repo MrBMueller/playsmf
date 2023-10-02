@@ -505,20 +505,17 @@ static struct MidiEvent *MidiEvent;
 static struct RecEvent  *RecEvents, *RecEvent;
 static struct RecEvent0 *RecEvents0, *RecEvents1, *RecEvents2;
 
-static unsigned short Crd0[][2] = {{0x120, 0}};
-
-static unsigned short Crd1[][3] = {{0x100, 0, 7}};
-
-static unsigned short Crd2[][4] = {{0x200, 0, 4, 7},
-                                   {0x300, 0, 3, 7},
-                                   {0x400, 0, 2, 7},
-                                   {0x500, 0, 3, 6},
-                                   {0x600, 0, 4, 8}};
-
-static unsigned short Crd3[][5] = {{0x700, 0, 4, 7, 11},
-                                   {0x800, 0, 3, 7, 10},
-                                   {0x900, 0, 4, 7, 10},
-                                   {0xa00, 0, 3, 7, 11}};
+static unsigned short Crds[] = {0x120, 0x001,
+                                0x100, 0x081,
+                                0x200, 0x091,
+                                0x300, 0x089,
+                                0x400, 0x085,
+                                0x500, 0x049,
+                                0x600, 0x111,
+                                0x700, 0x891,
+                                0x800, 0x489,
+                                0x900, 0x491,
+                                0xa00, 0x889};
 
 static   signed long   DefArgs[] = {0, 0, -1, 0, 0, -1, -1, 0, 0x0ff, 0x00008000, 21, 22, 36, 59};
 
@@ -579,11 +576,8 @@ EntryLabel = &Labels[args[10]]; ExitLabel = &Labels[args[11]]; signalling_object
 
 for (i=0; i<=11; i++) { for (j=0; j<=0xfff; j++) { Chords[i][j] = 0; }}
 
-for (i=0; i<=11; i++) { unsigned char m;
- for (m=0; m<sizeof(Crd0)/2/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=0; k++) { l |= 1 << (i+Crd0[m][1+k])%12; } for (k=0; k<=0; k++) { if (!Chords[(i+Crd0[m][1+k])%12][l]) { Chords[(i+Crd0[m][1+k])%12][l] = Crd0[m][0]|(k<<4)|i; }}}
- for (m=0; m<sizeof(Crd1)/3/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=1; k++) { l |= 1 << (i+Crd1[m][1+k])%12; } for (k=0; k<=1; k++) { if (!Chords[(i+Crd1[m][1+k])%12][l]) { Chords[(i+Crd1[m][1+k])%12][l] = Crd1[m][0]|(k<<4)|i; }}}
- for (m=0; m<sizeof(Crd2)/4/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=2; k++) { l |= 1 << (i+Crd2[m][1+k])%12; } for (k=0; k<=2; k++) { if (!Chords[(i+Crd2[m][1+k])%12][l]) { Chords[(i+Crd2[m][1+k])%12][l] = Crd2[m][0]|(k<<4)|i; }}}
- for (m=0; m<sizeof(Crd3)/5/sizeof(unsigned short); m++) { l = 0; for (k=0; k<=3; k++) { l |= 1 << (i+Crd3[m][1+k])%12; } for (k=0; k<=3; k++) { if (!Chords[(i+Crd3[m][1+k])%12][l]) { Chords[(i+Crd3[m][1+k])%12][l] = Crd3[m][0]|(k<<4)|i; }}}
+for (j=0; j<sizeof(Crds)/sizeof(unsigned short); j+=2) { unsigned long c = Crds[j+1], k = -1, N = -1;
+ while (c) { N++; if (c&1) { k++; l = Crds[j+1]; for (i=0; i<=11; i++) { if (!Chords[(i+N)%12][l]) { Chords[(i+N)%12][l] = Crds[j]|k<<4|i; } l <<= 1; l = l & 0xfff | l >> 12; }} c >>= 1; }
  }
 
 for (i=0; i<(sizeof(Port2Port)/sizeof(unsigned char)); i++) { Port2Port[i] = i; } PrintTxt = 0; for (i=12; i<_msize(args)/sizeof(signed long); i++) { if ((args[i]>>16) == 5) { PrintTxt = args[i] & 0xffff; }}
