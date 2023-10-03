@@ -64,7 +64,8 @@ struct RecEvent0 { unsigned long     event_time;
 
 struct PNoteI    { struct PNoteI    *Prev;
                    struct PNoteI    *Next;
-                   unsigned char     Key, Note, Vel; };
+                   unsigned short    Note;
+                   unsigned char     Key, Vel; };
 
 struct PNoteO    { struct PNoteO    *Prev;
                    struct PNoteO    *Next;
@@ -126,7 +127,7 @@ case 0x90: V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwP
   midiOutShortMsg(ThruE->midi_out, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); Thru->Pending = ThruE; }}
  RecEvent0->event_time = dwParam2; if (!(PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel = V1;
  switch (Key1->Zone) { case 1: if (LatestPendingI) { LatestPendingI->Next = PendingI; } PendingI->Prev = LatestPendingI; (LatestPendingI = PendingI)->Next = NULL;
-  c = v = n = 0; i = 127; while (PendingI) { c |= 1 << PendingI->Note; v += PendingI->Vel; n++; if (PendingI->Key < i) { i = PendingI->Key; } PendingI = PendingI->Prev; }
+  c = v = n = 0; i = 127; while (PendingI) { c |= PendingI->Note; v += PendingI->Vel; n++; if (PendingI->Key < i) { i = PendingI->Key; } PendingI = PendingI->Prev; }
   if (Chords[i=i%12][c] && (c = Var | Chords[i][c]) < LabelNum && Labels[c].Event) { V0 = c; V1 = v / n; } else { V0 |= Var; } break;
   case 2: if ((i = Key1->Val | Label0->Idx & 0xfff) < LabelNum && !Labels[i].Ret && !MidiEvenT->Label->Ret) { if (Key1->Val == Var0) { Var0 = Var1; } else { Var1 = Var0; Var0 = Key1->Val; } Var = Var0; } else { Var = Key1->Val; }
           V0 = Var | Label2->Idx & 0xfff; if (Var != (Label2->Idx&~0xfff) && MidiEvenT->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label3 = Label2 = Label1 = Label0 = &Labels[i]; V0 = -1; } SneakPending = 0; break;
@@ -596,8 +597,8 @@ for (i=12; i<_msize(args)/sizeof(signed long); i++) {
 for (i=0; i<(sizeof(Port2In       )/sizeof(struct MidiIn   )); i++) { Port2In[i].s  = -1; Port2In[i].h  = NULL; for (j=0; j<sizeof(Port2In[i].b)/sizeof(struct MidiBuf); j++) { Port2In[i].b[j].h.lpData = Port2In[i].b[j].b; Port2In[i].b[j].h.dwBufferLength = sizeof(Port2In[i].b[j].b); Port2In[i].b[j].h.dwFlags = 0; }}
 for (i=0; i<(sizeof(Port2Out      )/sizeof(struct MidiOut  )); i++) { Port2Out[i].s = -1; Port2Out[i].h = NULL; }
 for (i=0; i<(_msize(TrkInfo       )/sizeof(void*           )); i++) { TrkInfo[i] = (struct MidiEvent*)(DefODev << 8); }
-for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI   )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel = 0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = i%12; } LatestPendingI = NULL;
-for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO   )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Cnt = 0; PendingEventsO[i].Event = NULL;                           } LatestPendingO = NULL;
+for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI   )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel = 0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = 1 << i%12; } LatestPendingI = NULL;
+for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO   )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Cnt = 0; PendingEventsO[i].Event = NULL;                                } LatestPendingO = NULL;
 for (i=0; i<(_msize(Mutes         )/sizeof(unsigned char   )); i++) { Mutes[i] = 0; }
 for (i=0; i<(_msize(RecEvents     )/sizeof(struct RecEvent )); i++) { RecEvents[i].NextEvent = &RecEvents[i+1]; RecEvents[i].Event = NULL; } RecEvent = RecEvents[i-1].NextEvent = &RecEvents[0];
 for (i=0; i<(_msize(RecEvents0    )/sizeof(struct RecEvent0)); i++) { RecEvents0[i].NextEvent = &RecEvents0[i+1]; RecEvents0[i].EventData = 0; } RecEvent0 = RecEvents0[i-1].NextEvent = &RecEvents0[0];
