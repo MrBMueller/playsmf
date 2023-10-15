@@ -716,6 +716,7 @@ static MidiFile_t load_midi_file(MidiFileIO_t io)
 	unsigned char chunk_id[4], division_type_and_resolution[4];
 	long chunk_size, chunk_start;
 	int file_format, number_of_tracks, number_of_tracks_read = 0;
+    unsigned long file_size; fseek(io->u.file.file, 0, SEEK_END); file_size = ftell(io->u.file.file); rewind(io->u.file.file); if (file_size < 14) { return NULL; } //bmr
 
 	MidiFileIO_read(io, 4, chunk_id);
 	chunk_size = read_uint32(io);
@@ -786,36 +787,27 @@ static MidiFile_t load_midi_file(MidiFileIO_t io)
 	/* forwards compatibility:  skip over any extra header data */
 	MidiFileIO_seek(io, chunk_start + chunk_size, SEEK_SET);
 
-	while (number_of_tracks_read < number_of_tracks)
+	while (MidiFileIO_tell(io)+8 < file_size && MidiFileIO_read(io, 4, chunk_id)==4 && !memcmp(chunk_id, "MTrk", 4)) //bmr
 	{
-		MidiFileIO_read(io, 4, chunk_id);
-		chunk_size = read_uint32(io);
-		chunk_start = MidiFileIO_tell(io);
+		unsigned long chunk_size = read_uint32(io); //bmr
+		unsigned long chunk_start = MidiFileIO_tell(io); //bmr
 
-		if (memcmp(chunk_id, "MTrk", 4) == 0)
-		{
 			MidiFileTrack_t track = MidiFile_createTrack(midi_file);
 			long tick, previous_tick = 0;
 			unsigned char status, running_status = 0;
 			int at_end_of_track = 0;
 			LastNewEvent = LastEvent = NULL; LoadMidiFile = 1; //bmr
 
-			while ((MidiFileIO_tell(io) < chunk_start + chunk_size) && !at_end_of_track)
+			while ((MidiFileIO_tell(io) < chunk_start + chunk_size) && MidiFileIO_tell(io) < file_size) //bmr
 			{
 				tick = read_variable_length_quantity(io) + previous_tick;
 				previous_tick = tick;
 
 				status = MidiFileIO_getc(io);
 
-				if ((status & 0x80) == 0x00)
-				{
-					status = running_status;
-					MidiFileIO_seek(io, -1, SEEK_CUR);
-				}
-				else
-				{
-					running_status = status;
-				}
+				if (status >= 0x80) { if (status <= 0xef) { running_status = status; }} //bmr
+                 else if (running_status) { status = running_status; MidiFileIO_seek(io, -1, SEEK_CUR); }
+                 else { continue; }
 
 				switch (status & 0xF0)
 				{
@@ -899,7 +891,7 @@ static MidiFile_t load_midi_file(MidiFileIO_t io)
 								{
 									MidiFileTrack_createMetaEvent(track, tick, number, data_length, data_buffer); //bmr
 									//MidiFileTrack_setEndTick(track, tick);
-									//at_end_of_track = 1;
+									at_end_of_track = 1;
 								}
 								else
 								{
@@ -918,10 +910,9 @@ static MidiFile_t load_midi_file(MidiFileIO_t io)
 
 			LoadMidiFile = 0; //bmr
 			number_of_tracks_read++;
-		}
 
 		/* forwards compatibility:  skip over any unrecognized chunks, or extra data at the end of tracks */
-		MidiFileIO_seek(io, chunk_start + chunk_size, SEEK_SET);
+		//MidiFileIO_seek(io, chunk_start + chunk_size, SEEK_SET);
 	}
 
 	return midi_file;
