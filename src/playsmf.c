@@ -83,7 +83,7 @@ struct Thru      { struct MidiEvent  **Trk, *Pending;
                    unsigned short    Delay;
                    unsigned char     k, v0[128], v1[128], z, m; };
 
-struct Key       { unsigned char     Zone;
+struct Key       { unsigned char     Ch, Key, Zone;
                    unsigned long     Val;
                    struct Thru       Thrus[8+1]; };
 
@@ -154,8 +154,8 @@ case 0x80: V1 = dwParam1>>16;                            L0x80:   if ((V0 = (dwP
  V0 |= Var | 0x80;
  MyMacro0(0) } RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return;
 
-case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: i = -1;
- switch (dwParam1 & 0x7ff0) { case 0x40b0: case 0x42b0: case 0x43b0: while (Thrus[c=dwParam1&0xf][++i]     ) { if (           (ThruE = *Thrus[c][i]) && ThruE->Ch < 16 && (v = (cm0 = &cmap[ThruE->Track][dwParam1>>9&0x3f80 | dwParam1>>8&0x7f | dwParam1<<10&0x1c000])->v)) { if (V0 = cm0->s) { MyMacro2(,1) } else { midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); }}} break;
+case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: i = -1; Key1 = &Keys[dwParam1 & 0xf][Key1->Key];
+ switch (dwParam1 & 0x7ff0) { case 0x40b0: case 0x42b0: case 0x43b0: while (Thrus[c=Key1->Ch][++i]         ) { if (           (ThruE = *Thrus[c][i]) && ThruE->Ch < 16 && (v = (cm0 = &cmap[ThruE->Track][dwParam1>>9&0x3f80 | dwParam1>>8&0x7f | dwParam1<<10&0x1c000])->v)) { if (V0 = cm0->s) { MyMacro2(,1) } else { midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); }}} break;
                               default:                               while ((Thru = &Key1->Thrus[++i])->Trk) { if (Thru->m && (ThruE = *Thru->Trk  ) && ThruE->Ch < 16 && (v = (cm0 = &cmap[ThruE->Track][dwParam1>>9&0x3f80 | dwParam1>>8&0x7f | dwParam1<<10&0x1c000])->v)) { if (V0 = cm0->s) { MyMacro2(,1) } else { midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); }}} }
  RecEvent0->event_time = dwParam2; RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return;
 
@@ -384,7 +384,7 @@ for (i=0; i<RSz0; i++) { unsigned long t = (RecEvent0->event_time-MinEventTime)*
  if ((EventData & 0xf0) == 0x90 && EventData&0x7f0000) { Key1 = Key; }
  switch (EventData & 0xf0) {
   case 0x80: case 0x90:                                  MidiFileTrack_createShortMsg(track , t, EventData); WriteThrus(args, 1, NULL, Key, TrkInfo, RecEvent0, midi_file, SMF, MinEventTime, c, Port2Out, cmap); break;
-  case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: MidiFileTrack_createShortMsg(trackP, t, EventData);
+  case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: MidiFileTrack_createShortMsg(trackP, t, EventData); Key1 = &Keys[EventData & 0xf][Key1->Key];
    switch (EventData & 0x7ff0) { case 0x40b0: case 0x42b0: case 0x43b0: WriteThrus(args, 1, Thrus, NULL, TrkInfo, RecEvent0, midi_file, SMF, MinEventTime, c, Port2Out, cmap); break;
                                  default:                               WriteThrus(args, 0, NULL , Key1, TrkInfo, RecEvent0, midi_file, SMF, MinEventTime, c, Port2Out, cmap); } break;
   default:
@@ -628,7 +628,7 @@ for (i=0; i<(_msize(Thrus[0]      )/sizeof(void*           )); i++) { Thrus[0][i
 for (i=0; i<(_msize(MidiEvents    )/sizeof(struct MidiEvent)); i++) { MidiEvents[i].NextEvent = &MidiEvents[i+1]; MidiEvents[i].FlwCtl = MidiEvents[i].MsgCtl = MidiEvents[i].Rec = 0; }
 for (i=0; i<(_msize(Labels        )/sizeof(struct Label    )); i++) { Labels[i].Idx = i; Labels[i].Event = NULL; Labels[i].ReT = Labels[i].Now = Labels[i].Ret = 0; }
 
-for (i=0; i<=15; i++) { Thrus[i] = &Thrus[0][i*(TrkNum+1)]; for (j=0; j<=127; j++) { Keys[i][j].Zone = 0; for (k=0; k<(sizeof(Keys[i][j].Thrus)/sizeof(struct Thru)); k++) { Keys[i][j].Thrus[k].Trk = NULL; }}}
+for (i=0; i<=15; i++) { Thrus[i] = &Thrus[0][i*(TrkNum+1)]; for (j=0; j<=127; j++) { Keys[i][j].Ch = i; Keys[i][j].Key = j; Keys[i][j].Zone = 0; for (k=0; k<(sizeof(Keys[i][j].Thrus)/sizeof(struct Thru)); k++) { Keys[i][j].Thrus[k].Trk = NULL; }}}
 
 for (i=0; i<=15; i++) { signed long z = -1, k = 12, C = args[6], Ck = args[k], Mk = args[k+1]+1, K2 = Ck-MutesNum, K1 = K2-1, K0 = K1; if (Mk-1 < 0) { Mk = Ck+abs(Mk-1); } if (Mk > 128) { Mk = 128; } if ((LabelNum-1)>>12) { K0 -= ((LabelNum-1)>>12)+1; }
  for (j = K0; j < K1; j++) { Keys[i][j].Zone |= 2; Keys[i][j].Val = (K1-j-1)<<12; }
