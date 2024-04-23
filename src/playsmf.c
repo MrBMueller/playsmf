@@ -32,7 +32,7 @@
  if (V0 < LabelNum && Labels[V0].Event) {\
   if (Labels[V0].Event != Label0->Event) { if (!(Label0 = &Labels[V0])->Ret) { if (Label0 != Label2 || MidiEvenT->Label->Ret || IRQ) { Label3 = Label2 = Label1 = Label0;                      IRQ = 0x10; MyMacro1(##a) }}\
                     else { if (!MidiEvenT->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvenT->Label->Idx&0xfff]; } Label1 = Label0->Ret&1 ? Label3 : Label2; Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1(##a) }}\
-   else if (Label0->Ret) { if (!MidiEvenT->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvenT->Label->Idx&0xfff]; } Label1 = Label0->Ret&1 ? Label3 : Label2; Var = Label1->Idx&-4096; IRQ = 0x08; MyMacro1(##a)  }\
+   else if (Label0->Ret) { if (!MidiEvenT->Label->Ret) { Label3 = &Labels[Label1->Idx&-4096|MidiEvenT->Label->Idx&0xfff]; } Label1 = Label0->Ret&1 ? Label3 : Label2; Var = Label1->Idx&-4096; IRQ = MidiEvenT->Label->Ret&&!MidiEvenT->Label->ReT?0x18:0x08; MyMacro1(##a)  }\
    else                  { i = Label0->Idx; Label3 = Label2 = Label1 = Label0 = &Labels[V0]; if (!IRQ) { IRQ = 0x18^Label0->ReT; } if (Label0->ReT) { MyMacro1(##a) } else if (!((V0^i)&~0xfff)) { SneakPending = 1; }}}
 
 #define Record0(a) if (            MidiEvent->Rec) { RecEvent->event_time = current_time+t; RecEvent->Event = MidiEvent;             RecEvent->Src = a; RecEvent = RecEvent->NextEvent; }
@@ -744,11 +744,11 @@ while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInf
  MidiEvents[i].midi_out = Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].h;
  if (MidiEvents[i].FlwCtl & 2 && (signed long)MidiEvents[i].JumpEvent >= 0 && ((signed long)MidiEvents[i].JumpEvent >= LabelNum || !Labels[(unsigned long)MidiEvents[i].JumpEvent].Event)) { MidiEvents[i].FlwCtl &= ~2; MidiEvents[i].FlwCtl |= 1; }
  if (MidiEvents[i].FlwCtl & 2) { MidiEvents[i].FlwCtl &= ~4; MidiEvents[i].FlwCtl |= 1; if ((signed long)MidiEvents[i].JumpEvent >= (signed long)LabelNum) { MidiEvents[i].JumpEvent = (struct MidiEvent*)-1; }
-  if (((unsigned long)MidiEvents[i].JumpEvent < LabelNum) && (Labels[(unsigned long)MidiEvents[i].JumpEvent].Event)) { if (!(k & 0x100)) { k = 0; } MidiEvents[i].JumpEvent = Labels[(unsigned long)MidiEvents[i].JumpEvent].Event; }
-   else if ((l = (unsigned long)MidiEvents[j=i].JumpEvent*-1-4) >= 0) { while (l && j) { if (MidiEvents[j].Label->Event != MidiEvents[j-1].Label->Event) { l--; } j--; } if (!(k & 0x100)) { k = 0; } MidiEvents[i].JumpEvent = MidiEvents[j].Label->Event; }
+  if (((unsigned long)MidiEvents[i].JumpEvent < LabelNum) && (Labels[(unsigned long)MidiEvents[i].JumpEvent].Event)) { if (!(k & 0x100)) { if (fc & 0x60) { k &= ~0x200; } else { k = 0; }} MidiEvents[i].JumpEvent = Labels[(unsigned long)MidiEvents[i].JumpEvent].Event; }
+   else if ((l = (unsigned long)MidiEvents[j=i].JumpEvent*-1-4) >= 0) { while (l && j) { if (MidiEvents[j].Label->Event != MidiEvents[j-1].Label->Event) { l--; } j--; } if (!(k & 0x100)) { if (fc & 0x60) { k &= ~0x200; } else { k = 0; }} MidiEvents[i].JumpEvent = MidiEvents[j].Label->Event; }
    else { MidiEvents[i].FlwCtl = 4; k = (unsigned long)MidiEvents[i].JumpEvent; }
   } else { MidiEvents[i].FlwCtl &= ~4; }
- if (fc & 4) { k &= ~0x100; } MidiEvents[i].Label->Ret = k;
+ if (fc & 4) { k &= ~0x100; } MidiEvents[i].Label->Ret = k; MidiEvents[i].Label->ReT = MidiEvents[i].Label->ReT & ~1 | (k>>9) & 1;
  if (MidiEvents[i].FlwCtl & 0x10) { MidiEvents[i].FlwCtl = 2; }
  if (MidiEvents[i].FlwCtl & 0x08) { MidiEvents[i].FlwCtl = 5; }
  if (MidiEvents[i].FlwCtl & 0x20) { MidiEvents[i].FlwCtl = 6; }
@@ -762,6 +762,8 @@ while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInf
  if ((MidiEvents[i].EventData & ~0x010000) == 0x3412f4) { MidiEvents[i].MsgCtl = 0; if (MidiEvents[i].EventData & 0x010000) { MidiEvents[i].Ch |= 0x10; }}
  if (MidiEvents[i].MsgCtl == 5 && strstr(MidiEvents[i].data_buffer, "\x1b")) { strcpy(EscPre, "\x1b[0m"); }
  }
+
+for (i=0; i<LabelNum; i++) { Labels[i].ReT = Labels[i].ReT?8:0; }
 
 AlignLabels(Labels); if (strlen(EscPre)) { HANDLE h = GetStdHandle(-11); GetConsoleMode(h, &i); SetConsoleMode(h, i|5); GetConsoleMode(h, &i); if ((i&5)!=5) { strcpy(EscPre, ""); }}
 
