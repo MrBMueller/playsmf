@@ -407,7 +407,7 @@ for (i=0; i<RSz1; i++) { unsigned long v, i, t = (RecEvent1->event_time-MinEvent
  while (j && RecEvent->event_time <= RecEvent1->event_time) { TrkInfo[RecEvent->Event->Track] = RecEvent->Event; RecEvent = RecEvent->NextEvent; j--; }
  trackP = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+6+Zones+(Port2In[EventData>>24].z-1), 0); EventData &= 0xffffff;
  switch (EventData & 0xf0) {
-  case 0x80: case 0x90: case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: if (TrkID < TrkNum && TrkInfo[TrkID] && TrkInfo[TrkID]->Ch < 16 && (v = cmap1[TrkID][i = EventData>>9&0x3f80 | EventData>>8&0x7f | EventData<<10&0x1c000].v)) { if (cmap1[TrkID][i].s) { MidiFileTrack_createSysexEvent(track, t, cmap[TrkID][i].s, (void*)cmap[TrkID][i].v); } else { MidiFileTrack_createShortMsg(track, t, v | TrkInfo[TrkID]->Ch); }} break;
+  case 0x80: case 0x90: case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: if (TrkID < TrkNum && TrkInfo[TrkID] && TrkInfo[TrkID]->Ch < 16 && (v = cmap1[TrkID][i = EventData>>9&0x3f80 | EventData>>8&0x7f | EventData<<10&0x1c000].v)) { if (cmap1[TrkID][i].s) { MidiFileTrack_createSysexEvent(track, t, cmap1[TrkID][i].s, (void*)cmap1[TrkID][i].v); } else { MidiFileTrack_createShortMsg(track, t, v | TrkInfo[TrkID]->Ch); }} break;
   default:
   switch (EventData & 0xff) {
    case 0xf0: if ((EventData>>8) == 0xf0) { if (l) { MidiFileTrack_createSysexEvent(trackP, t0, l, b); } l = 0; }
