@@ -663,6 +663,11 @@ for (i=0; i<=15; i++) {
   }
  }
 
+for (i=0; i<=15; i++) { signed long L = -1; while (Thrus[i][++L]) {
+ k = 0; for (j=0xc040; j<=0x0ffc0; j+=0x80) { k |= cmap[Thrus[i][L]-TrkInfo][j].v | cmap[Thrus[i][L]-TrkInfo][j+2].v | cmap[Thrus[i][L]-TrkInfo][j+3].v; }
+ if (!k) { for (k=L; k<TrkNum; k++) { Thrus[i][k] = Thrus[i][k+1]; }}
+ }}
+
 k = DefIDev; l = -1;
 Port2In[k].z = ++l; Port2In[k].s = midiInOpen(&Port2In[k].h, k, (unsigned long)MidiInProc , (unsigned long)NULL, CALLBACK_FUNCTION | MIDI_IO_STATUS);
 strcpy(Port2In[k].c.szPname, ""); midiInGetDevCaps(k, &Port2In[k].c, sizeof(MIDIINCAPS)); printf("i%2d %x '%s'\n", k, Port2In[k].s, Port2In[k].c.szPname);
