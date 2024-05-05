@@ -650,7 +650,7 @@ for (i=0; i<=15; i++) { signed long z = -1, k = 12, C = args[6], Ck = args[k], M
   k += 7; while (k < _msize(args)/sizeof(signed long) && abs(args[k]) >= 0x10000) { k++; }
   }
 
- for (j=0; j<=128; j++) { k = -1; while (Keys[i][j].Thrus[++k].Trk) { z = -1; while (Thrus[i][++z] && Thrus[i][z] != Keys[i][j].Thrus[k].Trk) {} if (!Thrus[i][z]) { Thrus[i][z] = Keys[i][j].Thrus[k].Trk; }}}
+ for (j=0; j<=128; j++) { k = -1; while (Keys[i][j].Thrus[++k].Trk) { z = -1; while (Thrus[i][++z] && Thrus[i][z] != Keys[i][j].Thrus[k].Trk) {} if (!Thrus[i][z]) { Thrus[i][z] = Keys[i][j].Thrus[k].Trk; }}} Keys[i][128].Thrus[0].Trk = NULL;
 
  z = -1; while (Thrus[i][++z]) { k = 0; for (j=0xc040; j<=0x0ffc0; j+=0x80) { k |= cmap[Thrus[i][z]-TrkInfo][j].v | cmap[Thrus[i][z]-TrkInfo][j+2].v | cmap[Thrus[i][z]-TrkInfo][j+3].v; } if (!k) { for (k=z; k<TrkNum; k++) { Thrus[i][k] = Thrus[i][k+1]; }}}
  }
