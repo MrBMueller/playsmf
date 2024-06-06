@@ -831,11 +831,10 @@ saveMidiEventsToFile(args, Keys, InOfs, midi_file, Tempo0, TimeSig0, KeySig0, Re
 
 for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { midiOutClose(Port2Out[i].h); }}
 
-                                  i = 0;                      //regular
+                                  i = Label0->Idx << 4;       //regular/last/exit
 if       ( ExitVal & 8        ) { i = 4;                    } //close
  else if ( ExitVal & 4        ) { i = 3;                    } //CTRL+PAUSE/BREAK
  else if ((ExitVal & 3) < 3   ) { i = 2;                    } //timeout
- else if (Label0 != EntryLabel) { i = 5 | Label0->Idx << 4; } //last/exit
 
 if (i == 2) { Sleep(TimeOut); if (args[5] <= 0) { goto start; }}
 
