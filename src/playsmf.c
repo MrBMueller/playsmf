@@ -493,7 +493,7 @@ if (argc > 3 && !argv[3] || argc > 4 && !argv[4]) { signed long ni, no, n, mli, 
 
  }
 
-for (i=0; i<argc; i++) { if (!argv[i]) { argv[i] = argv[0]+strlen(argv[0]); if (i<3 || i>4) { printf("%*sa%d:", j, "", i); printf("%d (0x%x);", args[i] = GetArg(i<DefArgsSize?DefArgs[i]:0), args[i]); j = 1; }}}
+for (i=0; i<argc; i++) { if (!argv[i]) { argv[i] = argv[0]+strlen(argv[0]); if (i<3 || i>4) { args[i] = i<DefArgsSize?DefArgs[i]:0; if (i!=6 & i!=7 & i!=12 & i!=13 | midiInGetNumDevs()) { printf("%*sa%d:", j, "", i); printf("%d (0x%x);", args[i] = GetArg(args[i]), args[i]); } j = 1; }}}
 
 if (j) { printf("\n"); } return; }
 
