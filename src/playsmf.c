@@ -493,7 +493,7 @@ if (argc > 3 && !argv[3] || argc > 4 && !argv[4]) { signed long ni, no, n, mli, 
 
  }
 
-for (i=0; i<argc; i++) { if (!argv[i]) { argv[i] = argv[0]+strlen(argv[0]); if (i<3 || i>4) { args[i] = i<DefArgsSize?DefArgs[i]:0; if (i!=6 & i!=7 & i!=12 & i!=13 | midiInGetNumDevs()) { printf("%*sa%d:", j, "", i); printf("%d (0x%x);", args[i] = GetArg(args[i]), args[i]); } j = 1; }}}
+for (i=0; i<argc; i++) { if (!argv[i]) { argv[i] = argv[0]+strlen(argv[0]); if (i<3 || i>4) { args[i] = i<DefArgsSize?DefArgs[i]:0; if (i!=6 & i!=7 & i!=12 & i!=13 | midiInGetNumDevs()) { printf("%*sa%d:", j, "", i); printf("%d (0x%x);", args[i] = GetArg(args[i]), args[i]); j = 1; }}}}
 
 if (j) { printf("\n"); } return; }
 
@@ -832,11 +832,11 @@ saveMidiEventsToFile(args, Keys, InOfs, midi_file, Tempo0, TimeSig0, KeySig0, Re
 for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h) { midiOutClose(Port2Out[i].h); }}
 
                                                                                      i = 0;   //regular
-if       ( ExitVal & 8                                                           ) { i = 6; } //close
- else if ( ExitVal & 4                                                           ) { i = 3; } //CTRL+PAUSE/BREAK
+if       ( ExitVal & 8                                                           ) { i = 3; } //close
+ else if ( ExitVal & 4                                                           ) { i = 4; } //CTRL+PAUSE/BREAK
  else if ((ExitVal & 3) < 3                                                      ) { i = 2; } //timeout
- else if (Label0->Event != EntryLabel->Event && Label0->Event == ExitLabel->Event) { i = 4; } //exit
- else if (Label0->Event != EntryLabel->Event && Label0->Event == LastLabel->Event) { i = Label0->Idx << 4 | 5; } //last
+ else if (Label0->Event != EntryLabel->Event && Label0->Event == ExitLabel->Event) { i = 5; } //exit
+ else if (Label0->Event != EntryLabel->Event && Label0->Event == LastLabel->Event) { i = Label0->Idx << 4 | 6; } //last
  else if (Label0->Event != EntryLabel->Event                                     ) { i = Label0->Idx << 4 | 7; } //other
 
 if (i == 2) { Sleep(TimeOut); if (args[5] <= 0) { goto start; }}
