@@ -483,11 +483,11 @@ if (argc > 3 && !argv[3] || argc > 4 && !argv[4]) { signed long ni, no, n, mli, 
   }
 
  j = 0;
- if (argc > 4 && !argv[4] && ni) { printf("%*si:", j, "");
+ if (argc > 4 && !argv[4]) { printf("%*si:", j, "");
   if (ni < 62) { while ((i = map1[GetCh()]) < -2 || i >= ni) {}} else { while ((i = GetArg(-2)) < -2 || i >= ni) {}} if (i == -1) { printf("\n"); goto list; }
   if (i >= 0) { midiInGetDevCaps( i  , SelIDev, sizeof(MIDIINCAPS));  argv[4] = SelIDev->szPname; } j = 1; if (argv[4]) { printf("'%s'", argv[4]); } printf(";"); }
 
- if (argc > 3 && !argv[3] && no) { printf("%*so:", j, "");
+ if (argc > 3 && !argv[3]) { printf("%*so:", j, "");
   if (no < 62) { while ((i = map1[GetCh()]) < -2 || i >= no) {}} else { while ((i = GetArg(-2)) < -2 || i >= no) {}} if (i == -1) { printf("\n"); goto list; }
   if (i >= 0) { midiOutGetDevCaps(i-1, SelODev, sizeof(MIDIOUTCAPS)); argv[3] = SelODev->szPname; } j = 1; if (argv[3]) { printf("'%s'", argv[3]); } printf(";"); }
 
