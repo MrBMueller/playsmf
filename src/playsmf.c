@@ -477,9 +477,8 @@ if (argc > 3 && !argv[3] || argc > 4 && !argv[4]) { signed long ni, no, n, mli, 
  for (i = 0; i < no; i++) { MIDIOUTCAPS c; midiOutGetDevCaps(i-1, &c, sizeof(MIDIOUTCAPS)); if (strlen(c.szPname) > mlo) { mlo = strlen(c.szPname); }}
 
  for (i = 0; i < n; i++) { unsigned long nci = mli, nco = mlo; printf("%*d '%c' |", n<=10?1:n<=100?2:3, i, map0[i]);
-  if (ni) { printf(" "); if (i < ni) { MIDIINCAPS  c; midiInGetDevCaps( i  , &c, sizeof(MIDIINCAPS )); printf("'%s'", c.szPname); nci -= strlen(c.szPname); } else { nci += 2; } while (nci--) { printf(" "); } printf(" "); } printf("|");
-  if (no) { printf(" "); if (i < no) { MIDIOUTCAPS c; midiOutGetDevCaps(i-1, &c, sizeof(MIDIOUTCAPS)); printf("'%s'", c.szPname); nco -= strlen(c.szPname); } else { nci += 2; } while (nco--) { printf(" "); } printf(" "); }
-  printf("|\n");
+  if (ni) { printf(" "); if (i < ni) { MIDIINCAPS  c; midiInGetDevCaps( i  , &c, sizeof(MIDIINCAPS )); printf("'%s'", c.szPname); nci -= strlen(c.szPname); } else { nci += 2; } printf(" "); } while (nci--) { printf(" "); } printf("|");
+  if (no) { printf(" "); if (i < no) { MIDIOUTCAPS c; midiOutGetDevCaps(i-1, &c, sizeof(MIDIOUTCAPS)); printf("'%s'", c.szPname); nco -= strlen(c.szPname); } else { nco += 2; } printf(" "); } while (nco--) { printf(" "); } printf("|\n");
   }
 
  j = 0;
