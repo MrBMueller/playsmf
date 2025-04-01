@@ -129,7 +129,7 @@ static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { unsigned long register V0,
 
 static void CALLBACK MidiInProc(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { switch (wMsg) { case MIM_DATA:
 
-if (imap) { dwParam1 = imap[dwParam1>>2 & 0x1fc000 | dwParam1>>1 & 0x3f80 | dwParam1 & 0x7f] | ((dwParam1 & 0xf0)<0xf0 ? dwParam1 & 0xf : 0); }
+if (imap) { dwParam1 = imap[dwParam1>>2 & 0x1fc000 | dwParam1>>1 & 0x3f80 | dwParam1 & 0x7f]; }
 
 switch (dwParam1 & 0xf0) {
 
@@ -609,11 +609,11 @@ for (i=0; i<(sizeof(Port2Port)/sizeof(unsigned char)); i++) { Port2Port[i] = i; 
 
 imap = NULL;
 i = 0; for (k=12; k<_msize(args)/sizeof(signed long); k++) { if (args[k]>>24 == 4) { i = args[k]<<1 & 0x1000000 | args[k] & 0x7f7fff; if ((i & 0xe0) == 0x80) { i = i & ~0x7f00 | ((i>>8 & 0x7f)-InOfs & 0x7f) << 8; }} if (args[k]>>24 == 5) { if (i) {
- if (!imap) { imap = malloc(8*16*128*128*sizeof(unsigned int)); for (j=0; j<=0x1fffff; j++) { imap[j] = j << 2 & 0x7f0000 | j << 1 & 0x7f00 | 0x80 | j & 0x7f; }}
+ if (!imap) { imap = malloc(8*16*128*128*sizeof(unsigned long)); for (j=0; j<=0x1fffff; j++) { imap[j] = j << 2 & 0x7f0000 | j << 1 & 0x7f00 | 0x80 | j & 0x7f; }}
  imap[args[k] >> 2 & 0x1fc000 | args[k] >> 1 & 0x3f80 | args[k] & 0x7f] = i;
  }}}
 
-if (imap) { for (i=0; i<=0x7f; i++) {j = 0; for (k=0; k<=0x3fff; k++) { if (imap[k<<7 | i] != (k << 9 & 0x7f0000 | k << 8 & 0x7f00 | 0x80 | i)) { j++; }}
+if (imap) { for (i=0; i<=0x6f; i++) { j = 0; for (k=0; k<=0x3fff; k++) { if (imap[k<<7 | i] != (k << 9 & 0x7f0000 | k << 8 & 0x7f00 | 0x80 | i)) { j++; }} if (args[6] >= 0 && (i & 0xf) != args[6]) { j++; }
  if (j) { for (k=0; k<=0x3fff; k++) { if (imap[k<<7 | i] == (k << 9 & 0x7f0000 | k << 8 & 0x7f00 | 0x80 | i)) { imap[k<<7 | i] = 0xfe; }}}
  }}
 
