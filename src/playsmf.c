@@ -129,7 +129,7 @@ static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { unsigned long register V0,
 
 static void CALLBACK MidiInProc(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { switch (wMsg) { case MIM_DATA:
 
-if (imap) { dwParam1 = imap[dwParam1>>2 & 0x1fc000 | dwParam1>>1 & 0x3f80 | dwParam1 & 0x7f]; }
+if (imap) { dwParam1 = imap[dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<14&0x1fc000]; }
 
 switch (dwParam1 & 0xf0) {
 
@@ -159,8 +159,8 @@ case 0x80: V1 = dwParam1>>16;                            L0x80:   if ((V0 = (dwP
  MyMacro0(0) } RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return;
 
 case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: i = -1; Key1 = &Keys[dwParam1 & 0xf][Key1->Key];
- switch (dwParam1 & 0x7ff0) { case 0x40b0: case 0x42b0: case 0x43b0: while (Thrus[c=Key1->Ch][++i]         ) { if (           (ThruE = *Thrus[c][i]) && ThruE->Ch < 16 && (v = (cm0 = &cmap[ThruE->Track][dwParam1>>9&0x3f80 | dwParam1>>8&0x7f | dwParam1<<10&0x1c000])->v)) { if (V0 = cm0->s) { MyMacro2(,1) } else { midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); }}} break;
-                              default:                               while ((Thru = &Key1->Thrus[++i])->Trk) { if (Thru->m && (ThruE = *Thru->Trk  ) && ThruE->Ch < 16 && (v = (cm0 = &cmap[ThruE->Track][dwParam1>>9&0x3f80 | dwParam1>>8&0x7f | dwParam1<<10&0x1c000])->v)) { if (V0 = cm0->s) { MyMacro2(,1) } else { midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); }}} }
+ switch (dwParam1 & 0x7ff0) { case 0x40b0: case 0x42b0: case 0x43b0: while (Thrus[c=Key1->Ch][++i]         ) { if (           (ThruE = *Thrus[c][i]) && ThruE->Ch < 16 && (v = (cm0 = &cmap[ThruE->Track][dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<10&0x1c000])->v)) { if (V0 = cm0->s) { MyMacro2(,1) } else { midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); }}} break;
+                              default:                               while ((Thru = &Key1->Thrus[++i])->Trk) { if (Thru->m && (ThruE = *Thru->Trk  ) && ThruE->Ch < 16 && (v = (cm0 = &cmap[ThruE->Track][dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<10&0x1c000])->v)) { if (V0 = cm0->s) { MyMacro2(,1) } else { midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); }}} }
  RecEvent0->event_time = dwParam2; RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return;
 
 default: switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: Dead = 0; return; }
@@ -177,7 +177,7 @@ case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 //----------------------------------------------------------------------------//
 
 static void CALLBACK MidiInProc1(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { unsigned long p, i, v, V0, i1; midiInGetID(hMidiIn, &p); i1 = InPortOrder[p]; switch (wMsg) {
-case MIM_DATA: if ((dwParam1&0xff) < 0xf0) { if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Ch < 16 && (v = (cm1 = &cmap1[ThruE1->Track][dwParam1>>9&0x3f80 | dwParam1>>8&0x7f | dwParam1<<10&0x1c000])->v)) { if (V0 = cm1->s) { MyMacro2(1,2) } else { midiOutShortMsg(ThruE1->midi_out, v | ThruE1->Ch); }}}
+case MIM_DATA: if ((dwParam1&0xff) < 0xf0) { if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Ch < 16 && (v = (cm1 = &cmap1[ThruE1->Track][dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<10&0x1c000])->v)) { if (V0 = cm1->s) { MyMacro2(1,2) } else { midiOutShortMsg(ThruE1->midi_out, v | ThruE1->Ch); }}}
                                       else { switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: return; default: printf("%s \n1%x", EscPre, dwParam1); }} RecEvent1->event_time = dwParam2; RecEvent1->EventData = p<<24 | dwParam1; RecEvent1 = RecEvent1->NextEvent; return;
 case MIM_LONGDATA: if (((MIDIHDR*)dwParam1)->dwBytesRecorded && Active) {
  i1 = ((MIDIHDR*)dwParam1)->dwBufferLength; ((MIDIHDR*)dwParam1)->dwBufferLength = ((MIDIHDR*)dwParam1)->dwBytesRecorded; midiOutLongMsg(ThruE1->midi_out, (MIDIHDR*)dwParam1, sizeof(MIDIHDR));
@@ -294,7 +294,7 @@ while (Thrus && (Thru->Trk = Thrus[Ch][++i]) || Key && (Thru = &Key->Thrus[++i])
   switch (EventData & 0xf0) {
    case 0x80: MidiFileTrack_createShortMsg(track, (t+d)*c, Thru->v0[V1]<<16 | Thru->k<<8 | 0x80 | ThruE->Ch); Thru->Pending = NULL;  break;
    case 0x90: MidiFileTrack_createShortMsg(track, (t+d)*c, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); Thru->Pending = ThruE; break;
-   default: { unsigned long v, i; if (v = cmap[TrkID][i = EventData>>9&0x3f80 | EventData>>8&0x7f | EventData<<10&0x1c000].v) { if (cmap[TrkID][i].s) { MidiFileTrack_createSysexEvent(track, t*c, cmap[TrkID][i].s, (void*)cmap[TrkID][i].v); } else { MidiFileTrack_createShortMsg(track, t*c, v | ThruE->Ch); }}}}
+   default: { unsigned long v, i; if (v = cmap[TrkID][i = EventData>>16 | EventData>>1&0x3f80 | EventData<<10&0x1c000].v) { if (cmap[TrkID][i].s) { MidiFileTrack_createSysexEvent(track, t*c, cmap[TrkID][i].s, (void*)cmap[TrkID][i].v); } else { MidiFileTrack_createShortMsg(track, t*c, v | ThruE->Ch); }}}}
   }
  }
 
@@ -412,7 +412,7 @@ for (i=0; i<RSz1; i++) { unsigned long v, i, t = (RecEvent1->event_time-MinEvent
  while (j && RecEvent->event_time <= RecEvent1->event_time) { TrkInfo[RecEvent->Event->Track] = RecEvent->Event; RecEvent = RecEvent->NextEvent; j--; }
  trackP = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+6+Zones+(Port2In[EventData>>24].z-1), 0); EventData &= 0xffffff;
  switch (EventData & 0xf0) {
-  case 0x80: case 0x90: case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: if (TrkID < TrkNum && TrkInfo[TrkID] && TrkInfo[TrkID]->Ch < 16 && (v = cmap1[TrkID][i = EventData>>9&0x3f80 | EventData>>8&0x7f | EventData<<10&0x1c000].v)) { if (cmap1[TrkID][i].s) { MidiFileTrack_createSysexEvent(track, t, cmap1[TrkID][i].s, (void*)cmap1[TrkID][i].v); } else { MidiFileTrack_createShortMsg(track, t, v | TrkInfo[TrkID]->Ch); }} break;
+  case 0x80: case 0x90: case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: if (TrkID < TrkNum && TrkInfo[TrkID] && TrkInfo[TrkID]->Ch < 16 && (v = cmap1[TrkID][i = EventData>>16 | EventData>>1&0x3f80 | EventData<<10&0x1c000].v)) { if (cmap1[TrkID][i].s) { MidiFileTrack_createSysexEvent(track, t, cmap1[TrkID][i].s, (void*)cmap1[TrkID][i].v); } else { MidiFileTrack_createShortMsg(track, t, v | TrkInfo[TrkID]->Ch); }} break;
   default:
   switch (EventData & 0xff) {
    case 0xf0: if ((EventData>>8) == 0xf0) { if (l) { MidiFileTrack_createSysexEvent(trackP, t0, l, b); } l = 0; }
@@ -550,7 +550,7 @@ if (!(midi_file = MidiFile_load(argv[1]))) { printf("Error: Cannot open \"%s\".\
 if (argc > (i = j = sizeof(DefArgs)/sizeof(signed long))) { i = argc; } args = malloc(i*sizeof(signed long)); while (--i >= 0) { args[i] = i<j?DefArgs[i]:0; if (i<argc) { argv2arg(argv, args, i); }}
 
 cmap = malloc((TrkNum+1)*sizeof(void*)); cmap[0] = malloc(7*128*128*sizeof(struct cmap)); cmap1 = malloc(_msize(cmap)); cmap1[0] = malloc(_msize(cmap[0]));
-for (k=0; k<=TrkNum; k++) { cmap[k] = cmap[0]; cmap1[k] = cmap1[0]; } for (k=0; k<7*128*128; k++) { cmap1[0][k].v = cmap[0][k].v = (k&0x3f80)<<9 | (k&0x7f)<<8 | ((k&0x1c000)>>10)+0x80; cmap1[0][k].s = cmap[0][k].s = 0; }
+for (k=0; k<=TrkNum; k++) { cmap[k] = cmap[0]; cmap1[k] = cmap1[0]; } for (k=0; k<7*128*128; k++) { cmap1[0][k].v = cmap[0][k].v = (k&0x3f80)<<1 | (k&0x7f)<<16 | ((k&0x1c000)>>10)+0x80; cmap1[0][k].s = cmap[0][k].s = 0; }
 
 i = l = 0; j = -1; MutesNum = MutesInv = MutesRet = 0;
 for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_file_event = MidiFileEvent_getNextEventInFile(midi_file_event)) { i++;
@@ -572,10 +572,10 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
     a = D[4]<<24 | D[5]<<16 | D[6]<<8 | D[7], b = D[8]<<24 | D[9]<<16 | D[10]<<8 | D[11], c = D[12]<<24 | D[13]<<16 | D[14]<<8 | D[15],
     d = D[16]<<24 | D[17]<<16 | D[18]<<8 | D[19], e = D[20]<<24 | D[21]<<16 | D[22]<<8 | D[23], v0 = d & 0xffff, v1 = e & 0xffff, t; d >>= 16;
     T |= a>>17; if (T < 0) { T += TrkNum; } if (T > TrkNum) { T = TrkNum; } a &= 0x1ffff; b &= 0x1ffff;
-    for (t=a; t<=b; t+=c) { signed long v = v0; if (b-a) { v += (t-a)*(v1-v0)/(b-a); }
+    for (t=a; t<=b; t+=c) { signed long v = v0, z = t & 0x1c000 | t<<7 & 0x3f80 | t>>7 & 0x7f; if (b-a) { v += (t-a)*(v1-v0)/(b-a); }
      switch (d & 0xf0) { case 0xb0: v = v << 16; break; case 0xe0: v = v << 9 & 0x7f0000 | v << 8 & 0x7f00; break; default: v <<= 8; }
-     if (D[3]&1) { if (T < TrkNum && cmap [T] == cmap [TrkNum]) { unsigned long k; cmap [T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap [T][k].v = cmap [TrkNum][k].v; cmap [T][k].s = cmap [TrkNum][k].s; }} cmap [T][t].v = v | d; if (L > 24) { cmap [T][t].v = (unsigned long)&D[24]; cmap [T][t].s = L-24; }}
-     if (D[3]&2) { if (T < TrkNum && cmap1[T] == cmap1[TrkNum]) { unsigned long k; cmap1[T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap1[T][k].v = cmap1[TrkNum][k].v; cmap1[T][k].s = cmap1[TrkNum][k].s; }} cmap1[T][t].v = v | d; if (L > 24) { cmap1[T][t].v = (unsigned long)&D[24]; cmap1[T][t].s = L-24; }}
+     if (D[3]&1) { if (T < TrkNum && cmap [T] == cmap [TrkNum]) { unsigned long k; cmap [T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap [T][k].v = cmap [TrkNum][k].v; cmap [T][k].s = cmap [TrkNum][k].s; }} cmap [T][z].v = v | d; if (L > 24) { cmap [T][z].v = (unsigned long)&D[24]; cmap [T][z].s = L-24; }}
+     if (D[3]&2) { if (T < TrkNum && cmap1[T] == cmap1[TrkNum]) { unsigned long k; cmap1[T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap1[T][k].v = cmap1[TrkNum][k].v; cmap1[T][k].s = cmap1[TrkNum][k].s; }} cmap1[T][z].v = v | d; if (L > 24) { cmap1[T][z].v = (unsigned long)&D[24]; cmap1[T][z].s = L-24; }}
      }
     }
    if (L >= 4 && D[0] == 0x00 && (D[1]&0x7f) == 0x2b && (D[2]&0x7f) == 0x4d && D[3] >= 0x04) { unsigned long A = D[3]-4; if (!A) { A = -1; }
@@ -607,14 +607,15 @@ for (j=0; j<sizeof(Crds)/sizeof(unsigned short); j+=2) { unsigned long c = Crds[
 
 for (i=0; i<(sizeof(Port2Port)/sizeof(unsigned char)); i++) { Port2Port[i] = i; } PrintTxt = 0; for (i=12; i<_msize(args)/sizeof(signed long); i++) { if ((args[i]>>16) == 5) { PrintTxt = args[i] & 0xffff; }}
 
-imap = NULL;
-i = 0; for (k=12; k<_msize(args)/sizeof(signed long); k++) { if (args[k]>>24 == 4) { i = args[k]<<1 & 0x1000000 | args[k] & 0x7f7fff; if ((i & 0xe0) == 0x80) { i = i & ~0x7f00 | ((i>>8 & 0x7f)-InOfs & 0x7f) << 8; }} if (args[k]>>24 == 5) { if (i) {
- if (!imap) { imap = malloc(8*16*128*128*sizeof(unsigned long)); for (j=0; j<=0x1fffff; j++) { imap[j] = j << 2 & 0x7f0000 | j << 1 & 0x7f00 | 0x80 | j & 0x7f; }}
- imap[args[k] >> 2 & 0x1fc000 | args[k] >> 1 & 0x3f80 | args[k] & 0x7f] = i;
- }}}
+imap = NULL; i = 0;
+for (k=12; k<_msize(args)/sizeof(signed long); k++) { if (args[k]>>24 == 4) { i = k; } if (args[k]>>24 == 5 && i) { signed long t = args[i], s = args[k], c = args[6]>=0?args[6]:-1, c0 = c<0?0:c, c1 = c0;
+ if (!imap) { imap = malloc(0x1fc001*sizeof(unsigned long)); for (j=0; j<=0x1fc000; j++) { imap[j] = j << 16 & 0x7f0000 | j << 1 & 0x7f00 | 0x80 | j>>14 & 0x7f; }}
+ t = t<<1 & 0x1000000 | t & 0x7f7fff; if ((t & 0xe0) == 0x80) { t = t & ~0x7f00 | ((t>>8 & 0x7f)-InOfs & 0x7f) << 8; } if ((s & 0xf0) == 0xf0 || s & 0xf) { c0 = c1 = 0; } else if (c < 0) { c0 = 0; c1 = 15; }
+ for (j=c0; j<=c1; j++) { imap[s >> 16 & 0x7f | s >> 1 & 0x3f80 | (s | j)<<14 & 0x1fc000] = t | ((t & 0xf0) == 0xf0 || t & 0xf ? 0 : j); }
+ }}
 
-if (imap) { for (i=0; i<=0x6f; i++) { j = 0; for (k=0; k<=0x3fff; k++) { if (imap[k<<7 | i] != (k << 9 & 0x7f0000 | k << 8 & 0x7f00 | 0x80 | i)) { j++; }} if (args[6] >= 0 && (i & 0xf) != args[6]) { j++; }
- if (j) { for (k=0; k<=0x3fff; k++) { if (imap[k<<7 | i] == (k << 9 & 0x7f0000 | k << 8 & 0x7f00 | 0x80 | i)) { imap[k<<7 | i] = 0xfe; }}}
+if (imap) { for (i=0; i<=0x6f; i++) { j = 0; for (k=0; k<=0x3fff; k++) { if (imap[i<<14 | k] != (k << 16 & 0x7f0000 | k << 1 & 0x7f00 | 0x80 | i)) { j++; }} if (args[6] >= 0 && (i & 0xf) != args[6]) { j++; }
+ if (j) { for (k=0; k<=0x3fff; k++) { if (imap[i<<14 | k] == (k << 16 & 0x7f0000 | k << 1 & 0x7f00 | 0x80 | i)) { imap[i<<14 | k] = 0xfe; }}}
  }}
 
 start: timeGetDevCaps(&time_caps, sizeof(TIMECAPS));
