@@ -123,7 +123,7 @@ static unsigned char    n, EscPre[5] = "";
 
 //============================================================================//
 
-static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType) { unsigned long register V0, V1, i, c; RecEvent2->event_time = timeGetTime()-Port2In[DefIDev].StartTime; if (dwCtrlType) { V0 = ExitLabel->Idx; ExitVal |= 4<<(dwCtrlType>1); } else { V0 = EntryLabel->Idx; } V1 = -1; SneakPending = 0; Var = Var1 = Var0 = V0&~0xfff; MyMacro0(2) RecEvent2->EventData = 8|dwCtrlType; RecEvent2 = RecEvent2->NextEvent; if (dwCtrlType > 1) { Sleep(4000); return(FALSE); } return(TRUE); }
+static BOOL WINAPI HandlerRoutine(unsigned long dwCtrlType) { unsigned long register V0, V1, i, c; RecEvent2->event_time = timeGetTime()-Port2In[DefIDev].StartTime; if (dwCtrlType) { V0 = ExitLabel->Idx; ExitVal |= 4<<(dwCtrlType>1); } else { V0 = EntryLabel->Idx; } V1 = -1; SneakPending = 0; Var = Var1 = Var0 = V0&~0xfff; MyMacro0(2) RecEvent2->EventData = 8|dwCtrlType; RecEvent2 = RecEvent2->NextEvent; if (dwCtrlType > 1) { Sleep(4000); return(FALSE); } return(TRUE); }
 
 //----------------------------------------------------------------------------//
 
