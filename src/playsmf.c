@@ -1,5 +1,6 @@
 //============================================================================//
 
+#include <stdio.h>
 #include <windows.h>
 #include <midifile.h>
 
@@ -172,7 +173,7 @@ case MIM_LONGDATA: i = -1;
  if (((MIDIHDR*)dwParam1)->dwBytesRecorded && Active) { midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } Dead = 0; return; // MIM_LONGDATA
 case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
-} printf("%s \n%08x %08x %08x %08x %08x", EscPre, hMidiIn, wMsg, dwInstance, dwParam1, dwParam2); } //switch wMsg // CALLBACK fallthru
+} printf("%s \n%08x %08x %08x %08x %08x", EscPre, (unsigned long)hMidiIn, wMsg, dwInstance, dwParam1, dwParam2); } //switch wMsg // CALLBACK fallthru
 
 //----------------------------------------------------------------------------//
 
@@ -189,7 +190,7 @@ case MIM_LONGDATA: if (((MIDIHDR*)dwParam1)->dwBytesRecorded && Active) {
  ((MIDIHDR*)dwParam1)->dwBufferLength = i1; midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } return; // MIM_LONGDATA
 case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
-} printf("%s \n%08x %08x %08x %08x %08x", EscPre, hMidiIn, wMsg, dwInstance, dwParam1, dwParam2); } //switch wMsg // CALLBACK fallthru
+} printf("%s \n%08x %08x %08x %08x %08x", EscPre, (unsigned long)hMidiIn, wMsg, dwInstance, dwParam1, dwParam2); } //switch wMsg // CALLBACK fallthru
 
 //----------------------------------------------------------------------------//
 
