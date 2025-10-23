@@ -443,7 +443,7 @@ static signed long GetODev(char *n, signed long d) { signed long i; for (i = 0; 
 
 //----------------------------------------------------------------------------//
 
-static signed long Strtol(const char *a, char **b, int c, signed int d) { unsigned char *s; signed long r = strtol(a, &s, c); if (s == a) { r = d; } *b = s; return(r); }
+static signed long Strtol(const signed char *a, signed char **b, signed long c, signed long d) { unsigned char *s; signed long r = strtol(a, &s, c); if (s == a) { r = d; } *b = s; return(r); }
 
 //----------------------------------------------------------------------------//
 
