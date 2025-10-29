@@ -4,6 +4,12 @@
 #include <windows.h>
 #include <midifile.h>
 
+#ifdef _WIN64
+#define Long long long
+#else
+#define Long long
+#endif
+
 #define Msg0 "For further options, features, examples, updates and other information, check the github/sourceforge project repositories.\n"
 
 #define KW0 "Label"
@@ -85,7 +91,7 @@ struct Thru      { struct MidiEvent  **Trk, *Pending;
                    unsigned char     k, v0[128], v1[128], z, m; };
 
 struct Key       { unsigned char     Ch, Key, Zone;
-                   unsigned long     Val;
+                   unsigned Long     Val;
                    struct Thru       Thrus[8+1]; };
 
 struct MidiBuf   { MIDIHDR           h;
@@ -100,7 +106,7 @@ struct MidiOut   { unsigned long     s;
                    HMIDIOUT          h;
                    MIDIOUTCAPS       c; };
 
-struct cmap      { unsigned long     v;
+struct cmap      { unsigned Long     v;
                    unsigned char     s; };
 
 static HANDLE           sot, so0, so1, so2;
@@ -111,7 +117,8 @@ static struct PNoteI    PendingEventsI[128], *PendingI, *LatestPendingI;
 static unsigned short   Chords[12][0xfff+1];
 static struct RecEvent0 *RecEvent0, *RecEvent1, *RecEvent2;
 static unsigned char    V1, IRQ, *Mutes, *Mute, *Mute0, *Mute1, *Mute2, *Mute3, *Mute11, *EntryMute, *FirstMute, *MuteA, *MuteB, Dead, Active, ExitVal, InPortOrder[256], SneakPending;
-static unsigned long    V0, c, v, i, j, LastTime, LabelNum, TrkNum, Var, Var0, Var1, *imap;
+static unsigned long    V0, c, i, j, LastTime, LabelNum, TrkNum, Var, Var0, Var1, *imap;
+static unsigned Long    v;
 static struct cmap      **cmap, **cmap1, *cm0, *cm1;
 static struct MidiEvent *MidiEvents, *MidiEvenT, **TrkInfo, ***Thrus[16], *ThruE, *ThruE1;
 static float            Speed0;
@@ -128,7 +135,7 @@ static BOOL WINAPI HandlerRoutine(unsigned long dwCtrlType) { unsigned long regi
 
 //----------------------------------------------------------------------------//
 
-static void CALLBACK MidiInProc(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { switch (wMsg) { case MIM_DATA:
+static void CALLBACK MidiInProc(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned Long dwParam1, unsigned long dwParam2) { switch (wMsg) { case MIM_DATA:
 
 if (imap) { dwParam1 = imap[dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<14&0x1fc000]; }
 
@@ -143,7 +150,7 @@ case 0x90: V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwP
   if (Chords[i=i%12][c] && (c = Var | Chords[i][c]) < LabelNum && Labels[c].Event) { V0 = c; V1 = v / n; } else { V0 |= Var; } break;
   case 2: if ((i = Key1->Val | Label0->Idx & 0xfff) < LabelNum && !Labels[i].Ret && !MidiEvenT->Label->Ret) { if (Key1->Val == Var0) { Var0 = Var1; } else { Var1 = Var0; Var0 = Key1->Val; } Var = Var0; } else { Var = Key1->Val; }
           V0 = Var | Label2->Idx & 0xfff; if (Var != (Label2->Idx&~0xfff) && MidiEvenT->Label->Ret && V0 < LabelNum && !Labels[V0].Ret && (i = Var | Label1->Idx & 0xfff) < LabelNum) { Label3 = Label2 = Label1 = Label0 = &Labels[i]; V0 = -1; } SneakPending = 0; break;
-  case 4: if (!(Mute2 = (unsigned char*)Key1->Val)[-1]) { if (Mute2 == MuteA) { MuteA = MuteB; } else { MuteB = MuteA; MuteA = Mute2; } Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA; }
+  case 4: if (!(Mute2 = (void*)Key1->Val)[-1]) { if (Mute2 == MuteA) { MuteA = MuteB; } else { MuteB = MuteA; MuteA = Mute2; } Mute0 = Mute1 = Mute2 = Mute3 = Mute11 = MuteA; }
            else                                         { Mute1 = Mute3 = Mute2; if (!Mute[-1]) { Mute0 = Mute11 = Mute; }} V0 |= Var; break;
   case 8: Mute[Key1->Val] ^= 0x08;                                                                                          V0 |= Var; break;
   default: V0 |= Var; }
@@ -166,39 +173,39 @@ case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: i = -1; Key1 = &Keys[dwPa
 
 default: switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: Dead = 0; return; }
 
-} printf("%s \n0%x", EscPre, dwParam1); RecEvent0->event_time = dwParam2; RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return; //switch dwParam1 // MIM_DATA fallthru
+} printf("%s \n0%Ix", EscPre, dwParam1); RecEvent0->event_time = dwParam2; RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return; //switch dwParam1 // MIM_DATA fallthru
 
 case MIM_LONGDATA: i = -1;
  while (++i < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { RecEvent0->event_time = dwParam2; RecEvent0->EventData = (*(((MIDIHDR*)dwParam1)->lpData+i)&0xff)<<8 | 0xf0; RecEvent0 = RecEvent0->NextEvent; }
- if (((MIDIHDR*)dwParam1)->dwBytesRecorded && Active) { midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } Dead = 0; return; // MIM_LONGDATA
+ if (((MIDIHDR*)dwParam1)->dwBytesRecorded && Active) { midiInAddBuffer(hMidiIn, (void*)dwParam1, sizeof(MIDIHDR)); } Dead = 0; return; // MIM_LONGDATA
 case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
-} printf("%s \n%08x %08x %08x %08x %08x", EscPre, (unsigned long)hMidiIn, wMsg, dwInstance, dwParam1, dwParam2); } //switch wMsg // CALLBACK fallthru
+} printf("%s \n%p %08x %08x %08Ix %08x", EscPre, hMidiIn, wMsg, dwInstance, dwParam1, dwParam2); } //switch wMsg // CALLBACK fallthru
 
 //----------------------------------------------------------------------------//
 
-static void CALLBACK MidiInProc1(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) { unsigned long p, i, v, V0, i1; midiInGetID(hMidiIn, &p); i1 = InPortOrder[p]; switch (wMsg) {
+static void CALLBACK MidiInProc1(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned Long dwParam1, unsigned long dwParam2) { unsigned long p, i, V0, i1; unsigned Long v; midiInGetID(hMidiIn, &p); i1 = InPortOrder[p]; switch (wMsg) {
 case MIM_DATA: if ((dwParam1&0xff) < 0xf0) { if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Ch < 16 && (v = (cm1 = &cmap1[ThruE1->Track][dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<10&0x1c000])->v)) { if (V0 = cm1->s) { MyMacro2(1,2) } else { midiOutShortMsg(ThruE1->midi_out, v | ThruE1->Ch); }}}
-                                      else { switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: return; default: printf("%s \n1%x", EscPre, dwParam1); }} RecEvent1->event_time = dwParam2; RecEvent1->EventData = p<<24 | dwParam1; RecEvent1 = RecEvent1->NextEvent; return;
+                                      else { switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: return; default: printf("%s \n1%Ix", EscPre, dwParam1); }} RecEvent1->event_time = dwParam2; RecEvent1->EventData = p<<24 | dwParam1; RecEvent1 = RecEvent1->NextEvent; return;
 case MIM_LONGDATA: if (((MIDIHDR*)dwParam1)->dwBytesRecorded && Active) {
- i1 = ((MIDIHDR*)dwParam1)->dwBufferLength; ((MIDIHDR*)dwParam1)->dwBufferLength = ((MIDIHDR*)dwParam1)->dwBytesRecorded; midiOutLongMsg(ThruE1->midi_out, (MIDIHDR*)dwParam1, sizeof(MIDIHDR));
+ i1 = ((MIDIHDR*)dwParam1)->dwBufferLength; ((MIDIHDR*)dwParam1)->dwBufferLength = ((MIDIHDR*)dwParam1)->dwBytesRecorded; midiOutLongMsg(ThruE1->midi_out, (void*)dwParam1, sizeof(MIDIHDR));
  if (((MIDIHDR*)dwParam1)->dwBytesRecorded >= 6 && (*(((MIDIHDR*)dwParam1)->lpData+1)&0xff) == 0x00 && (*(((MIDIHDR*)dwParam1)->lpData+2)&0xff) == 0x2b && (*(((MIDIHDR*)dwParam1)->lpData+3)&0xff) == 0x4d) {
   switch (*(((MIDIHDR*)dwParam1)->lpData+4)&0xff) { case 0x00: Speed0 = 1+(float)(*(((MIDIHDR*)dwParam1)->lpData+5)&0xff)/127   ; break;
                                                     case 0x01: Speed0 = 1-(float)(*(((MIDIHDR*)dwParam1)->lpData+5)&0xff)/127*.5; }
   }
  i = -1; while (++i < ((MIDIHDR*)dwParam1)->dwBytesRecorded) { RecEvent1->event_time = dwParam2; RecEvent1->EventData = p<<24 | (*(((MIDIHDR*)dwParam1)->lpData+i)&0xff)<<8 | 0xf0; RecEvent1 = RecEvent1->NextEvent; }
- ((MIDIHDR*)dwParam1)->dwBufferLength = i1; midiInAddBuffer(hMidiIn, (MIDIHDR*)dwParam1, sizeof(MIDIHDR)); } return; // MIM_LONGDATA
+ ((MIDIHDR*)dwParam1)->dwBufferLength = i1; midiInAddBuffer(hMidiIn, (void*)dwParam1, sizeof(MIDIHDR)); } return; // MIM_LONGDATA
 case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
-} printf("%s \n%08x %08x %08x %08x %08x", EscPre, (unsigned long)hMidiIn, wMsg, dwInstance, dwParam1, dwParam2); } //switch wMsg // CALLBACK fallthru
+} printf("%s \n%p %08x %08x %08Ix %08x", EscPre, hMidiIn, wMsg, dwInstance, dwParam1, dwParam2); } //switch wMsg // CALLBACK fallthru
 
 //----------------------------------------------------------------------------//
 
-static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long dwInstance, unsigned long dwParam1, unsigned long dwParam2) {
+static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long dwInstance, unsigned Long dwParam1, unsigned long dwParam2) {
 if (wMsg == MOM_DONE) {
- if       (dwParam1 == (unsigned long)&mmh0) { SetEvent(so0); }
-  else if (dwParam1 == (unsigned long)&mmh1) { SetEvent(so1); }
-  else if (dwParam1 == (unsigned long)&mmh2) { SetEvent(so2); }
+ if       ((void*)dwParam1 == &mmh0) { SetEvent(so0); }
+  else if ((void*)dwParam1 == &mmh1) { SetEvent(so1); }
+  else if ((void*)dwParam1 == &mmh2) { SetEvent(so2); }
  }
 }
 
@@ -573,8 +580,8 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
     T |= a>>17; if (T < 0) { T += TrkNum; } if (T > TrkNum) { T = TrkNum; } a &= 0x1ffff; b &= 0x1ffff;
     for (t=a; t<=b; t+=c) { signed long v = v0, z = t & 0x1c000 | t<<7 & 0x3f80 | t>>7 & 0x7f; if (b-a) { v += (t-a)*(v1-v0)/(b-a); }
      switch (d & 0xf0) { case 0xb0: v = v << 16; break; case 0xe0: v = v << 9 & 0x7f0000 | v << 8 & 0x7f00; break; default: v <<= 8; }
-     if (D[3]&1) { if (T < TrkNum && cmap [T] == cmap [TrkNum]) { unsigned long k; cmap [T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap [T][k].v = cmap [TrkNum][k].v; cmap [T][k].s = cmap [TrkNum][k].s; }} cmap [T][z].v = v | d; if (L > 24) { cmap [T][z].v = (unsigned long)&D[24]; cmap [T][z].s = L-24; }}
-     if (D[3]&2) { if (T < TrkNum && cmap1[T] == cmap1[TrkNum]) { unsigned long k; cmap1[T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap1[T][k].v = cmap1[TrkNum][k].v; cmap1[T][k].s = cmap1[TrkNum][k].s; }} cmap1[T][z].v = v | d; if (L > 24) { cmap1[T][z].v = (unsigned long)&D[24]; cmap1[T][z].s = L-24; }}
+     if (D[3]&1) { if (T < TrkNum && cmap [T] == cmap [TrkNum]) { unsigned long k; cmap [T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap [T][k].v = cmap [TrkNum][k].v; cmap [T][k].s = cmap [TrkNum][k].s; }} cmap [T][z].v = v | d; if (L > 24) { cmap [T][z].v = (unsigned Long)&D[24]; cmap [T][z].s = L-24; }}
+     if (D[3]&2) { if (T < TrkNum && cmap1[T] == cmap1[TrkNum]) { unsigned long k; cmap1[T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap1[T][k].v = cmap1[TrkNum][k].v; cmap1[T][k].s = cmap1[TrkNum][k].s; }} cmap1[T][z].v = v | d; if (L > 24) { cmap1[T][z].v = (unsigned Long)&D[24]; cmap1[T][z].s = L-24; }}
      }
     }
    if (L >= 4 && D[0] == 0x00 && (D[1]&0x7f) == 0x2b && (D[2]&0x7f) == 0x4d && D[3] >= 0x04) { unsigned long A = D[3]-4, s = _msize(argv)/sizeof(void*); if (!A) { A = -1; }
@@ -630,7 +637,7 @@ for (i=12; i<_msize(args)/sizeof(signed long); i++) {
 
 for (i=0; i<(sizeof(Port2In       )/sizeof(struct MidiIn   )); i++) { Port2In[i].s  = -1; Port2In[i].h  = NULL; for (j=0; j<sizeof(Port2In[i].b)/sizeof(struct MidiBuf); j++) { Port2In[i].b[j].h.lpData = Port2In[i].b[j].b; Port2In[i].b[j].h.dwBufferLength = sizeof(Port2In[i].b[j].b); Port2In[i].b[j].h.dwFlags = 0; }}
 for (i=0; i<(sizeof(Port2Out      )/sizeof(struct MidiOut  )); i++) { Port2Out[i].s = -1; Port2Out[i].h = NULL; }
-for (i=0; i<(_msize(TrkInfo       )/sizeof(void*           )); i++) { TrkInfo[i] = (struct MidiEvent*)(DefODev << 8); }
+for (i=0; i<(_msize(TrkInfo       )/sizeof(void*           )); i++) { TrkInfo[i] = (void*)(unsigned Long)(DefODev << 8); }
 for (i=0; i<(sizeof(PendingEventsI)/sizeof(struct PNoteI   )); i++) { PendingEventsI[i].Prev = PendingEventsI[i].Next = NULL; PendingEventsI[i].Vel = 0; PendingEventsI[i].Key = i; PendingEventsI[i].Note = 1 << i%12; } LatestPendingI = NULL;
 for (i=0; i<(_msize(PendingEventsO)/sizeof(struct PNoteO   )); i++) { PendingEventsO[i].Prev = PendingEventsO[i].Next = NULL; PendingEventsO[i].Cnt = 0; PendingEventsO[i].Event = NULL;                                } LatestPendingO = NULL;
 for (i=0; i<(_msize(Mutes         )/sizeof(unsigned char   )); i++) { Mutes[i] = 0; }
@@ -651,7 +658,7 @@ for (i=0; i<=15; i++) { signed long z = -1;
   if (!++z) {
    for (j = K0; j < K1; j++) { Keys[i][j].Zone |= 2; Keys[i][j].Val = (K1-j-1)<<12; }
    for (j = K1; j < K2; j++) { Keys[i][j].Zone |= 8; Keys[i][j].Val = K2-j-1; }
-   for (j = K2; j < Ck; j++) { Keys[i][j].Zone |= 4; if (j > (Ck-3)) { Keys[i][j].Val = (unsigned long)&Mutes[(j-K2)*(TrkNum+1)+1]; } else { Keys[i][j].Val = (unsigned long)&Mutes[(Ck-3-j)*(TrkNum+1)+1]; }}
+   for (j = K2; j < Ck; j++) { Keys[i][j].Zone |= 4; if (j > (Ck-3)) { Keys[i][j].Val = (unsigned Long)&Mutes[(j-K2)*(TrkNum+1)+1]; } else { Keys[i][j].Val = (unsigned Long)&Mutes[(Ck-3-j)*(TrkNum+1)+1]; }}
    for (j = Ck; j < Mk; j++) { Keys[i][j].Zone |= 1; }
    }
   if (k+6<_msize(args)/sizeof(signed long)) {
@@ -675,12 +682,12 @@ for (i=0; i<=15; i++) { signed long z = -1;
  }
 
 k = DefIDev; l = -1;
-Port2In[k].z = ++l; Port2In[k].s = midiInOpen(&Port2In[k].h, k, (unsigned long)MidiInProc , (unsigned long)NULL, CALLBACK_FUNCTION | MIDI_IO_STATUS);
+Port2In[k].z = ++l; Port2In[k].s = midiInOpen(&Port2In[k].h, k, (unsigned Long)MidiInProc , (unsigned Long)NULL, CALLBACK_FUNCTION | MIDI_IO_STATUS);
 strcpy(Port2In[k].c.szPname, ""); midiInGetDevCaps(k, &Port2In[k].c, sizeof(MIDIINCAPS)); printf("i%2d %x '%s'\n", k, Port2In[k].s, Port2In[k].c.szPname);
 for (j=0; j<sizeof(Port2In[k].b)/sizeof(struct MidiBuf); j++) { midiInPrepareHeader(Port2In[k].h, &Port2In[k].b[j].h, sizeof(MIDIHDR)); midiInAddBuffer(Port2In[k].h, &Port2In[k].b[j].h, sizeof(MIDIHDR)); }
 
 for (i=12; i<_msize(args)/sizeof(signed long); i++) { if (argv[i] && strlen(argv[i])) { args[i] |= GetIDev(argv[i], midiInGetNumDevs()); } if ((((args[i]>>16) == 2) && (!Port2In[k = args[i]&0xff].h) || ((args[i]>>16) == 4) && (!Port2In[k = midiInGetNumDevs()-1-args[i]&0xff].h)) && (k < midiInGetNumDevs())) { InPortOrder[k] = (args[i]>>8)&0xff;
-Port2In[k].z = ++l; Port2In[k].s = midiInOpen(&Port2In[k].h, k, (unsigned long)MidiInProc1, (unsigned long)NULL, CALLBACK_FUNCTION | MIDI_IO_STATUS);
+Port2In[k].z = ++l; Port2In[k].s = midiInOpen(&Port2In[k].h, k, (unsigned Long)MidiInProc1, (unsigned Long)NULL, CALLBACK_FUNCTION | MIDI_IO_STATUS);
 strcpy(Port2In[k].c.szPname, ""); midiInGetDevCaps(k, &Port2In[k].c, sizeof(MIDIINCAPS)); printf("i%2d %x '%s'\n", k, Port2In[k].s, Port2In[k].c.szPname);
 for (j=0; j<sizeof(Port2In[k].b)/sizeof(struct MidiBuf); j++) { midiInPrepareHeader(Port2In[k].h, &Port2In[k].b[j].h, sizeof(MIDIHDR)); midiInAddBuffer(Port2In[k].h, &Port2In[k].b[j].h, sizeof(MIDIHDR)); }}}
 
@@ -705,15 +712,15 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
                                                Tempo   =                                      (MidiEvents[i].data_buffer[0]<<16) | (MidiEvents[i].data_buffer[1]<<8) | (MidiEvents[i].data_buffer[2]<<0); if (Tempo0   & 0x01000000) { Tempo0   = Tempo;   }}
   if (MidiEvents[i].EventData == 0x0000587f) { TimeSig = (MidiEvents[i].data_buffer[0]<<24) | (MidiEvents[i].data_buffer[1]<<16) | (MidiEvents[i].data_buffer[2]<<8) | (MidiEvents[i].data_buffer[3]<<0); if (TimeSig0 & 0x00000080) { TimeSig0 = TimeSig; }}
   if (MidiEvents[i].EventData == 0x0000597f) { KeySig  =                                                                           (MidiEvents[i].data_buffer[0]<<8) | (MidiEvents[i].data_buffer[1]<<0); if (KeySig0  & 0x00010000) { KeySig0  = KeySig;  }}
-  if (MidiEvents[i].EventData == 0x0000217f) { TrkInfo[MidiEvents[i].Track] = (struct MidiEvent*)((unsigned long)TrkInfo[MidiEvents[i].Track] & ~0xff00 | (Port2Port[        MidiEvents[i].data_buffer[0]    ] << 8)); } //port ID
-  if (MidiEvents[i].EventData == 0x0000097f) { TrkInfo[MidiEvents[i].Track] = (struct MidiEvent*)((unsigned long)TrkInfo[MidiEvents[i].Track] & ~0xff00 | (          GetODev(MidiEvents[i].data_buffer, 0xff)  << 8)); } //port name
+  if (MidiEvents[i].EventData == 0x0000217f) { TrkInfo[MidiEvents[i].Track] = (void*)((unsigned Long)TrkInfo[MidiEvents[i].Track] & ~0xff00 | (Port2Port[        MidiEvents[i].data_buffer[0]    ] << 8)); } //port ID
+  if (MidiEvents[i].EventData == 0x0000097f) { TrkInfo[MidiEvents[i].Track] = (void*)((unsigned Long)TrkInfo[MidiEvents[i].Track] & ~0xff00 | (          GetODev(MidiEvents[i].data_buffer, 0xff)  << 8)); } //port name
   if (MidiEvents[i].EventData == 0x0000037f) { unsigned char *p0 = MidiEvents[i].data_buffer, *p1; p1 = p0; //trkname
    while (p0 = strstr(p0, KW2)) { unsigned long v = strtoul(p0+sizeof(KW2)-1, &p0, 0); unsigned long t = 0; if (!v) { v =  MutesInv;                   } while (v) { if (v&1) { Mutes[t*(TrkNum+1)+1+MidiEvents[i].Track] ^= 0x08; } t++; v >>= 1; }}
    while (p1 = strstr(p1, KW3)) { unsigned long v = strtoul(p1+sizeof(KW3)-1, &p1, 0); unsigned long t = 0; if (!v) { v = ~MutesInv & (1<<MutesNum)-1; } while (v) { if (v&1) { Mutes[t*(TrkNum+1)+1+MidiEvents[i].Track] ^= 0x08; } t++; v >>= 1; }}
    }
   if (MidiEvents[i].EventData == 0x0000067f) { unsigned char *p0 = MidiEvents[i].data_buffer, *p1; p1 = p0; //marker
    while (p0 = strstr(p0, KW0)) { signed long v = Strtol(p0+sizeof(KW0)-1, &p0, 0, -1); unsigned long t = j;                                        MidiEvents[t].FlwCtl |= 4; if (v < 0 || (v&0xfff) == 0xfff) { v = (v<0?LastLabel?LastLabel->Idx:0:v) & ~0xfff | v & 0xfff; while (v & 0xfff && (Labels[v].Event || IntLabel(v))) { v--; } if (Labels[v].Event || IntLabel(v)) { printf("warning: autolabel overflow!\n"); }} (LastLabel = &Labels[v])->Event = &MidiEvents[t]; if (!FirstLabel) { FirstLabel = LastLabel; } if (p0 == strstr(p0, "i")) { LastLabel->Now = 1; p0++; } if (p0 == strstr(p0, "r")) { LastLabel->ReT = 8; }}
-   while (p1 = strstr(p1, KW1)) { signed long v = Strtol(p1+sizeof(KW1)-1, &p1, 0, -4); unsigned long t = j; if (MidiEvents[t].FlwCtl&2) { t = i; } MidiEvents[t].FlwCtl |= 2; MidiEvents[t].JumpEvent = (struct MidiEvent*)v; if (p1 == strstr(p1, ">|")) { MidiEvents[t].FlwCtl |= 0x40; } else if (p1 == strstr(p1, ">>")) { MidiEvents[t].FlwCtl |= 0x20; } else if (p1 == strstr(p1, ">")) { MidiEvents[t].FlwCtl |= 8; } else if (p1 == strstr(p1, "v")) { MidiEvents[t].FlwCtl |= 0x10; }}
+   while (p1 = strstr(p1, KW1)) { signed long v = Strtol(p1+sizeof(KW1)-1, &p1, 0, -4); unsigned long t = j; if (MidiEvents[t].FlwCtl&2) { t = i; } MidiEvents[t].FlwCtl |= 2; MidiEvents[t].JumpEvent = (void*)(unsigned Long)v; if (p1 == strstr(p1, ">|")) { MidiEvents[t].FlwCtl |= 0x40; } else if (p1 == strstr(p1, ">>")) { MidiEvents[t].FlwCtl |= 0x20; } else if (p1 == strstr(p1, ">")) { MidiEvents[t].FlwCtl |= 8; } else if (p1 == strstr(p1, "v")) { MidiEvents[t].FlwCtl |= 0x10; }}
    }
   }
   else if (MidiFileEvent_getType(midi_file_event) == MIDI_FILE_EVENT_TYPE_SYSEX) {
@@ -735,7 +742,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   else if ( (MidiEvents[i].EventData & 0xf0) == 0x90                                                   ) { MidiEvents[i].MsgCtl += 2; }
  //MidiEvents[i].MsgCtl += 1*((MidiEvents[i].EventData & 0x407ff0) == 0x0040b0);
  //MidiEvents[i].MsgCtl += 2*((MidiEvents[i].EventData & 0x407ff0) == 0x4040b0);
- if (MidiEvents[i].EventData & 0x80 && (MidiEvents[i].EventData & 0xf0) < 0xf0) { TrkInfo[MidiEvents[i].Track] = (struct MidiEvent*)((unsigned long)TrkInfo[MidiEvents[i].Track] & ~0xf | MidiEvents[i].EventData & 0xf | 0x10); }
+ if (MidiEvents[i].EventData & 0x80 && (MidiEvents[i].EventData & 0xf0) < 0xf0) { TrkInfo[MidiEvents[i].Track] = (void*)((unsigned Long)TrkInfo[MidiEvents[i].Track] & ~0xf | MidiEvents[i].EventData & 0xf | 0x10); }
  MidiEvents[i].midi_out = (HMIDIOUT)TrkInfo[MidiEvents[i].Track];
  { unsigned long a = MidiEvents[i].EventData, b = c = args[9]; if (a & 0x7f00f0 == 0x90) { a ^= 0x10; } if (c & 0xf000e0 == 0xf00080) { c &= ~0x100010; }
   if ((a & b>>16) == (b & 0x7fff)) { MidiEvents[j].FlwCtl |= 1; } if ((a & c>>16) == (c & 0x7fff)) { MidiEvents[i].MsgCtl *= c>>15 & 1; }}
@@ -747,17 +754,17 @@ MidiEvents[i].event_time = MidiEvents[i].EventData = 0; if (i) { MidiEvents[i].e
 
 MidiEvenT = MidiEvent = &MidiEvents[0]; EntryLabel->ReT = ExitLabel->ReT = 8; if (!(args[9] & ~0x8000)) { EntryLabel->Now = ExitLabel->Now = 1; } ExpandLabels(Labels); k = 0;
 
-while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInfo = &TrkInfo[MidiEvents[i].Track]; MidiEvents[i].Ch = (unsigned long)MidiEvents[i].midi_out^0x10;
- j = 2; while (j--) { unsigned long p = (unsigned long)MidiEvents[i].midi_out>>8;
- if (Port2Out[p].s == -1) { Port2Out[p].s = midiOutOpen(&Port2Out[p].h, p-1, (unsigned long)MidiOutProc, (unsigned long)NULL, CALLBACK_FUNCTION);
-  strcpy(Port2Out[p].c.szPname, ""); midiOutGetDevCaps(p-1, &Port2Out[p].c, sizeof(MIDIOUTCAPS)); printf("o%2d %x '%s'\n", p, Port2Out[p].s, Port2Out[p].c.szPname);
-  } if (Port2Out[p].s) { MidiEvents[i].midi_out = (HMIDIOUT)(DefODev << 8); }}
- MidiEvents[i].midi_out = Port2Out[(unsigned long)MidiEvents[i].midi_out>>8].h;
- if (MidiEvents[i].FlwCtl & 2 && (signed long)MidiEvents[i].JumpEvent >= 0 && ((signed long)MidiEvents[i].JumpEvent >= LabelNum || !Labels[(unsigned long)MidiEvents[i].JumpEvent].Event)) { MidiEvents[i].FlwCtl &= ~2; MidiEvents[i].FlwCtl |= 1; }
- if (MidiEvents[i].FlwCtl & 2) { MidiEvents[i].FlwCtl &= ~4; MidiEvents[i].FlwCtl |= 1; if ((signed long)MidiEvents[i].JumpEvent >= (signed long)LabelNum) { MidiEvents[i].JumpEvent = (struct MidiEvent*)-1; }
-  if (((unsigned long)MidiEvents[i].JumpEvent < LabelNum) && (Labels[(unsigned long)MidiEvents[i].JumpEvent].Event)) { if (!(k & 0x100)) { if (fc & 0x60) { k &= ~0x200; } else { k = 0; }} MidiEvents[i].JumpEvent = Labels[(unsigned long)MidiEvents[i].JumpEvent].Event; }
-   else if ((l = (unsigned long)MidiEvents[j=i].JumpEvent*-1-4) >= 0) { while (l && j) { if (MidiEvents[j].Label->Event != MidiEvents[j-1].Label->Event) { l--; } j--; } if (!(k & 0x100)) { if (fc & 0x60) { k &= ~0x200; } else { k = 0; }} MidiEvents[i].JumpEvent = MidiEvents[j].Label->Event; }
-   else { MidiEvents[i].FlwCtl = 4; k = (unsigned long)MidiEvents[i].JumpEvent; }
+while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInfo = &TrkInfo[MidiEvents[i].Track]; MidiEvents[i].Ch = (unsigned Long)MidiEvents[i].midi_out^0x10;
+ j = 2; while (j--) { unsigned Long p = (unsigned Long)MidiEvents[i].midi_out>>8;
+ if (Port2Out[p].s == -1) { Port2Out[p].s = midiOutOpen(&Port2Out[p].h, p-1, (unsigned Long)MidiOutProc, (unsigned Long)NULL, CALLBACK_FUNCTION);
+  strcpy(Port2Out[p].c.szPname, ""); midiOutGetDevCaps(p-1, &Port2Out[p].c, sizeof(MIDIOUTCAPS)); printf("o%2Id %x '%s'\n", p, Port2Out[p].s, Port2Out[p].c.szPname);
+  } if (Port2Out[p].s) { MidiEvents[i].midi_out = (void*)(unsigned Long)(DefODev << 8); }}
+ MidiEvents[i].midi_out = Port2Out[(unsigned Long)MidiEvents[i].midi_out>>8].h;
+ if (MidiEvents[i].FlwCtl & 2 && (signed Long)MidiEvents[i].JumpEvent >= 0 && ((signed Long)MidiEvents[i].JumpEvent >= LabelNum || !Labels[(unsigned Long)MidiEvents[i].JumpEvent].Event)) { MidiEvents[i].FlwCtl &= ~2; MidiEvents[i].FlwCtl |= 1; }
+ if (MidiEvents[i].FlwCtl & 2) { MidiEvents[i].FlwCtl &= ~4; MidiEvents[i].FlwCtl |= 1; if ((signed Long)MidiEvents[i].JumpEvent >= (signed long)LabelNum) { MidiEvents[i].JumpEvent = (void*)-1; }
+  if (((unsigned Long)MidiEvents[i].JumpEvent < LabelNum) && (Labels[(unsigned Long)MidiEvents[i].JumpEvent].Event)) { if (!(k & 0x100)) { if (fc & 0x60) { k &= ~0x200; } else { k = 0; }} MidiEvents[i].JumpEvent = Labels[(unsigned Long)MidiEvents[i].JumpEvent].Event; }
+   else if ((l = (unsigned Long)MidiEvents[j=i].JumpEvent*-1-4) >= 0) { while (l && j) { if (MidiEvents[j].Label->Event != MidiEvents[j-1].Label->Event) { l--; } j--; } if (!(k & 0x100)) { if (fc & 0x60) { k &= ~0x200; } else { k = 0; }} MidiEvents[i].JumpEvent = MidiEvents[j].Label->Event; }
+   else { MidiEvents[i].FlwCtl = 4; k = (unsigned Long)MidiEvents[i].JumpEvent; }
   } else { MidiEvents[i].FlwCtl &= ~4; }
  if (fc & 4) { k &= ~0x100; } MidiEvents[i].Label->Ret = k; MidiEvents[i].Label->ReT = MidiEvents[i].Label->ReT & ~1 | (k>>9) & 1; if (fc & 0x60 && k & 0x400) { MidiEvents[i].Label->ReT |= 1; k &= ~0x400; }
  if (MidiEvents[i].FlwCtl & 0x10) { MidiEvents[i].FlwCtl = 2; }
