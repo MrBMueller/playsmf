@@ -6,8 +6,10 @@
 
 #ifdef _WIN64
 #define Long long long
+#define strtouL strtoull
 #else
 #define Long long
+#define strtouL strtoul
 #endif
 
 #define Msg0 "For further options, features, examples, updates and other information, check the github/sourceforge project repositories.\n"
@@ -524,7 +526,8 @@ static TIMECAPS        time_caps;
 static struct MidiOut  Port2Out[ 256];
 static unsigned char   Port2Port[256], FlwMsk;
 static MidiFileEvent_t midi_file_event;
-static unsigned long   start_time, current_time, t, WatchDogTimeOut, MutesNum, tick, tempo_event_tick, MutesInv, MutesRet, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0, PrintTxt;
+static unsigned long   start_time, current_time, t, WatchDogTimeOut, MutesNum, tick, tempo_event_tick, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0, PrintTxt;
+static unsigned Long   MutesInv, MutesRet;
 static   signed long   i, j, k, l, *args, TimeOut, DefODev;
 static struct PNoteO   *PendingEventsO, *PendingO, *LatestPendingO;
 static float           Speed, tempo_event_time;
@@ -563,8 +566,8 @@ i = l = 0; j = -1; MutesNum = MutesInv = MutesRet = 0;
 for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_file_event = MidiFileEvent_getNextEventInFile(midi_file_event)) { i++;
  if (MidiFileEvent_getType(midi_file_event) == MIDI_FILE_EVENT_TYPE_META) {
   if (MidiFileMetaEvent_getNumber(midi_file_event) == 0x03) { unsigned char *p0 = MidiFileMetaEvent_getData(midi_file_event), *p1; p1 = p0; //trkname
-   while (p0 = strstr(p0, KW2)) { unsigned long v = strtoul(p0+sizeof(KW2)-1, &p0, 0); unsigned long t = 0; if (p0 == strstr(p0, "r")) { MutesRet |= v; }                while (v) { t++; v >>= 1; } if (t > MutesNum) { MutesNum = t; }}
-   while (p1 = strstr(p1, KW3)) { unsigned long v = strtoul(p1+sizeof(KW3)-1, &p1, 0); unsigned long t = 0; if (p1 == strstr(p1, "r")) { MutesRet |= v; } MutesInv |= v; while (v) { t++; v >>= 1; } if (t > MutesNum) { MutesNum = t; }}
+   while (p0 = strstr(p0, KW2)) { unsigned Long v = strtouL(p0+sizeof(KW2)-1, &p0, 0); unsigned long t = 0; if (p0 == strstr(p0, "r")) { MutesRet |= v; }                while (v) { t++; v >>= 1; } if (t > MutesNum) { MutesNum = t; }}
+   while (p1 = strstr(p1, KW3)) { unsigned Long v = strtouL(p1+sizeof(KW3)-1, &p1, 0); unsigned long t = 0; if (p1 == strstr(p1, "r")) { MutesRet |= v; } MutesInv |= v; while (v) { t++; v >>= 1; } if (t > MutesNum) { MutesNum = t; }}
    }
   if (MidiFileMetaEvent_getNumber(midi_file_event) == 0x06) { unsigned char *p0 = MidiFileMetaEvent_getData(midi_file_event), *p1; p1 = p0; //marker
    while (p0 = strstr(p0, KW0)) { signed long v = Strtol(p0+sizeof(KW0)-1, &p0, 0, -1); if (v < 0) { v = l & ~0xfff | v & 0xfff; } l = v; if (v > j) { j = v; }}
@@ -625,7 +628,7 @@ if (imap) { for (i=0; i<=0x6f; i++) { j = 0; for (k=0; k<=0x3fff; k++) { if (ima
  }}
 
 start: timeGetDevCaps(&time_caps, sizeof(TIMECAPS));
-printf("[%d:%d] [%d:%d] %Id %d %d %d %Id %x %d:%x:%x %4.2f %4.2f\n", time_caps.wPeriodMin, time_caps.wPeriodMax, midiInGetNumDevs()-1, midiOutGetNumDevs(), _msize(args)/sizeof(signed long), MidiFile_getResolution(midi_file), MidiFile_getFileFormat(midi_file), TrkNum, _msize(MidiEvents)/sizeof(struct MidiEvent)-1, LabelNum-1, MutesNum, MutesInv, MutesRet, (float)_msize(MidiEvents)/(1024*1024), (float)_msize(Labels)/(1024*1024));
+printf("%Id [%d:%d] [%d:%d] %Id %d %d %d %Id %x %d:%Ix:%Ix %4.2f %4.2f\n", sizeof(void*)*8, time_caps.wPeriodMin, time_caps.wPeriodMax, midiInGetNumDevs()-1, midiOutGetNumDevs(), _msize(args)/sizeof(signed long), MidiFile_getResolution(midi_file), MidiFile_getFileFormat(midi_file), TrkNum, _msize(MidiEvents)/sizeof(struct MidiEvent)-1, LabelNum-1, MutesNum, MutesInv, MutesRet, (float)_msize(MidiEvents)/(1024*1024), (float)_msize(Labels)/(1024*1024));
 
 DefODev = args[3]; if (DefODev < 0) { DefODev += midiOutGetNumDevs()+1; } if (DefODev < 0 || DefODev >  midiOutGetNumDevs()) { DefODev = 0; } if (argv[3] && strlen(argv[3])) { DefODev = GetODev(argv[3], 0                 ); }
 DefIDev = args[4]; if (DefIDev < 0) { DefIDev += midiInGetNumDevs();    } if (DefIDev < 0 || DefIDev >= midiInGetNumDevs() ) { DefIDev = 0; } if (argv[4] && strlen(argv[4])) { DefIDev = GetIDev(argv[4], midiInGetNumDevs()); }
@@ -715,8 +718,8 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   if (MidiEvents[i].EventData == 0x0000217f) { TrkInfo[MidiEvents[i].Track] = (void*)((unsigned Long)TrkInfo[MidiEvents[i].Track] & ~0xff00 | (Port2Port[        MidiEvents[i].data_buffer[0]    ] << 8)); } //port ID
   if (MidiEvents[i].EventData == 0x0000097f) { TrkInfo[MidiEvents[i].Track] = (void*)((unsigned Long)TrkInfo[MidiEvents[i].Track] & ~0xff00 | (          GetODev(MidiEvents[i].data_buffer, 0xff)  << 8)); } //port name
   if (MidiEvents[i].EventData == 0x0000037f) { unsigned char *p0 = MidiEvents[i].data_buffer, *p1; p1 = p0; //trkname
-   while (p0 = strstr(p0, KW2)) { unsigned long v = strtoul(p0+sizeof(KW2)-1, &p0, 0); unsigned long t = 0; if (!v) { v =  MutesInv;                   } while (v) { if (v&1) { Mutes[t*(TrkNum+1)+1+MidiEvents[i].Track] ^= 0x08; } t++; v >>= 1; }}
-   while (p1 = strstr(p1, KW3)) { unsigned long v = strtoul(p1+sizeof(KW3)-1, &p1, 0); unsigned long t = 0; if (!v) { v = ~MutesInv & (1<<MutesNum)-1; } while (v) { if (v&1) { Mutes[t*(TrkNum+1)+1+MidiEvents[i].Track] ^= 0x08; } t++; v >>= 1; }}
+   while (p0 = strstr(p0, KW2)) { unsigned Long v = strtouL(p0+sizeof(KW2)-1, &p0, 0); unsigned long t = 0; if (!v) { v =  MutesInv;                   } while (v) { if (v&1) { Mutes[t*(TrkNum+1)+1+MidiEvents[i].Track] ^= 0x08; } t++; v >>= 1; }}
+   while (p1 = strstr(p1, KW3)) { unsigned Long v = strtouL(p1+sizeof(KW3)-1, &p1, 0); unsigned long t = 0; if (!v) { v = ~MutesInv & (1<<MutesNum)-1; } while (v) { if (v&1) { Mutes[t*(TrkNum+1)+1+MidiEvents[i].Track] ^= 0x08; } t++; v >>= 1; }}
    }
   if (MidiEvents[i].EventData == 0x0000067f) { unsigned char *p0 = MidiEvents[i].data_buffer, *p1; p1 = p0; //marker
    while (p0 = strstr(p0, KW0)) { signed long v = Strtol(p0+sizeof(KW0)-1, &p0, 0, -1); unsigned long t = j;                                        MidiEvents[t].FlwCtl |= 4; if (v < 0 || (v&0xfff) == 0xfff) { v = (v<0?LastLabel?LastLabel->Idx:0:v) & ~0xfff | v & 0xfff; while (v & 0xfff && (Labels[v].Event || IntLabel(v))) { v--; } if (Labels[v].Event || IntLabel(v)) { printf("warning: autolabel overflow!\n"); }} (LastLabel = &Labels[v])->Event = &MidiEvents[t]; if (!FirstLabel) { FirstLabel = LastLabel; } if (p0 == strstr(p0, "i")) { LastLabel->Now = 1; p0++; } if (p0 == strstr(p0, "r")) { LastLabel->ReT = 8; }}
