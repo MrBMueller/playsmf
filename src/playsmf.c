@@ -171,8 +171,8 @@ case 0x80: V1 = dwParam1>>16;                            L0x80:   if ((V0 = (dwP
  MyMacro0(0) } RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return;
 
 case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: i = -1; Key1 = &Keys[dwParam1 & 0xf][Key1->Key];
- switch (dwParam1 & 0x7ff0) { case 0x40b0: case 0x42b0: case 0x43b0: while (Thrus[c=Key1->Ch][++i]         ) { if (           (ThruE = *Thrus[c][i]) && ThruE->Ch < 16 && (v = (cm0 = &cmap[ThruE->Track][dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<10&0x1c000])->v)) { if (V0 = cm0->s) { MyMacro2(,1) } else { midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); }}} break;
-                              default:                               while ((Thru = &Key1->Thrus[++i])->Trk) { if (Thru->m && (ThruE = *Thru->Trk  ) && ThruE->Ch < 16 && (v = (cm0 = &cmap[ThruE->Track][dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<10&0x1c000])->v)) { if (V0 = cm0->s) { MyMacro2(,1) } else { midiOutShortMsg(ThruE->midi_out, v | ThruE->Ch); }}} }
+ switch (dwParam1 & 0x7ff0) { case 0x40b0: case 0x42b0: case 0x43b0: while (Thrus[c=Key1->Ch][++i]         ) { if (           (ThruE = *Thrus[c][i]) && ThruE->Ch < 16 && (v = (cm0 = &cmap[ThruE->Track][dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<10&0x1c000])->v)) { if (V0 = cm0->s) { MyMacro2(,1) } else { midiOutShortMsg(ThruE->midi_out, v ^ ThruE->Ch); }}} break;
+                              default:                               while ((Thru = &Key1->Thrus[++i])->Trk) { if (Thru->m && (ThruE = *Thru->Trk  ) && ThruE->Ch < 16 && (v = (cm0 = &cmap[ThruE->Track][dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<10&0x1c000])->v)) { if (V0 = cm0->s) { MyMacro2(,1) } else { midiOutShortMsg(ThruE->midi_out, v ^ ThruE->Ch); }}} }
  RecEvent0->event_time = dwParam2; RecEvent0->EventData = dwParam1; RecEvent0 = RecEvent0->NextEvent; Dead = 0; return;
 
 default: switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: Dead = 0; return; }
@@ -189,7 +189,7 @@ case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 //----------------------------------------------------------------------------//
 
 static void CALLBACK MidiInProc1(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned Long dwParam1, unsigned long dwParam2) { unsigned long p, i, V0, i1; unsigned Long v; midiInGetID(hMidiIn, &p); i1 = InPortOrder[p]; switch (wMsg) {
-case MIM_DATA: if ((dwParam1&0xff) < 0xf0) { if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Ch < 16 && (v = (cm1 = &cmap1[ThruE1->Track][dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<10&0x1c000])->v)) { if (V0 = cm1->s) { MyMacro2(1,2) } else { midiOutShortMsg(ThruE1->midi_out, v | ThruE1->Ch); }}}
+case MIM_DATA: if ((dwParam1&0xff) < 0xf0) { if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Ch < 16 && (v = (cm1 = &cmap1[ThruE1->Track][dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<10&0x1c000])->v)) { if (V0 = cm1->s) { MyMacro2(1,2) } else { midiOutShortMsg(ThruE1->midi_out, v ^ ThruE1->Ch); }}}
                                       else { switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: return; default: printf("%s \n1%Ix", EscPre, dwParam1); }} RecEvent1->event_time = dwParam2; RecEvent1->EventData = p<<24 | dwParam1; RecEvent1 = RecEvent1->NextEvent; return;
 case MIM_LONGDATA: if (((MIDIHDR*)dwParam1)->dwBytesRecorded && Active) {
  i1 = ((MIDIHDR*)dwParam1)->dwBufferLength; ((MIDIHDR*)dwParam1)->dwBufferLength = ((MIDIHDR*)dwParam1)->dwBytesRecorded; midiOutLongMsg(ThruE1->midi_out, (void*)dwParam1, sizeof(MIDIHDR));
@@ -305,7 +305,7 @@ while (Thrus && (Thru->Trk = Thrus[Ch][++i]) || Key && (Thru = &Key->Thrus[++i])
   switch (EventData & 0xf0) {
    case 0x80: MidiFileTrack_createShortMsg(track, (t+d)*c, Thru->v0[V1]<<16 | Thru->k<<8 | 0x80 | ThruE->Ch); Thru->Pending = NULL;  break;
    case 0x90: MidiFileTrack_createShortMsg(track, (t+d)*c, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); Thru->Pending = ThruE; break;
-   default: { unsigned long v, i; if (v = cmap[TrkID][i = EventData>>16 | EventData>>1&0x3f80 | EventData<<10&0x1c000].v) { if (cmap[TrkID][i].s) { MidiFileTrack_createSysexEvent(track, t*c, cmap[TrkID][i].s, (void*)cmap[TrkID][i].v); } else { MidiFileTrack_createShortMsg(track, t*c, v | ThruE->Ch); }}}}
+   default: { unsigned long v, i; if (v = cmap[TrkID][i = EventData>>16 | EventData>>1&0x3f80 | EventData<<10&0x1c000].v) { if (cmap[TrkID][i].s) { MidiFileTrack_createSysexEvent(track, t*c, cmap[TrkID][i].s, (void*)cmap[TrkID][i].v); } else { MidiFileTrack_createShortMsg(track, t*c, v ^ ThruE->Ch); }}}}
   }
  }
 
@@ -423,7 +423,7 @@ for (i=0; i<RSz1; i++) { unsigned long v, i, t = (RecEvent1->event_time-MinEvent
  while (j && RecEvent->event_time <= RecEvent1->event_time) { TrkInfo[RecEvent->Event->Track] = RecEvent->Event; RecEvent = RecEvent->NextEvent; j--; }
  trackP = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+6+Zones+(Port2In[EventData>>24].z-1), 0); EventData &= 0xffffff;
  switch (EventData & 0xf0) {
-  case 0x80: case 0x90: case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: if (TrkID < TrkNum && TrkInfo[TrkID] && TrkInfo[TrkID]->Ch < 16 && (v = cmap1[TrkID][i = EventData>>16 | EventData>>1&0x3f80 | EventData<<10&0x1c000].v)) { if (cmap1[TrkID][i].s) { MidiFileTrack_createSysexEvent(track, t, cmap1[TrkID][i].s, (void*)cmap1[TrkID][i].v); } else { MidiFileTrack_createShortMsg(track, t, v | TrkInfo[TrkID]->Ch); }} break;
+  case 0x80: case 0x90: case 0xa0: case 0xb0: case 0xc0: case 0xd0: case 0xe0: if (TrkID < TrkNum && TrkInfo[TrkID] && TrkInfo[TrkID]->Ch < 16 && (v = cmap1[TrkID][i = EventData>>16 | EventData>>1&0x3f80 | EventData<<10&0x1c000].v)) { if (cmap1[TrkID][i].s) { MidiFileTrack_createSysexEvent(track, t, cmap1[TrkID][i].s, (void*)cmap1[TrkID][i].v); } else { MidiFileTrack_createShortMsg(track, t, v ^ TrkInfo[TrkID]->Ch); }} break;
   default:
   switch (EventData & 0xff) {
    case 0xf0: if ((EventData>>8) == 0xf0) { if (l) { MidiFileTrack_createSysexEvent(trackP, t0, l, b); } l = 0; }
