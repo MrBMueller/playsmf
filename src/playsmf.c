@@ -21,6 +21,8 @@
 #define KW2 "Mute"
 #define KW3 "Solo"
 
+#define KSz 128+8+1
+
 #define BreakPoint printf("%s %s %s %d\n", __DATE__, __TIME__, __FILE__, __LINE__); getch();
 
 #define SetEntryLabel Var = Var1 = Var0 = (Label3 = Label2 = Label1 = Label0 = EntryLabel)->Idx&-4096;
@@ -115,7 +117,7 @@ struct cmap      { unsigned Long     v;
 
 static HANDLE           sot, so0, so1, so2;
 static struct Label    *Labels, *Label0, *Label1, *Label2, *Label3, *FirstLabel, *LastLabel, *EntryLabel, *ExitLabel;
-static struct Key       Keys[16][129], *Key0, *Key1;
+static struct Key       Keys[16][KSz], *Key0, *Key1;
 static struct Thru     *Thru;
 static struct PNoteI    PendingEventsI[128], *PendingI, *LatestPendingI;
 static unsigned short   Chords[12][0xfff+1];
@@ -313,7 +315,7 @@ return; }
 
 //----------------------------------------------------------------------------//
 
-static void saveMidiEventsToFile(unsigned char **argv, signed Long *args, struct Key Keys[][129], signed char InOfs, MidiFile_t SMF, unsigned long Tempo, unsigned long TimeSig, unsigned long KeySig, struct RecEvent *RecEvents, struct RecEvent *RecEvent, struct RecEvent0 *RecEvents0, struct RecEvent0 *RecEvent0, struct RecEvent0 *RecEvents1, struct RecEvent0 *RecEvent1, struct RecEvent0 *RecEvents2, struct RecEvent0 *RecEvent2, unsigned char ExitVal, struct Label *Label0, struct MidiEvent **TrkInfo, struct MidiIn *Port2In, struct MidiOut *Port2Out, struct MidiEvent ***Thrus[], struct cmap **cmap, struct cmap **cmap1, unsigned char InPortOrder[], signed long DefIDev) {
+static void saveMidiEventsToFile(unsigned char **argv, signed Long *args, struct Key Keys[][KSz], signed char InOfs, MidiFile_t SMF, unsigned long Tempo, unsigned long TimeSig, unsigned long KeySig, struct RecEvent *RecEvents, struct RecEvent *RecEvent, struct RecEvent0 *RecEvents0, struct RecEvent0 *RecEvent0, struct RecEvent0 *RecEvents1, struct RecEvent0 *RecEvent1, struct RecEvent0 *RecEvents2, struct RecEvent0 *RecEvent2, unsigned char ExitVal, struct Label *Label0, struct MidiEvent **TrkInfo, struct MidiIn *Port2In, struct MidiOut *Port2Out, struct MidiEvent ***Thrus[], struct cmap **cmap, struct cmap **cmap1, unsigned char InPortOrder[], signed long DefIDev) {
 SYSTEMTIME    current_time;
 unsigned char b[1024], tempo[] = {(Tempo>>16)&0xff, (Tempo>>8)&0xff, (Tempo>>0)&0xff}, timeSig[] = {(TimeSig>>24)&0xff, (TimeSig>>16)&0xff, (TimeSig>>8)&0xff, (TimeSig>>0)&0x7f}, keySig[] = {(KeySig>>8)&0xff, (KeySig>>0)&0xff};
 unsigned long PPQ = MidiFile_getResolution(SMF), PPQc = PPQ*1000, RecNum = 0, MinEventTime = -1, i, j, l, t0, TrkNum = MidiFile_getNumberOfTracks(SMF),
@@ -322,7 +324,7 @@ RSz = RecEvent->Event?BSz:RecEvent-RecEvents, RSz0 = RecEvent0->EventData?BSz0:R
 OverFlow = (RSz2>=BSz2)<<3 | (RSz1>=BSz1)<<2 | (RSz0>=BSz0)<<1 | (RSz>=BSz)<<0;
 float         c = (float)PPQc/(float)(Tempo&0xffffff);
 struct Label  *Label = NULL;
-struct Key    *Key1 = &Keys[0x0][0x80];
+struct Key    *Key1 = &Keys[0][KSz-1];
 struct RecEvent *RE = RSz>=BSz?RecEvent:RecEvents; struct RecEvent0 *RE0 = RSz0>=BSz0?RecEvent0:RecEvents0, *RE1 = RSz1>=BSz1?RecEvent1:RecEvents1, *RE2 = RSz2>=BSz2?RecEvent2:RecEvents2;
 
 MidiFile_t midi_file = MidiFile_new(1, MIDI_FILE_DIVISION_TYPE_PPQ, PPQ); MidiFileTrack_t track0, trackP, trackP0, trackP1, trackP2, trackP3, trackP4;
@@ -654,11 +656,11 @@ for (i=0; i<(_msize(Thrus[0]      )/sizeof(void*           )); i++) { Thrus[0][i
 for (i=0; i<(_msize(MidiEvents    )/sizeof(struct MidiEvent)); i++) { MidiEvents[i].NextEvent = &MidiEvents[i+1]; MidiEvents[i].FlwCtl = MidiEvents[i].MsgCtl = MidiEvents[i].Rec = 0; }
 for (i=0; i<(_msize(Labels        )/sizeof(struct Label    )); i++) { Labels[i].Idx = i; Labels[i].Event = NULL; Labels[i].ReT = Labels[i].Now = Labels[i].Ret = 0; }
 
-for (i=0; i<=15; i++) { Thrus[i] = &Thrus[0][i*(TrkNum+1)]; for (j=0; j<=128; j++) { Keys[i][j].Ch = i; Keys[i][j].Key = j; Keys[i][j].Zone = 0; for (k=0; k<(sizeof(Keys[i][j].Thrus)/sizeof(struct Thru)); k++) { Keys[i][j].Thrus[k].Trk = NULL; Keys[i][j].Thrus[k].Pending = NULL; }}}
+for (i=0; i<=15; i++) { Thrus[i] = &Thrus[0][i*(TrkNum+1)]; for (j=0; j<KSz; j++) { Keys[i][j].Ch = i; Keys[i][j].Key = j; Keys[i][j].Zone = 0; for (k=0; k<(sizeof(Keys[i][j].Thrus)/sizeof(struct Thru)); k++) { Keys[i][j].Thrus[k].Trk = NULL; Keys[i][j].Thrus[k].Pending = NULL; }}}
 
 for (i=0; i<=15; i++) { signed long z = -1;
  for (k=12; k+1<_msize(args)/sizeof(void*); k+=args[k]>>16?1:7) { if (!(args[k]>>16)) { signed long C = args[6], Ck = args[k], Mk = args[k+1]+1, K2 = Ck-(2+MutesNum), K1 = K2-1, K0 = K1;
-  if (Mk-1 < 0) { Mk = Ck+abs(Mk-1); } if (Mk > 129) { Mk = 129; } if ((LabelNum-1)>>12) { K0 -= ((LabelNum-1)>>12)+1; }
+  if (Mk-1 < 0) { Mk = Ck+abs(Mk-1); } if (Mk > KSz) { Mk = KSz; } if ((LabelNum-1)>>12) { K0 -= ((LabelNum-1)>>12)+1; }
 
   if (!++z) {
    for (j = K0; j < K1; j++) { Keys[i][j].Zone |= 2; Keys[i][j].Val = (K1-j-1)<<12; }
@@ -669,7 +671,7 @@ for (i=0; i<=15; i++) { signed long z = -1;
   if (k+6<_msize(args)/sizeof(void*)) {
    signed long K0 = args[k+0], K1 = args[k+1], T = args[k+2], Delay = args[k+3], K = args[k+4], V1 = args[k+5], V0 = args[k+6];
    signed char v0o = V0&0xff, v1o = V1&0xff; float v0s = 1.0, v1s = 1.0; if (V0 > 255) { v0s = ((V0>>8)-1)*.25; } if (V1 > 255) { v1s = ((V1>>8)-1)*.25; }
-   if (K0 <= -2) { K0 = Ck; } if (K0 == -1) { K0 = Mk; } if (K1 < 0) { K1 = K0+abs(K1)-1; } if (K1 > 128) { K1 = 128; } Ck = K0; Mk = K1+1; if (T < 0) { T = TrkNum-abs(T); }
+   if (K0 <= -2) { K0 = Ck; } if (K0 == -1) { K0 = Mk; } if (K1 < 0) { K1 = K0+abs(K1)-1; } if (K1 > KSz-1) { K1 = KSz-1; } Ck = K0; Mk = K1+1; if (T < 0) { T = TrkNum-abs(T); }
    if (Delay >= 0 && T >= 0 && T < TrkNum && (C < 0 || i == C)) { if (C < -1) { if (args[k+2] < 0) { T -= i+abs(C+2); if (T < 0) { T = TrkNum - 1 - abs(T+1) % TrkNum; }} else { T += i+abs(C+2); T %= TrkNum; }}
     for (j = K0; j <= K1; j++) { signed long L = -1, a = j+K, t; while (L < ((int)(sizeof(Keys[i][j].Thrus)/sizeof(struct Thru))-2) && Keys[i][j].Thrus[++L].Trk) {} if (K > 0x7f) { a = K & 0x7f; } if ((a > 127) || (a < 0)) { a = j; }
      Keys[i][j].Thrus[L].Trk = &TrkInfo[T]; Keys[i][j].Thrus[L].Delay = Delay; Keys[i][j].Thrus[L].k = a; Keys[i][j].Thrus[L].z = z;
@@ -681,7 +683,7 @@ for (i=0; i<=15; i++) { signed long z = -1;
    }
   }}
 
- for (j=0; j<=128; j++) { k = -1; while (Keys[i][j].Thrus[++k].Trk) { z = -1; while (Thrus[i][++z] && Thrus[i][z] != Keys[i][j].Thrus[k].Trk) {} Thrus[i][z] = Keys[i][j].Thrus[k].Trk; }}
+ for (j=0; j<KSz; j++) { k = -1; while (Keys[i][j].Thrus[++k].Trk) { z = -1; while (Thrus[i][++z] && Thrus[i][z] != Keys[i][j].Thrus[k].Trk) {} Thrus[i][z] = Keys[i][j].Thrus[k].Trk; }}
 
  z = -1; while (Thrus[i][++z]) { k = 0; for (j=0xc040; j<=0x0ffc0; j+=0x80) { k |= cmap[Thrus[i][z]-TrkInfo][j].v | cmap[Thrus[i][z]-TrkInfo][j+2].v | cmap[Thrus[i][z]-TrkInfo][j+3].v; } if (!k) { for (k=z; k<TrkNum; k++) { Thrus[i][k] = Thrus[i][k+1]; }}}
  }
@@ -806,7 +808,7 @@ for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } if (!FirstLabel) { FirstLabel = 
 
 FirstMute = EntryMute = &Mutes[MutesNum*(TrkNum+1)+1]; if (MutesNum) { FirstMute = &Mutes[(0)*(TrkNum+1)+1]; } Mute = SetEntryMute
 
-Key0 = Key1 = &Keys[0x0][0x80]; LastTime = SneakPending = FlwMsk = IRQ = ExitVal = 0; Active = Dead = 1; Speed = Speed0 = 1; ThruE1 = EntryLabel->Event;
+Key0 = Key1 = &Keys[0][KSz-1]; LastTime = SneakPending = FlwMsk = IRQ = ExitVal = 0; Active = Dead = 1; Speed = Speed0 = 1; ThruE1 = EntryLabel->Event;
 
 ResetEvent(sot); ResetEvent(so0); ResetEvent(so1); ResetEvent(so2);
 
