@@ -21,7 +21,8 @@
 #define KW2 "Mute"
 #define KW3 "Solo"
 
-#define KSz 128+8+1
+#define KSz 128+1+1
+#define KDf 128
 
 #define BreakPoint printf("%s %s %s %d\n", __DATE__, __TIME__, __FILE__, __LINE__); getch();
 
@@ -324,7 +325,7 @@ RSz = RecEvent->Event?BSz:RecEvent-RecEvents, RSz0 = RecEvent0->EventData?BSz0:R
 OverFlow = (RSz2>=BSz2)<<3 | (RSz1>=BSz1)<<2 | (RSz0>=BSz0)<<1 | (RSz>=BSz)<<0;
 float         c = (float)PPQc/(float)(Tempo&0xffffff);
 struct Label  *Label = NULL;
-struct Key    *Key1 = &Keys[0][KSz-1];
+struct Key    *Key1 = &Keys[0][KDf];
 struct RecEvent *RE = RSz>=BSz?RecEvent:RecEvents; struct RecEvent0 *RE0 = RSz0>=BSz0?RecEvent0:RecEvents0, *RE1 = RSz1>=BSz1?RecEvent1:RecEvents1, *RE2 = RSz2>=BSz2?RecEvent2:RecEvents2;
 
 MidiFile_t midi_file = MidiFile_new(1, MIDI_FILE_DIVISION_TYPE_PPQ, PPQ); MidiFileTrack_t track0, trackP, trackP0, trackP1, trackP2, trackP3, trackP4;
@@ -808,7 +809,7 @@ for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } if (!FirstLabel) { FirstLabel = 
 
 FirstMute = EntryMute = &Mutes[MutesNum*(TrkNum+1)+1]; if (MutesNum) { FirstMute = &Mutes[(0)*(TrkNum+1)+1]; } Mute = SetEntryMute
 
-Key0 = Key1 = &Keys[0][KSz-1]; LastTime = SneakPending = FlwMsk = IRQ = ExitVal = 0; Active = Dead = 1; Speed = Speed0 = 1; ThruE1 = EntryLabel->Event;
+Key0 = Key1 = &Keys[0][KDf]; LastTime = SneakPending = FlwMsk = IRQ = ExitVal = 0; Active = Dead = 1; Speed = Speed0 = 1; ThruE1 = EntryLabel->Event;
 
 ResetEvent(sot); ResetEvent(so0); ResetEvent(so1); ResetEvent(so2);
 
