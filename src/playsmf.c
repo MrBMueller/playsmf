@@ -116,33 +116,33 @@ struct MidiOut   { unsigned long     s;
 struct cmap      { unsigned Long     v;
                    unsigned char     s; };
 
-static HANDLE           sot, so0, so1, so2;
-static struct Label    *Labels, *Label0, *Label1, *Label2, *Label3, *FirstLabel, *LastLabel, *EntryLabel, *ExitLabel;
-static struct Key       Keys[16][KSz], *Key0, *Key1;
-static struct Thru     *Thru;
-static struct PNoteI    PendingEventsI[128], *PendingI, *LatestPendingI;
-static unsigned short   Chords[12][0xfff+1];
-static struct RecEvent0 *RecEvent0, *RecEvent1, *RecEvent2;
-static unsigned char    V1, IRQ, *Mutes, *Mute, *Mute0, *Mute1, *Mute2, *Mute3, *Mute11, *EntryMute, *FirstMute, *MuteA, *MuteB, Dead, Active, ExitVal, InPortOrder[256], SneakPending;
-static unsigned long    V0, c, i, j, LastTime, LabelNum, TrkNum, Var, Var0, Var1, *imap;
-static unsigned Long    v;
-static struct cmap      **cmap, **cmap1, *cm0, *cm1;
-static struct MidiEvent *MidiEvents, *MidiEvenT, **TrkInfo, ***Thrus[16], *ThruE, *ThruE1;
-static float            Speed0;
-static signed char      InOfs;
-static struct MidiIn    Port2In[256];
-static signed long      DefIDev;
-static MIDIHDR          mmh0, mmh1, mmh2;
+HANDLE           sot, so0, so1, so2;
+struct Label    *Labels, *Label0, *Label1, *Label2, *Label3, *FirstLabel, *LastLabel, *EntryLabel, *ExitLabel;
+struct Key       Keys[16][KSz], *Key0, *Key1;
+struct Thru     *Thru;
+struct PNoteI    PendingEventsI[128], *PendingI, *LatestPendingI;
+unsigned short   Chords[12][0xfff+1];
+struct RecEvent0 *RecEvent0, *RecEvent1, *RecEvent2;
+unsigned char    V1, IRQ, *Mutes, *Mute, *Mute0, *Mute1, *Mute2, *Mute3, *Mute11, *EntryMute, *FirstMute, *MuteA, *MuteB, Dead, Active, ExitVal, InPortOrder[256], SneakPending;
+unsigned long    V0, c, i, j, LastTime, LabelNum, TrkNum, Var, Var0, Var1, *imap;
+unsigned Long    v;
+struct cmap      **cmap, **cmap1, *cm0, *cm1;
+struct MidiEvent *MidiEvents, *MidiEvenT, **TrkInfo, ***Thrus[16], *ThruE, *ThruE1;
+float            Speed0;
+signed char      InOfs;
+struct MidiIn    Port2In[256];
+signed long      DefIDev;
+MIDIHDR          mmh0, mmh1, mmh2;
 
-static unsigned char    n, EscPre[5] = "";
+unsigned char    n, EscPre[5] = "";
 
 //============================================================================//
 
-static BOOL WINAPI HandlerRoutine(unsigned long dwCtrlType) { unsigned long register V0, V1, i, c; RecEvent2->event_time = timeGetTime()-Port2In[DefIDev].StartTime; if (dwCtrlType) { V0 = ExitLabel->Idx; ExitVal |= 4<<(dwCtrlType>1); } else { V0 = EntryLabel->Idx; } V1 = -1; SneakPending = 0; Var = Var1 = Var0 = V0&~0xfff; MyMacro0(2) RecEvent2->EventData = 8|dwCtrlType; RecEvent2 = RecEvent2->NextEvent; if (dwCtrlType > 1) { Sleep(4000); return(FALSE); } return(TRUE); }
+BOOL WINAPI HandlerRoutine(unsigned long dwCtrlType) { unsigned long V0, V1, i, c; RecEvent2->event_time = timeGetTime()-Port2In[DefIDev].StartTime; if (dwCtrlType) { V0 = ExitLabel->Idx; ExitVal |= 4<<(dwCtrlType>1); } else { V0 = EntryLabel->Idx; } V1 = -1; SneakPending = 0; Var = Var1 = Var0 = V0&~0xfff; MyMacro0(2) RecEvent2->EventData = 8|dwCtrlType; RecEvent2 = RecEvent2->NextEvent; if (dwCtrlType > 1) { Sleep(4000); return(FALSE); } return(TRUE); }
 
 //----------------------------------------------------------------------------//
 
-static void CALLBACK MidiInProc(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned Long dwParam1, unsigned long dwParam2) { switch (wMsg) { case MIM_DATA:
+void CALLBACK MidiInProc(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned Long dwParam1, unsigned long dwParam2) { switch (wMsg) { case MIM_DATA:
 
 if (imap) { dwParam1 = imap[dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<14&0x1fc000]; }
 
@@ -191,7 +191,7 @@ case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
 //----------------------------------------------------------------------------//
 
-static void CALLBACK MidiInProc1(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned Long dwParam1, unsigned long dwParam2) { unsigned long p, i, V0, i1; unsigned Long v; midiInGetID(hMidiIn, &p); i1 = InPortOrder[p]; switch (wMsg) {
+void CALLBACK MidiInProc1(HMIDIIN hMidiIn, unsigned long wMsg, unsigned long dwInstance, unsigned Long dwParam1, unsigned long dwParam2) { unsigned long p, i, V0, i1; unsigned Long v; midiInGetID(hMidiIn, &p); i1 = InPortOrder[p]; switch (wMsg) {
 case MIM_DATA: if ((dwParam1&0xff) < 0xf0) { if ((i1 += dwParam1&0xf) < TrkNum && (ThruE1 = TrkInfo[i1]) && ThruE1->Ch < 16 && (v = (cm1 = &cmap1[ThruE1->Track][dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<10&0x1c000])->v)) { if (V0 = cm1->s) { MyMacro2(1,2) } else { midiOutShortMsg(ThruE1->midi_out, v ^ ThruE1->Ch); }}}
                                       else { switch (dwParam1 & 0xff) { case 0xf1: case 0xf8: case 0xfe: return; default: printf("%s \n1%Ix", EscPre, dwParam1); }} RecEvent1->event_time = dwParam2; RecEvent1->EventData = p<<24 | dwParam1; RecEvent1 = RecEvent1->NextEvent; return;
 case MIM_LONGDATA: if (((MIDIHDR*)dwParam1)->dwBytesRecorded && Active) {
@@ -208,7 +208,7 @@ case MIM_OPEN: case MIM_CLOSE: return; // MIM_OPEN|MIM_CLOSE
 
 //----------------------------------------------------------------------------//
 
-static void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long dwInstance, unsigned Long dwParam1, unsigned long dwParam2) {
+void CALLBACK MidiOutProc(HMIDIOUT hmo, unsigned long wMsg, unsigned long dwInstance, unsigned Long dwParam1, unsigned long dwParam2) {
 if (wMsg == MOM_DONE) {
  if       ((void*)dwParam1 == &mmh0) { SetEvent(so0); }
   else if ((void*)dwParam1 == &mmh1) { SetEvent(so1); }
@@ -218,7 +218,7 @@ if (wMsg == MOM_DONE) {
 
 //----------------------------------------------------------------------------//
 
-static unsigned long IntLabel(unsigned long i) { unsigned long a, b, c, z = 0; i &= 0xfff;
+unsigned long IntLabel(unsigned long i) { unsigned long a, b, c, z = 0; i &= 0xfff;
 
 for (b = 0x00; b <= 0x80; b += 0x80) { if (i >= (b|0x00) && i <= (b|0x7f)) { z |= 1; }
 
@@ -232,7 +232,7 @@ return(z); }
 
 //----------------------------------------------------------------------------//
 
-static void ExpandLabels(struct Label *Labels) { unsigned long LabelNum = _msize(Labels)/sizeof(struct Label), i;
+void ExpandLabels(struct Label *Labels) { unsigned long LabelNum = _msize(Labels)/sizeof(struct Label), i;
 
 for (i=0; i<LabelNum; i++) { if (!Labels[i].Event) { unsigned long j = (i>>8)&0xf, k = (i>>4)&0x3, l = i&0xf;
  if (j >= 0x1 && j <= 0xa && l >= 0x1 && l <= 0xb) { Labels[i].Event = Labels[i&~0xf].Event; }
@@ -256,7 +256,7 @@ return; }
 
 //----------------------------------------------------------------------------//
 
-static void AlignLabels(struct Label *Labels) { unsigned long LabelNum = _msize(Labels)/sizeof(struct Label), i;
+void AlignLabels(struct Label *Labels) { unsigned long LabelNum = _msize(Labels)/sizeof(struct Label), i;
 
 for (i=0; i<LabelNum; i++) { if (Labels[i].Event) { unsigned long j; unsigned char a = 0, b = 0, c = 0;
  for (j=0; j<LabelNum; j++) { if (Labels[i].Event == Labels[j].Event) { a |= Labels[j].Ret; b |= Labels[j].Now; c |= Labels[j].ReT; }}
@@ -267,7 +267,7 @@ return; }
 
 //----------------------------------------------------------------------------//
 
-static void MidiFileTrack_createShortMsg(MidiFileTrack_t track, unsigned long t, unsigned long EventData) {
+void MidiFileTrack_createShortMsg(MidiFileTrack_t track, unsigned long t, unsigned long EventData) {
 
 switch (EventData & 0xf0) {
  case 0x80: MidiFileTrack_createNoteOffEvent(        track, t, EventData&0xf, (EventData>>8)&0x007f , (EventData>>16)&0x7f); break;
@@ -282,7 +282,7 @@ return; }
 
 //----------------------------------------------------------------------------//
 
-static void WriteThrus(signed Long *args, unsigned long m, struct MidiEvent ***Thrus[], struct Key *Key, struct MidiEvent **TrkInfo, struct RecEvent0 *RecEvent0, MidiFile_t midi_file, MidiFile_t SMF, unsigned long MinEventTime, float c, struct MidiOut *Port2Out, struct cmap **cmap) {
+void WriteThrus(signed Long *args, unsigned long m, struct MidiEvent ***Thrus[], struct Key *Key, struct MidiEvent **TrkInfo, struct RecEvent0 *RecEvent0, MidiFile_t midi_file, MidiFile_t SMF, unsigned long MinEventTime, float c, struct MidiOut *Port2Out, struct cmap **cmap) {
 signed long C = args[6], EventData = (RecEvent0->EventData & 0x7f00f0) == 0x90 ? RecEvent0->EventData^0x10 | 0x400000 : RecEvent0->EventData, Ch = EventData & 0xf, i = -1, d = 0, V0 = (EventData>>8)&0x7f, V1 = (EventData>>16)&0x7f, t = RecEvent0->event_time-MinEventTime, TrkNum = MidiFile_getNumberOfTracks(SMF); struct Thru ThruO, *Thru = &ThruO; Thru->Pending = NULL;
 
 while (Thrus && (Thru->Trk = Thrus[Ch][++i]) || Key && (Thru = &Key->Thrus[++i])->Trk) { MidiFileTrack_t track; unsigned long TrkID = Thru->Trk-TrkInfo; struct MidiEvent *ThruE = (EventData & 0xf0) == 0x80 ? Thru->Pending : TrkInfo[TrkID];
@@ -316,7 +316,7 @@ return; }
 
 //----------------------------------------------------------------------------//
 
-static void saveMidiEventsToFile(unsigned char **argv, signed Long *args, struct Key Keys[][KSz], signed char InOfs, MidiFile_t SMF, unsigned long Tempo, unsigned long TimeSig, unsigned long KeySig, struct RecEvent *RecEvents, struct RecEvent *RecEvent, struct RecEvent0 *RecEvents0, struct RecEvent0 *RecEvent0, struct RecEvent0 *RecEvents1, struct RecEvent0 *RecEvent1, struct RecEvent0 *RecEvents2, struct RecEvent0 *RecEvent2, unsigned char ExitVal, struct Label *Label0, struct MidiEvent **TrkInfo, struct MidiIn *Port2In, struct MidiOut *Port2Out, struct MidiEvent ***Thrus[], struct cmap **cmap, struct cmap **cmap1, unsigned char InPortOrder[], signed long DefIDev) {
+void saveMidiEventsToFile(unsigned char **argv, signed Long *args, struct Key Keys[][KSz], signed char InOfs, MidiFile_t SMF, unsigned long Tempo, unsigned long TimeSig, unsigned long KeySig, struct RecEvent *RecEvents, struct RecEvent *RecEvent, struct RecEvent0 *RecEvents0, struct RecEvent0 *RecEvent0, struct RecEvent0 *RecEvents1, struct RecEvent0 *RecEvent1, struct RecEvent0 *RecEvents2, struct RecEvent0 *RecEvent2, unsigned char ExitVal, struct Label *Label0, struct MidiEvent **TrkInfo, struct MidiIn *Port2In, struct MidiOut *Port2Out, struct MidiEvent ***Thrus[], struct cmap **cmap, struct cmap **cmap1, unsigned char InPortOrder[], signed long DefIDev) {
 SYSTEMTIME    current_time;
 unsigned char b[1024], tempo[] = {(Tempo>>16)&0xff, (Tempo>>8)&0xff, (Tempo>>0)&0xff}, timeSig[] = {(TimeSig>>24)&0xff, (TimeSig>>16)&0xff, (TimeSig>>8)&0xff, (TimeSig>>0)&0x7f}, keySig[] = {(KeySig>>8)&0xff, (KeySig>>0)&0xff};
 unsigned long PPQ = MidiFile_getResolution(SMF), PPQc = PPQ*1000, RecNum = 0, MinEventTime = -1, i, j, l, t0, TrkNum = MidiFile_getNumberOfTracks(SMF),
@@ -452,22 +452,22 @@ if (args[8] != 0x0ff && (ExitVal >= 3 || RecNum)) { MidiFile_save(midi_file, b);
 
 //----------------------------------------------------------------------------//
 
-static signed Long GetVal(unsigned char *D) { signed Long i=0, r=0; while (i<8) { r = r<<8 | D[i++]; } return(r); }
+signed Long GetVal(unsigned char *D) { signed Long i=0, r=0; while (i<8) { r = r<<8 | D[i++]; } return(r); }
 
-static signed long GetIDev(char *n, signed long d) { signed long i; for (i = 0; i <  midiInGetNumDevs();  i++) { MIDIINCAPS  c; midiInGetDevCaps( i  , &c, sizeof(MIDIINCAPS )); if (strstr(c.szPname, n)) { return(i); }} return(d); }
-static signed long GetODev(char *n, signed long d) { signed long i; for (i = 0; i <= midiOutGetNumDevs(); i++) { MIDIOUTCAPS c; midiOutGetDevCaps(i-1, &c, sizeof(MIDIOUTCAPS)); if (strstr(c.szPname, n)) { return(i); }} return(d); }
-
-//----------------------------------------------------------------------------//
-
-static signed Long StrtoL(const signed char *a, signed char **b, signed long c, signed Long d) { unsigned char *s; signed Long r = strtoL(a, &s, c); if (s == a) { r = d; } *b = s; return(r); }
+signed long GetIDev(char *n, signed long d) { signed long i; for (i = 0; i <  midiInGetNumDevs();  i++) { MIDIINCAPS  c; midiInGetDevCaps( i  , &c, sizeof(MIDIINCAPS )); if (strstr(c.szPname, n)) { return(i); }} return(d); }
+signed long GetODev(char *n, signed long d) { signed long i; for (i = 0; i <= midiOutGetNumDevs(); i++) { MIDIOUTCAPS c; midiOutGetDevCaps(i-1, &c, sizeof(MIDIOUTCAPS)); if (strstr(c.szPname, n)) { return(i); }} return(d); }
 
 //----------------------------------------------------------------------------//
 
-static unsigned long GetCh() { unsigned long r = getch(); switch (r) { case 0: case 224: getch(); } return(r); }
+signed Long StrtoL(const signed char *a, signed char **b, signed long c, signed Long d) { unsigned char *s; signed Long r = strtoL(a, &s, c); if (s == a) { r = d; } *b = s; return(r); }
 
 //----------------------------------------------------------------------------//
 
-static void GetStr(unsigned char *b, unsigned long s) { unsigned long j = 0;
+unsigned long GetCh() { unsigned long r = getch(); switch (r) { case 0: case 224: getch(); } return(r); }
+
+//----------------------------------------------------------------------------//
+
+void GetStr(unsigned char *b, unsigned long s) { unsigned long j = 0;
 
 while ((b[j] = GetCh()) != 13) { switch (b[j]) { case 0: case 224: break; case 8: if (j) { printf("\b \b"); j--; } break; default: if (j < s-1) { printf("%c", b[j++]); }}}
 
@@ -475,7 +475,7 @@ b[j] = 0; return; }
 
 //----------------------------------------------------------------------------//
 
-static unsigned Long GetArg(signed Long d) { unsigned Long r, i; unsigned char b[64] = "0", *a = b;
+unsigned Long GetArg(signed Long d) { unsigned Long r, i; unsigned char b[64] = "0", *a = b;
 
 while (strlen(b) && a == b) { GetStr(b, sizeof(b)); r = strtoL(b, &a, 0); i = strlen(b); while (i--) { printf("\b \b"); }}
 
@@ -483,7 +483,7 @@ if (!strlen(b)) { r = d; } return(r); }
 
 //----------------------------------------------------------------------------//
 
-static void SetArgs(unsigned char **argv, MIDIINCAPS *SelIDev, MIDIOUTCAPS *SelODev, signed Long *args) { signed long i, j = 0;
+void SetArgs(unsigned char **argv, MIDIINCAPS *SelIDev, MIDIOUTCAPS *SelODev, signed Long *args) { signed long i, j = 0;
 
 if (!argv[3] || !argv[4]) { signed long ni, no, n, mli, mlo;
 
@@ -519,7 +519,7 @@ if (j) { printf("\n"); } return; }
 
 //============================================================================//
 
-static void argv2arg(unsigned char **argv, signed Long *args, signed long i) {
+void argv2arg(unsigned char **argv, signed Long *args, signed long i) {
 
 if (argv[i] && strlen(argv[i])) { unsigned char *a; signed Long v = strtoL(argv[i], &a, 0); if (a == argv[i] && (i==2 || i>4)) { argv[i] = argv[i]+strlen(argv[i]); return; }
  if (a != argv[i] || i!=2 && i<5) { args[i] = v; if (!strlen(a) || i==2 || i>4) { argv[i] = a; }} else { argv[i] = NULL; }} else { argv[i] = NULL; }
@@ -529,33 +529,33 @@ return; }
 //============================================================================//
 
 signed long main(signed long argc, unsigned char **argv) {
-static TIMECAPS        time_caps;
-static struct MidiOut  Port2Out[ 256];
-static unsigned char   Port2Port[256], FlwMsk;
-static MidiFileEvent_t midi_file_event;
-static unsigned long   start_time, current_time, t, WatchDogTimeOut, MutesNum, tick, tempo_event_tick, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0, PrintTxt;
-static   signed long   i, j, k, l, TimeOut, DefODev;
-static struct PNoteO   *PendingEventsO, *PendingO, *LatestPendingO;
-static float           Speed, tempo_event_time;
-static struct MidiEvent *MidiEvent;
-static struct RecEvent  *RecEvents, *RecEvent;
-static struct RecEvent0 *RecEvents0, *RecEvents1, *RecEvents2;
+TIMECAPS        time_caps;
+struct MidiOut  Port2Out[ 256];
+unsigned char   Port2Port[256], FlwMsk;
+MidiFileEvent_t midi_file_event;
+unsigned long   start_time, current_time, t, WatchDogTimeOut, MutesNum, tick, tempo_event_tick, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0, PrintTxt;
+  signed long   i, j, k, l, TimeOut, DefODev;
+struct PNoteO   *PendingEventsO, *PendingO, *LatestPendingO;
+float           Speed, tempo_event_time;
+struct MidiEvent *MidiEvent;
+struct RecEvent  *RecEvents, *RecEvent;
+struct RecEvent0 *RecEvents0, *RecEvents1, *RecEvents2;
 
-static unsigned short Crds[] = {0x120, 0x001,
-                                0x100, 0x081,
-                                0x200, 0x091,
-                                0x300, 0x089,
-                                0x400, 0x085,
-                                0x500, 0x049,
-                                0x600, 0x111,
-                                0x700, 0x891,
-                                0x800, 0x489,
-                                0x900, 0x491,
-                                0xa00, 0x889};
+unsigned short Crds[] = {0x120, 0x001,
+                         0x100, 0x081,
+                         0x200, 0x091,
+                         0x300, 0x089,
+                         0x400, 0x085,
+                         0x500, 0x049,
+                         0x600, 0x111,
+                         0x700, 0x891,
+                         0x800, 0x489,
+                         0x900, 0x491,
+                         0xa00, 0x889};
 
-static signed Long DefArgs[] = {0, 0, -1, 0, 0, -1, -1, 0, 0x0ff, 0x00008000, 0x15, 0x16}, argd = sizeof(DefArgs)/sizeof(void*), *args, MutesInv, MutesRet;
+signed Long DefArgs[] = {0, 0, -1, 0, 0, -1, -1, 0, 0x0ff, 0x00008000, 0x15, 0x16}, argd = sizeof(DefArgs)/sizeof(void*), *args, MutesInv, MutesRet;
 
-static unsigned long ProcessPrios[] = {IDLE_PRIORITY_CLASS, BELOW_NORMAL_PRIORITY_CLASS, NORMAL_PRIORITY_CLASS, ABOVE_NORMAL_PRIORITY_CLASS, HIGH_PRIORITY_CLASS, REALTIME_PRIORITY_CLASS, PROCESS_MODE_BACKGROUND_BEGIN, PROCESS_MODE_BACKGROUND_END};
+unsigned long ProcessPrios[] = {IDLE_PRIORITY_CLASS, BELOW_NORMAL_PRIORITY_CLASS, NORMAL_PRIORITY_CLASS, ABOVE_NORMAL_PRIORITY_CLASS, HIGH_PRIORITY_CLASS, REALTIME_PRIORITY_CLASS, PROCESS_MODE_BACKGROUND_BEGIN, PROCESS_MODE_BACKGROUND_END};
 
 MidiFile_t midi_file; MIDIINCAPS SelIDev; MIDIOUTCAPS SelODev; if (argc < 2) { printf("Usage: %s <filename.mid>\n" Msg0, argv[0]); return(1); }
 
