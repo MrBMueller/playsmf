@@ -541,17 +541,17 @@ struct MidiEvent *MidiEvent;
 struct RecEvent  *RecEvents, *RecEvent;
 struct RecEvent0 *RecEvents0, *RecEvents1, *RecEvents2;
 
-unsigned short Crds[] = {0x120, 0x001,
-                         0x100, 0x081,
-                         0x200, 0x091,
-                         0x300, 0x089,
-                         0x400, 0x085,
-                         0x500, 0x049,
-                         0x600, 0x111,
-                         0x700, 0x891,
-                         0x800, 0x489,
-                         0x900, 0x491,
-                         0xa00, 0x889};
+unsigned short Crds[] = {0x001, 0x120,
+                         0x081, 0x100,
+                         0x091, 0x200,
+                         0x089, 0x300,
+                         0x085, 0x400,
+                         0x049, 0x500,
+                         0x111, 0x600,
+                         0x891, 0x700,
+                         0x489, 0x800,
+                         0x491, 0x900,
+                         0x889, 0xa00};
 
 signed Long DefArgs[] = {0, 0, -1, 0, 0, -1, -1, 0, 0x0ff, 0x00008000, 0x15, 0x16}, argd = sizeof(DefArgs)/sizeof(void*), *args, MutesInv, MutesRet;
 
@@ -615,8 +615,8 @@ EntryLabel = &Labels[args[10]]; ExitLabel = &Labels[args[11]]; sot = CreateEvent
 
 for (i=0; i<=11; i++) { for (j=0; j<=0xfff; j++) { Chords[i][j] = 0; }}
 
-for (j=0; j<sizeof(Crds)/sizeof(unsigned short); j+=2) { unsigned long c = Crds[j+1], k = -1, N = -1;
- while (c) { N++; if (c&1) { k++; l = Crds[j+1]; for (i=0; i<=11; i++) { if (!Chords[(i+N)%12][l]) { Chords[(i+N)%12][l] = Crds[j]|k<<4|i; } l <<= 1; l = l & 0xfff | l >> 12; }} c >>= 1; }
+for (j=0; j<sizeof(Crds)/sizeof(unsigned short); j+=2) { unsigned long c = Crds[j], k = -1, N = -1;
+ while (c) { N++; if (c&1) { k++; l = Crds[j]; for (i=0; i<=11; i++) { if (!Chords[(i+N)%12][l]) { Chords[(i+N)%12][l] = Crds[j+1]|k<<4|i; } l <<= 1; l = l & 0xfff | l >> 12; }} c >>= 1; }
  }
 
 for (i=0; i<(sizeof(Port2Port)/sizeof(unsigned char)); i++) { Port2Port[i] = i; } PrintTxt = 0; for (i=12; i<_msize(args)/sizeof(void*); i++) { if ((args[i]>>16) == 5) { PrintTxt = args[i] & 0xffff; }}
