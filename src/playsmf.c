@@ -809,7 +809,7 @@ for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } if (!FirstLabel) { FirstLabel = 
 
 FirstMute = EntryMute = &Mutes[MutesNum*(TrkNum+1)+1]; if (MutesNum) { FirstMute = &Mutes[(0)*(TrkNum+1)+1]; } Mute = SetEntryMute
 
-Key0 = Key1 = &Keys[0][KDf]; LastTime = SneakPending = FlwMsk = IRQ = ExitVal = 0; Active = Dead = 1; Speed = Speed0 = 1; ThruE1 = EntryLabel->Event;
+Key0 = Key1 = &Keys[0][KDf]; LastTime = SneakPending = FlwMsk = IRQ = ExitVal = 0; Active = Dead = 1; Speed = Speed0 = 1; ThruE1 = NULL;
 
 ResetEvent(sot); ResetEvent(so0); ResetEvent(so1); ResetEvent(so2);
 
