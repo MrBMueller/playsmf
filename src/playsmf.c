@@ -533,8 +533,8 @@ TIMECAPS        time_caps;
 struct MidiOut  Port2Out[ 256];
 unsigned char   Port2Port[256], FlwMsk;
 MidiFileEvent_t midi_file_event;
-unsigned long   start_time, current_time, t, WatchDogTimeOut, MutesNum, tick, tempo_event_tick, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0, PrintTxt;
-  signed long   i, j, k, l, TimeOut, DefODev;
+unsigned long   start_time, current_time, WatchDogTimeOut, MutesNum, tick, tempo_event_tick, Tempo, TimeSig, KeySig, Tempo0, TimeSig0, KeySig0, PrintTxt;
+  signed long   i, j, k, l, t, TimeOut, DefODev;
 struct PNoteO   *PendingEventsO, *PendingO, *LatestPendingO;
 float           Speed, tempo_event_time;
 struct MidiEvent *MidiEvent;
@@ -819,7 +819,7 @@ for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { 
 
 printf("%Id %d:%02d:%03d %.2f (%s%.2f %s%d/%d) playing ...", ExitLabel->Event-MidiEvent, ExitLabel->Event->event_time/(1000*60), (ExitLabel->Event->event_time/1000)%60, ExitLabel->Event->event_time%1000, (float)ExitLabel->Event->event_time*1000*(1<<(TimeSig0>>16&0xff))/(((Tempo0&0xffffff)<<2)*(TimeSig0>>24&0xff)), Tempo0&0x1000000?"-":"", (float)60000000/(Tempo0&0xffffff), TimeSig0&0x80?"-":"", TimeSig0>>24&0xff, 1<<(TimeSig0>>16&0xff));
 while (MidiEvent->EventData) { t = MidiEvent->event_time*Speed; if (start_time) { current_time = timeGetTime(); } else { start_time = current_time-t; }
- if ((signed long)(t += start_time-current_time) > 0 && !WaitForSingleObject(sot, t)) { current_time = timeGetTime(); t = 0; }
+ if ((t += start_time-current_time) > 0 && !WaitForSingleObject(sot, t)) { current_time = timeGetTime(); t = 0; }
 
  switch ((*(MidiEvent->TrkInfo) = MidiEvenT = MidiEvent)->FlwCtl^FlwMsk | IRQ) {
   case 0x09: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f: case 0x11: case 0x13: case 0x14: case 0x16:
@@ -849,7 +849,7 @@ while (MidiEvent->EventData) { t = MidiEvent->event_time*Speed; if (start_time) 
   case 0x5:           printf(MidiEvent->data_buffer); Record0(0) break;
   case 0x0: case 0x8: Record0(0) }
 
- MidiEvent = MidiEvent->NextEvent; FlwMsk = 0; if (current_time+t >= WatchDogTimeOut) { WatchDogTimeOut = current_time+t+TimeOut; if (Dead) { goto Exit0; } Dead = 1; }
+ MidiEvent = MidiEvent->NextEvent; FlwMsk = 0; if (current_time >= WatchDogTimeOut) { WatchDogTimeOut = current_time+TimeOut; if (Dead) { goto Exit0; } Dead = 1; }
  }
 ExitVal |= 1; Exit2: ExitVal |= 2; Exit0: printf("%s done. (%x)\n", EscPre, ExitVal); Active = 0; for (i=0; i<(sizeof(Port2In)/sizeof(struct MidiIn)); i++) { if (Port2In[i].h) { midiInStop(Port2In[i].h); }} if (ExitVal < 8) { SetConsoleCtrlHandler(HandlerRoutine, FALSE); } if (args[2] >= 0 && (args[2]&0xff) < 0xff) { timeEndPeriod(args[2]&0xff); }
 
