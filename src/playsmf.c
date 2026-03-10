@@ -148,7 +148,7 @@ if (imap) { dwParam1 = imap[dwParam1>>16 | dwParam1>>1&0x3f80 | dwParam1<<14&0x1
 
 switch (dwParam1 & 0xf0) {
 
-case 0x90: V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwParam1>>8)+InOfs & 0x7f) & -128) { Dead = 0; return; } Key1 = &Keys[dwParam1 & 0xf][V0]; j = -1;
+case 0x90: V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { Dead = 0; return; } Key1 = &Keys[dwParam1 & 0xf][V0]; j = -1;
  while ((Thru = &Key1->Thrus[++j])->Trk && !Thru->Delay) { if ((ThruE = *Thru->Trk) && ThruE->Ch < 16) {
   midiOutShortMsg(ThruE->midi_out, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); Thru->Pending = ThruE; }}
  RecEvent0->event_time = dwParam2; if (!(PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel = V1;
@@ -165,7 +165,7 @@ case 0x90: V1 = dwParam1>>16; if (!V1) { V1 = 0x40; goto L0x80; } if ((V0 = (dwP
  while ((Thru = &Key1->Thrus[j++])->Trk) { if ((ThruE = *Thru->Trk) && ThruE->Ch < 16) { if (Thru->Delay) { Sleep(Thru->Delay); }
   midiOutShortMsg(ThruE->midi_out, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); Thru->Pending = ThruE; }} if (dwParam1 < 0x1000000) { return; }
 
-case 0x80: V1 = dwParam1>>16;                            L0x80:   if ((V0 = (dwParam1>>8)+InOfs & 0x7f) & -128) { Dead = 0; return; } Key0 = &Keys[dwParam1 & 0xf][V0]; j = -1;
+case 0x80: V1 = dwParam1>>16;                            L0x80:   if ((V0 = (dwParam1>>8 & 0x7f)+InOfs) & -128) { Dead = 0; return; } Key0 = &Keys[dwParam1 & 0xf][V0]; j = -1;
  while ((Thru = &Key0->Thrus[++j])->Trk) { if (ThruE = Thru->Pending) { midiOutShortMsg(ThruE->midi_out, Thru->v0[V1]<<16 | Thru->k<<8 | 0x80 | ThruE->Ch); Thru->Pending = NULL; }}
  RecEvent0->event_time = dwParam2; if ( (PendingI = &PendingEventsI[V0])->Vel) { PendingI->Vel =  0;
  switch (Key0->Zone) { case 1: if (PendingI->Prev) { PendingI->Prev->Next = PendingI->Next; } if (PendingI->Next) { PendingI->Next->Prev = PendingI->Prev; } else { LatestPendingI = PendingI->Prev; }
