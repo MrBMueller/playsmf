@@ -398,7 +398,7 @@ for (i=0; i < TrkNum; i++) { TrkInfo[i] = NULL; } RecEvent0 = RE0; j = RSz; RecE
 for (i=0; i<RSz0; i++) { unsigned long t = (RecEvent0->event_time-MinEventTime)*c, EventData = RecEvent0->EventData; MidiFileTrack_t track = trackP; struct Key *Key; RecNum++;
  if (i+1 < RSz0 && EventData > 0xffffff && (EventData & 0xf0) == 0x90 && RecEvent0->NextEvent->EventData == EventData && RecEvent0->NextEvent->event_time == RecEvent0->event_time) { RecEvent0->NextEvent->EventData &= ~0x10; }
  while (j && RecEvent->event_time <= RecEvent0->event_time) { TrkInfo[RecEvent->Event->Track] = RecEvent->Event; RecEvent = RecEvent->NextEvent; j--; }
- switch ((Key = &Keys[EventData & 0xf][(EventData>>8)+InOfs & 0x7f])->Zone) {
+ switch ((Key = &Keys[EventData & 0xf][(EventData>>8 & 0x7f)+InOfs & 0x7f])->Zone) {
   case 0: track = trackP0; break; case 1: track = trackP1; break; case 2: track = trackP2; break; case 4: track = trackP3; break; case 8: track = trackP4; }
  if ((EventData & 0xf0) == 0x90 && EventData&0x7f0000) { Key1 = Key; }
  switch (EventData & 0xf0) {
@@ -624,7 +624,7 @@ for (i=0; i<(sizeof(Port2Port)/sizeof(unsigned char)); i++) { Port2Port[i] = i; 
 imap = NULL; i = 0;
 for (k=12; k<_msize(args)/sizeof(void*); k++) { if (args[k]>>24 == 4) { i = k; } if (args[k]>>24 == 5 && i) { signed long t = args[i], s = args[k], c = args[6]>=0?args[6]:-1, c0 = c<0?0:c, c1 = c0;
  if (!imap) { imap = malloc(0x1fc001*sizeof(unsigned long)); for (j=0; j<=0x1fc000; j++) { imap[j] = j << 16 & 0x7f0000 | j << 1 & 0x7f00 | 0x80 | j>>14 & 0x7f; }}
- t = t<<1 & 0x1000000 | t & 0x7f7fff; if ((t & 0xe0) == 0x80) { t = t & ~0x7f00 | ((t>>8)-InOfs & 0x7f) << 8; } if ((s & 0xf0) == 0xf0 || s & 0xf) { c0 = c1 = 0; } else if (c < 0) { c0 = 0; c1 = 15; }
+ t = t<<1 & 0x1000000 | t & 0x7f7fff; if ((t & 0xe0) == 0x80) { t = t & ~0x7f00 | ((t>>8 & 0x7f)-InOfs & 0x7f) << 8; } if ((s & 0xf0) == 0xf0 || s & 0xf) { c0 = c1 = 0; } else if (c < 0) { c0 = 0; c1 = 15; }
  for (j=c0; j<=c1; j++) { imap[s >> 16 & 0x7f | s >> 1 & 0x3f80 | (s | j)<<14 & 0x1fc000] = t | ((t & 0xf0) == 0xf0 || t & 0xf ? 0 : j); }
  }}
 
