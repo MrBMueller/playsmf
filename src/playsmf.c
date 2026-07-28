@@ -762,7 +762,8 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   else if ( (MidiEvents[i].EventData & 0xf0) == 0x90                                                   ) { MidiEvents[i].MsgCtl += 2; }
  //MidiEvents[i].MsgCtl += 1*((MidiEvents[i].EventData & 0x407ff0) == 0x0040b0);
  //MidiEvents[i].MsgCtl += 2*((MidiEvents[i].EventData & 0x407ff0) == 0x4040b0);
- if (MidiEvents[i].EventData & 0x80 && (MidiEvents[i].EventData & 0xf0) < 0xf0) { TrkInfo[MidiEvents[i].Track] = (void*)((unsigned Long)TrkInfo[MidiEvents[i].Track] & ~0xf | MidiEvents[i].EventData & 0xf | 0x10); }
+ if (MidiEvents[i].EventData & 0x80 && (MidiEvents[i].EventData & 0xf0) < 0xf0) { TrkInfo[MidiEvents[i].Track] = (void*)((unsigned Long)TrkInfo[MidiEvents[i].Track] & ~0x1f | MidiEvents[i].EventData & 0xf ^ 0x10); }
+ if ((MidiEvents[i].EventData & ~0x1f0000) == 0x0012f4                        ) { TrkInfo[MidiEvents[i].Track] = (void*)((unsigned Long)TrkInfo[MidiEvents[i].Track] & ~0x1f | MidiEvents[i].EventData >> 16 ^ 0x10); }
  MidiEvents[i].midi_out = (HMIDIOUT)TrkInfo[MidiEvents[i].Track];
  { unsigned long a = MidiEvents[i].EventData, b = c = args[9]; if (a & 0x7f00f0 == 0x90) { a ^= 0x10; } if (c & 0xf000e0 == 0xf00080) { c &= ~0x100010; }
   if ((a & b>>16) == (b & 0x7fff)) { MidiEvents[j].FlwCtl |= 1; } if ((a & c>>16) == (c & 0x7fff)) { MidiEvents[i].MsgCtl *= c>>15 & 1; }}
@@ -797,8 +798,7 @@ while (--i >= 0) { unsigned char fc = MidiEvents[i].FlwCtl; MidiEvents[i].TrkInf
  if ((MidiEvents[i].MsgCtl == 4) && (MidiEvents[i].EventIdx->Event)) { MidiEvents[i].OffMsg          = MidiEvents[i].EventIdx->Event->EventData; }
  if (MidiEvents[i].Label->Now && !MidiEvents[i].FlwCtl) { MidiEvents[i].FlwCtl = 1; }
  if ((MidiEvents[i].EventData & (args[8]>>16)) == (args[8] & 0x7fff)) { MidiEvents[i].Rec |= 1; MidiEvents[i].MsgCtl *= (args[8]>>15) & 1; }
- if ((MidiEvents[i].EventData & ~0x000000) == 0x3412f4) { MidiEvents[i].MsgCtl = 0; }
- if ((MidiEvents[i].EventData & ~0x1f0000) == 0x0012f4) { MidiEvents[i].MsgCtl = 0; MidiEvents[i].Ch = MidiEvents[i].EventData >> 16; }
+ if ((MidiEvents[i].EventData & ~0x1f0000) == 0x0012f4 || MidiEvents[i].EventData == 0x3412f4) { MidiEvents[i].MsgCtl = 0; }
  if (MidiEvents[i].MsgCtl == 5 && strstr(MidiEvents[i].data_buffer, "\x1b")) { strcpy(EscPre, "\x1b[0m"); }
  }
 
