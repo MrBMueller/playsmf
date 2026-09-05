@@ -757,7 +757,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
   MidiEvents[i].EventData = (unsigned long)MidiFileVoiceEvent_getData(midi_file_event); MidiEvents[i].data_length = 0; MidiEvents[i].data_buffer = NULL;
   }
  for (k=j; k<=i; k++) { MidiEvents[k].Label = LastLabel?LastLabel:EntryLabel; MidiEvents[k].Tempo = Tempo & 0xffffff; MidiEvents[k].TimeSigN = TimeSig >> 24; MidiEvents[k].TimeSigD = TimeSig >> 16; }
- if ((MidiEvents[i].EventData & 0xff) == 0x7f && ((PrintTxt & 0xfffe) >> (MidiEvents[i].EventData >> 8))&1 && (PrintTxt&1 || MidiEvents[i].event_time >= (Tempo0&0xffffff)/250*(TimeSig0>>24&0xff)/(1<<(TimeSig0>>16&0xff)))) { MidiEvents[i].MsgCtl = 5; }
+ if ((MidiEvents[i].EventData & 0xff) == 0x7f && MidiEvents[i].EventData <= 0xf7f && ((PrintTxt & 0xfffe) >> (MidiEvents[i].EventData >> 8))&1 && (PrintTxt&1 || MidiEvents[i].event_time >= (Tempo0&0xffffff)/250*(TimeSig0>>24&0xff)/(1<<(TimeSig0>>16&0xff)))) { MidiEvents[i].MsgCtl = 5; }
  if       (((MidiEvents[i].EventData & 0xf0) == 0x80) || ((MidiEvents[i].EventData & 0x7f00f0) == 0x90)) { MidiEvents[i].MsgCtl += 1; }
   else if ( (MidiEvents[i].EventData & 0xf0) == 0x90                                                   ) { MidiEvents[i].MsgCtl += 2; }
  //MidiEvents[i].MsgCtl += 1*((MidiEvents[i].EventData & 0x407ff0) == 0x0040b0);
@@ -815,7 +815,7 @@ for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h)
  unsigned long a = args[k] & 0xf, b = 0xf; if ((args[k] & 0xf0) >= 0xf0) { b = a = args[k] & 0xf; } for (j=a; j<=b; j++) { midiOutShortMsg(Port2Out[i].h, args[k]&0xfffff0 | j); }
  }}}}
 
-for (j=0; j<(2+MutesNum); j++) { Mutes[j*(TrkNum+1)] |= (MutesRet>>j)&1; for (i=0; i<TrkNum; i++) { Mutes[j*(TrkNum+1)+1+i] ^= (((MutesInv>>j)&1) | (j==((2+MutesNum)-1)))<<3; }}
+for (j=0; j<(2+MutesNum); j++) { Mutes[j*(TrkNum+1)] |= j<sizeof(void*)*8?(MutesRet>>j)&1:0; for (i=0; i<TrkNum; i++) { Mutes[j*(TrkNum+1)+1+i] ^= ((j<sizeof(void*)*8?(MutesInv>>j)&1:0) | (j==((2+MutesNum)-1)))<<3; }}
 
 for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } if (!FirstLabel) { FirstLabel = EntryLabel; } if (!LastLabel) { LastLabel = ExitLabel; } SetEntryLabel
 
