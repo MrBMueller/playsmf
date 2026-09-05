@@ -815,7 +815,7 @@ for (i=0; i<(sizeof(Port2Out)/sizeof(struct MidiOut)); i++) { if (Port2Out[i].h)
  unsigned long a = args[k] & 0xf, b = 0xf; if ((args[k] & 0xf0) >= 0xf0) { b = a = args[k] & 0xf; } for (j=a; j<=b; j++) { midiOutShortMsg(Port2Out[i].h, args[k]&0xfffff0 | j); }
  }}}}
 
-for (j=0; j<(2+MutesNum); j++) { Mutes[j*(TrkNum+1)] |= j<sizeof(void*)*8?(MutesRet>>j)&1:0; for (i=0; i<TrkNum; i++) { Mutes[j*(TrkNum+1)+1+i] ^= ((j<sizeof(void*)*8?(MutesInv>>j)&1:0) | (j==((2+MutesNum)-1)))<<3; }}
+for (j=0; j<MutesNum; j++) { Mutes[j*(TrkNum+1)] |= (MutesRet>>j)&1; for (i=0; i<TrkNum; i++) { Mutes[j*(TrkNum+1)+1+i] ^= ((MutesInv>>j)&1)<<3; }} for (i=0; i<TrkNum; i++) { Mutes[((2+MutesNum)-1)*(TrkNum+1)+1+i] ^= 0x08; }
 
 for (i=0; i<TrkNum; i++) { TrkInfo[i] = NULL; } if (!FirstLabel) { FirstLabel = EntryLabel; } if (!LastLabel) { LastLabel = ExitLabel; } SetEntryLabel
 
