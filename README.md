@@ -55,7 +55,7 @@ The player generally supports full live session recording and captures all data 
  - "Pri-Other" - all other key events which are not part of the key zones above
  - "Zone*" - track(s) w/ midi thru data as defined by the zonal key setup per individual thru zone
  - "Secondary*" - track(s) w/ non-channel data from Seondary input port(s) while channel data get mixed directly into corresponding SMF tracks
- 
+
  In addition, PortID and PortName information is stored for each track in case multi port setups are used. So if you replay your recording using playsmf, the right midi output ports should be selected automatically.
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img18.png width="100%">
@@ -88,7 +88,7 @@ Basically all types of midi events including system common (sysex, time code, so
 On the recording side, the player records everything including sysex, system common and system realtime events except midi timecode, timing clock and active sensing. Similar as on the player side, the recorder packs system common and realtime events (which are not part of the smf spec.) into escape meta events. This way you can also record something like start/stop/continue transport control data into the smf.
 
 ### SMF text event support
-SMF text events are typically ignored unless they are explicitly enbaled using argument 0x5xxxx where bits [15:1] represent a mask filter for SMF text meta event types 1 to 15. If bit 0 is disbaled, text messages within the 1st bar measure are ignored, else everthing gets displayed on the console output including track names, device names, etc. Text messages are simply displayed as they are on the console output screen at the time when they appear in the sequence. This can be used either for simple lyric printing or in combination with style type pattern to display messages on certain timestamps or in combination with marker labels for style accompaniement tracking.
+SMF text events are typically ignored unless they are explicitly enabled using argument 0x5xxxx where bits [15:1] represent a mask filter for SMF text meta event types 1 to 15. If bit 0 is disbaled, text messages within the 1st bar measure are ignored, else everthing gets displayed on the console output including track names, device names, etc. Text messages are simply displayed as they are on the console output screen at the time when they appear in the sequence. This can be used either for simple lyric printing or in combination with style type pattern to display messages on certain timestamps or in combination with marker labels for style accompaniement tracking.
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img24.png width="100%">
 
@@ -210,8 +210,39 @@ This is a regular Jump, however the sequence doesnt branch if a **retrigger** in
 A set of Labels in the range from 0x000-0xfff is called a variation. To include multiple variations, the player takes the most significant Label digits as a variation number. So for instance Labels between 0x0000-0x0fff belong to variation 0 while Labels between 0x1000-0x1fff belong to variation 1.
 Variations can get switched by the keys right below the Mute-zone.  If you switch from a non-return (looping) sequence to a return (one-shot) sequence variation, the variation will return back once finished, else you'll stay in the new variation. This allows to implement variations with fills or breaks in contrast to regular main (looping) variations.
 
+------
+
 ### Mute sets (groups)
-A mute-set represents a list of simultaneously muted tracks. So with multiple distinct mute-sets, it is possible to mute and unmute multiple tracks simultaneously. For smooth mute/unmute transitions, a requested mute-set change is only taken at interrupt sync points. Mute-sets are primarily used to build pattern variations. They can get switched in realtime with the keys below the chord recognition zone. Two default mute-sets are always defined: mute-all and unmute-all.
+Mute sets are basically binary vectors allowing to mute or unmute multiple tracks simultaneously while playing. To guarantee smooth, syncronous mute/unmute transitions, they are only taken at interrupt sync edges similar to sequence transitions. All tracks in combination with defined mute sets spawn a matrix, which can be filled by individual "Mute<vector>" and "Solo<vector>" trackname keywords, where each <vector> represents the numerical binary mute/unmute row information for the given track.
+
+#### Solo sets
+
+The Solo keyword acts similar to Mute, however takes additionally the inversion vector into account. The inversion vector is basically an or'd version across all Solo vectors.
+
+#### notes about <vector> settings
+
+- numerical settings can be given in either decimal or hexadecimal '0x' representation
+- the max. vector size is either limited to 32 elements for x86 or 64 elements for x64 platforms
+- the given <vector> value doesnt include default all -on and -off sets as they are always present and pre-filled
+- the total number of user-defined mute-sets (excluding default all -on and -off) is directly derrived from the maximum <vector> settings MSB
+- multiple Mute/Solo keywords and vectors  within the same track can be combined will get xor'd into the matrix - cancelling or reenabling individual elements
+- if there is no numerical value specified, it will default to zero
+- Mute0 (zero) will apply the inversion vector (can be used to reenable unintetionally muted tracks, e.g. muted by Solo vectors)
+- Solo0 (zero) will apply the inverse inversion vector
+
+#### Return type mute-sets:
+
+In addition to regular non-return mute-sets, mute-sets can get flagged as 'return' types by having a trailing 'r' after the numeric vector value. Return-type mute-sets will automatically return to the previous Mute-sets on the next sequence transition event (Jump or interrupt). This allows to build fill or intro variations using mutes or solos in addition to regular sequence variations.
+
+#### Default mute-set
+
+If there are no user defined mute sets available, the default set is 'all-on', else it will default to the 1st user defined set (0).
+
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img26.png width="100%">
+
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img27.png width="100%">
+
+------
 
 ### single track mute
 In addition to mute-sets, it is possible to toggle individual mutes per track while playing. Single mutes are accessed with the keys below the mute-set zone. However this feature is currently limited to the first track only since there is not much use of single mutes/unmutes.
