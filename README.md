@@ -213,18 +213,18 @@ Variations can get switched by the keys right below the Mute-zone.  If you switc
 ------
 
 ### Mute sets (groups)
-Mute sets are basically binary vectors allowing to mute or unmute multiple tracks simultaneously while playing. To guarantee smooth, syncronous mute/unmute transitions, they are only taken at interrupt sync edges similar to sequence transitions. All tracks in combination with defined mute sets spawn a matrix, which can be filled by individual "Mute<vector>" and "Solo<vector>" trackname keywords, where each <vector> represents the numerical binary mute/unmute row information for the given track.
+Mute sets are basically binary vectors allowing to mute or unmute multiple tracks simultaneously while playing. To guarantee smooth, syncronous mute/unmute transitions, they are only taken at interrupt sync edges similar to sequence transitions. All tracks in combination with defined mute sets spawn a matrix, which can be filled by individual "`Mute<vector>`" and "`Solo<vector>`" trackname keywords, where each `<vector>` represents the numerical binary mute/unmute row information for the given track.
 
 #### Solo sets
 
-The Solo keyword acts similar to Mute, however takes additionally the inversion vector into account. The inversion vector is basically an or'd version across all Solo vectors.
+The `Solo` keyword acts similar to `Mute`, however takes additionally the inversion vector into account. The inversion vector is basically an or'd version across all `Solo` vectors.
 
-#### notes about <vector> settings
+#### notes about `<vector>` settings
 
 - numerical settings can be given in either decimal or hexadecimal '0x' representation
 - the max. vector size is either limited to 32 elements for x86 or 64 elements for x64 platforms
-- the given <vector> value doesnt include default all -on and -off sets as they are always present and pre-filled
-- the total number of user-defined mute-sets (excluding default all -on and -off) is directly derrived from the maximum <vector> settings MSB
+- the given `<vector>` value doesnt include default all -on and -off sets as they are always present and pre-filled
+- the total number of user-defined mute-sets (excluding default all -on and -off) is directly derrived from the maximum `<vector>` settings MSB
 - multiple Mute/Solo keywords and vectors  within the same track can be combined will get xor'd into the matrix - cancelling or reenabling individual elements
 - if there is no numerical value specified, it will default to zero
 - Mute0 (zero) will apply the inversion vector (can be used to reenable unintetionally muted tracks, e.g. muted by Solo vectors)
