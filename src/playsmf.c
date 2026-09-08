@@ -596,7 +596,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
     for (t=12; t+8<=L; t += 8) { if (A >= 0) { args[A] = GetVal(D+t); if (argv[A]) { argv[A] = argv[0]+strlen(argv[0]); }} A++; }
     }
    if (L >= 44 && D[0] == 0x00 && (D[1]&0x7f) == 0x2b && (D[2]&0x7f) == 0x4d && D[3] >= 0x01 && D[3] <= 0x03) { signed Long T = MidiFileTrack_getNumber(MidiFileEvent_getTrack(midi_file_event)),
-    a = GetVal(D+4), b = GetVal(D+12), c = GetVal(D+20), d = GetVal(D+28), e = GetVal(D+36), v0 = d & 0xffff, v1 = e & 0xffff, t; d >>= 16;
+    a = GetVal(D+4), b = GetVal(D+12), c = GetVal(D+20), d = GetVal(D+28), e = GetVal(D+36), v0 = d & 0xffff, v1 = e & 0xffff, t; d = (unsigned Long)d >> 16;
     T |= a>>17; if (T < 0) { T += TrkNum; } if (T > TrkNum) { T = TrkNum; } a &= 0x1ffff; b &= 0x1ffff;
     for (t=a; t<=b; t+=c) { signed long v = v0, z = t & 0x1c000 | t<<7 & 0x3f80 | t>>7 & 0x7f; if (b-a) { v += (t-a)*(v1-v0)/(b-a); }
      switch (d & 0xf0) { case 0xb0: v = v << 16; break; case 0xe0: v = v << 9 & 0x7f0000 | v << 8 & 0x7f00; break; default: v <<= 8; }
