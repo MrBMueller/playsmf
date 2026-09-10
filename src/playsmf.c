@@ -599,7 +599,7 @@ for (midi_file_event = MidiFile_getFirstEvent(midi_file); midi_file_event; midi_
     a = GetVal(D+4), b = GetVal(D+12), c = GetVal(D+20), d = GetVal(D+28), e = GetVal(D+36), v0 = d & 0xffff, v1 = e & 0xffff, t; d = (unsigned Long)d >> 16;
     T |= a>>17; if (T < 0) { T += TrkNum; } if (T > TrkNum) { T = TrkNum; } a &= 0x1ffff; b &= 0x1ffff;
     for (t=a; t<=b; t+=c) { signed long v = v0, z = t & 0x1c000 | t<<7 & 0x3f80 | t>>7 & 0x7f; if (b-a) { v += (t-a)*(v1-v0)/(b-a); }
-     switch (d & 0xf0) { case 0xa0: case 0xb0: v = v << 16; break; default: v = v << 9 & 0x7f0000 | v << 8 & 0x7f00; }
+     switch (d & 0xf0) { case 0xa0: case 0xb0: v = v << 16; break; case 0xe0: v = v << 9 & 0x7f0000 | v << 8 & 0x7f00; break; default: v <<= 8; }
      if (D[3]&1) { if (T < TrkNum && cmap [T] == cmap [TrkNum]) { unsigned long k; cmap [T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap [T][k].v = cmap [TrkNum][k].v; cmap [T][k].s = cmap [TrkNum][k].s; }} cmap [T][z].v = v | d; if (L > 44) { cmap [T][z].v = (unsigned Long)&D[44]; cmap [T][z].s = L-44; }}
      if (D[3]&2) { if (T < TrkNum && cmap1[T] == cmap1[TrkNum]) { unsigned long k; cmap1[T] = malloc(_msize(cmap[0])); for (k=0; k<7*128*128; k++) { cmap1[T][k].v = cmap1[TrkNum][k].v; cmap1[T][k].s = cmap1[TrkNum][k].s; }} cmap1[T][z].v = v | d; if (L > 44) { cmap1[T][z].v = (unsigned Long)&D[44]; cmap1[T][z].s = L-44; }}
      }
