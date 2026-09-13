@@ -129,13 +129,15 @@ In addition to key routing and transformation by zone/layer, there is also realt
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img28.png width="50%" style="zoom:50%;" >
 
-```
-<MapEvent> = {<SMF-meta>, <SequencerSpecific>, <playsmf-ID>, <TargetMap>, <a>, <b>, <c>, <d>, <e>, [optional long msg data bytes]*}
+Mapping table setup format (sequencer specific SMF meta event):
 
-<SMF-meta>: 0xff; <SequencerSpecific>: 0x7f; <playsmf-ID>: 3 byte {0x00, 0x2b, 0x4d}
+```
+<MapEvent> = {<meta-event>, <type>, <length>, <Man-ID>, <TargetMap>, <a>, <b>, <c>, <d>, <e>, [optional data bytes]*}
+
+<meta-event>: 0xff; <type>: 0x7f Sequencer-Specific; <length>: number of data bytes (>=44); <Man-ID>: 3 byte {0x00, 0x2b, 0x4d}
 <TargetMap>: target map (0x01:primary, 0x02:secondary, 0x03:both)
 
-<a>..<e>: five 64-bit arguments, each represented by eight consecutive SMF data-bytes starting with MSB (big endian)
+<a>..<e>: five 64-bit arguments, each represented by eight consecutive data-bytes starting with MSB (big endian)
 example: a[63:0] = {a[63:56], a[55:48], a[47:40], a[39:32], a[31:24], a[23:16], a[15:8], a[7:0]};
 note: for 32-bit backward compatibility, only lower 32 bits are used (sign extended)
 
@@ -153,7 +155,6 @@ arguments:
 		- if larger than number of SMF tracks (e.g. max. 0x3fff), the general default map is accessed
 
 InputEventType[2:0]: 2 (key aftertouch), 3 (control change), 4 (program change), 5 (chan aftertouch), 6 (pitch bend)
-
 InputIntervalLo/Hi[13:0]: input value interval low and high limits (detailed interpretation depends on input event type)
 InputIncrementStep: input interval increment stepping (depends on input event type - see below)
 
@@ -162,8 +163,13 @@ InputIncrementStep: input interval increment stepping (depends on input event ty
 	4 or 5: InputInterval*[ 6:0] = Value[ 6:0]; IncrementStep typically 1
 	6     : InputInterval*[13:0] = Value[13:0]; IncrementStep typically 1
 
-OutputShortMsg[15:0]: fix part of target output message type (status/channel + 1st data byte)
-OutputIntervalLo/Hi[13:0]: output value interval low and high limits (range according to message type; low<->high swap allowed for inversion)
+OutputShortMsg[15:0]: fix part of target output message type (status/channel + optional 1st data byte)
+	- OutputShortMsg[7:0]: Status/channel (for channel messages, keep channel=zero since output track takes care)
+	- OutputShortMsg[15:8]: 1st data byte (typically zero since OutputInterval* takes care about data bytes)
+OutputIntervalLo/Hi[13:0]: output value interval low and high limits
+	- provide range according to output message type (7 vs. 14 bit values) and target range values
+	- low<->high swap allowed for inversion
+	- for constant values or key and system messages, set OutputIntervalLo=OutputIntervalHi
 
 ```
 
