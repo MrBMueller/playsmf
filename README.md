@@ -96,12 +96,83 @@ Specifically on Windows10 and 11, the std. console text output supports VT100 te
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img25.png width="100%">
 
-### MIDI-Thru and track-follow mode
-The player generally supports MIDI-Thru functionality with split and multi-layer modes for live sessions. However instead assigning fixed devices/channels to play on, you can assign tracks to follow their current device/channel combinations while playing. This enables dynamic MIDI-Thru (re)assignments during a live session.
+------
+
+### MIDI-Thru and track-follow mode (primary input routing)
+The player generally supports MIDI-Thru functionality with split and multi-layer modes for live sessions. However instead assigning fixed devices/channels to play on, you can assign layered zones to SMF tracks following their current device/channel combinations while playing. This enables dynamic MIDI-Thru (re)assignments and routing during a live session.
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img5.png width="100%">
 
+Zones can be defined by arguments above entry/exit key definitions. Each zone is defined by 7 consecutive arguments such as:
+
+* `<LowKey> <HighKey> <Track> <Delay> <KeyOffset> <Von> <Voff>`
+
+| parameter | description                                                  |
+| :-------: | :----------------------------------------------------------- |
+|  LowKey   | low key                                                      |
+|  HighKey  | high key                                                     |
+|   Track   | assigned track (count backward if negative, e.g. -1 assigns very last track) |
+|   Delay   | delay in ms (experimental feature - use in rare cases with small delays only) negative numbers will disable the entire zone and arguments are used as placeholders. delays are cummulative, meaning that subsequent zones will get delayed as well. therefore zones need to be arranged and ordered by delay settings starting with lowest delays (typically zero) |
+| KeyOffset | key transformation transpose +/-127 or set a fixed key if larger than 127 (e.g. can be used as fixed layered percussion sound) |
+|    Von    | NoteOn velocity transformation offset +/-127 or set a fixed value if larger than 127 |
+|   Voff    | NoteOff velocity transformation offset +/-127 or set a fixed value if larger than 127 |
+
+#### non-key channel message routing
+
+Primary input routing and transformation mainly applies to channel messages while incoming sysex data get captured and recorded, but not routed to any output. Key messages (Note on/off) are mainly routed and transformed by given zonal arguments while all other channel messages such as controller, aftertouch, program change and pitchbend follow only zones/layers assigend to the last pressed key. This allows to pass non-key channel messages selectively to zones/layers associated to certain keys or ranges. For instance if you have 2 split zones left and right, a program change, controller or pitchbend message might only get applied to either left or right zone dependend on whatever zone was accessed last. At startup if no key was pressed yet, non-channel messages will not get routed anywhere.
+
+One exception from selective non-key channel message routing are general foot controller such as damper,sustain and portamento switches. They get always routed to all zones simultaneously.
+
+#### non-key channel message transformation
+
+In addition to key routing and transformation by zone/layer, there is also realtime data manipulation and transformation for non-key channel messages implemented. Internally this is handled by lookup tables, mapping any incoming non-key channel message respective parameter(s) into any other event type / parameter combination. Those mapping tables can be filled and modified with sequencer specific SMF meta events (see below). Generally, event filtering and mapping is organized by two individual tables: one for primary input and one for all secondary inputs sharing the same table. Furthermore, each track assigns its own mapping table providing more flexibility for multi-zone and multi-layer setups.
+
+<img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img28.png width="50%" style="zoom:50%;" >
+
+```
+<MapEvent> = {<SMF-meta>, <SequencerSpecific>, <playsmf-ID>, <TargetMap>, <a>, <b>, <c>, <d>, <e>, [optional long msg data bytes]*}
+
+<SMF-meta>: 0xff; <SequencerSpecific>: 0x7f; <playsmf-ID>: 3 byte {0x00, 0x2b, 0x4d}
+<TargetMap>: target map (0x01:primary, 0x02:secondary, 0x03:both)
+
+<a>..<e>: five 64-bit arguments, each represented by eight consecutive SMF data-bytes starting with MSB (big endian)
+example: a[63:0] = {a[63:56], a[55:48], a[47:40], a[39:32], a[31:24], a[23:16], a[15:8], a[7:0]};
+note: for 32-bit backward compatibility, only lower 32 bits are used (sign extended)
+
+arguments:
+<a> : {TargetTrack, InputEventType[2:0], InputIntervalLo[13:0]}
+<b> : {             InputEventType[2:0], InputIntervalHi[13:0]}
+<c> : InputIncrementStep
+<d> : {OutputShortMsg[15:0], 2'0, OutputIntervalLo[13:0]}
+<e> : {                      2'0, OutputIntervalHi[13:0]}
+
+<TargetTrack>: only used if <MapEvent> is placed into the conductor (very 1st SMF) track, else taken from SMF track ID#.
+	- if placed into non-conductor tracks: always set this field to zero
+	- special cases if placed into conductor track:
+		- if nevative, tracks are selected backwards (e.g. -1 selects very last track)
+		- if larger than number of SMF tracks (e.g. max. 0x3fff), the general default map is accessed
+
+InputEventType[2:0]: 2 (key aftertouch), 3 (control change), 4 (program change), 5 (chan aftertouch), 6 (pitch bend)
+
+InputIntervalLo/Hi[13:0]: input value interval low and high limits (detailed interpretation depends on input event type)
+InputIncrementStep: input interval increment stepping (depends on input event type - see below)
+
+	InputEventType[2:0]
+	2 or 3: InputInterval*[13:7] = Value[ 6:0]; InputInterval*[6:0] = Key/Ctrl[6:0]; IncrementStep typically 0x80
+	4 or 5: InputInterval*[ 6:0] = Value[ 6:0]; IncrementStep typically 1
+	6     : InputInterval*[13:0] = Value[13:0]; IncrementStep typically 1
+
+OutputShortMsg[15:0]: fix part of target output message type (status/channel + 1st data byte)
+OutputIntervalLo/Hi[13:0]: output value interval low and high limits (range according to message type; low<->high swap allowed for inversion)
+
+```
+
+
+
+------
+
 ### general system integration
+
 The player runs as a standalone console application more or less in background and is mainly controlled by the primary midi input device/controller. In addition, the computer keyboard controls sequence restart (CTRL+C) and sequence exit (CTRL+PAUSE/BREAK) flow control jumps.
 
 For seamless system integration along with your faforite DAWs, software synthesizers, virtual midi controllers, etc. it is strongly recommented to install virtual midi routers/cables to connect playsmf with other applications. Especially since MIDI devices are typically blocked when opened by one client, it is possible to route additional (secondary slaved) input devices thru playsmf to all open output devices. This allows to hook real or virtual midi controllers (mixer applications, etc.) thru playsmf to all open outputs.
