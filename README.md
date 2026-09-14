@@ -123,9 +123,9 @@ Zones can be defined by arguments above entry/exit key definitions. Each zone is
 
 > [!TIP]
 >
-> If global argument #6 `<Channel>` is set to -2 or less, the attached track number is calclated by `<Track> + Abs(<Channel>)-2 + <InputChannel>`. This allows to change track assignments dynamically while changing the output channel on your instrument.
+> If global argument #6 `<Channel>` is set to -2 or less, the attached track number is calculated by `<Track> + Abs(<Channel>)-2 + <InputChannel>`. This allows to change track assignments dynamically by changing the output channel on your instrument.
 
-### non-channel message routing
+### non-channel message handling
 
 Non-channel messages such as SysEx, System realtime, etc. get captured and recorded (except active sensing and clock messages), however not routed anywhere.
 
@@ -133,11 +133,14 @@ Non-channel messages such as SysEx, System realtime, etc. get captured and recor
 
 Incoming key (Note on/off) messages get routed and transformed according to zonal definitions to all assigned zones/layers simultaneously.
 
-### non-key channel message routing
+### selective non-key channel message routing
 
 Other channel messages such as controller, aftertouch, program change and pitchbend follow only zones/layers assigend to the last pressed key. This allows to pass non-key channel messages selectively to zones/layers associated to certain keys or ranges. For instance if you have 2 split zones left and right, a program change, controller or pitchbend message might only get applied to either left or right zone dependend on whatever zone was accessed last. At startup if no key was pressed yet, non-channel messages will not get routed anywhere.
 
-One exception from selective non-key channel message routing are general foot controller such as damper,sustain and portamento switches. They get always routed to all zones simultaneously.
+> [!NOTE]
+>
+> One exception from selective non-key channel message routing are general foot controller such as damper,sustain and portamento switches. They get always routed to all zones simultaneously.
+>
 
 #### non-key channel message transformation
 
@@ -188,7 +191,7 @@ OutputIntervalLo/Hi[13:0]: output value interval low and high limits
 	- for constant values or key and system messages, set OutputIntervalLo=OutputIntervalHi
 	- if all Output* settings are zero, the input event will not get routed anywhere (filter function)
 
-general note: If <length> is larger than 0x2c (44 data bytes), all Output* settings are ignored and remaining optional data bytes are taken as a long message. This can be used for SysEx or any other multi message mapping.
+general note: If <length> is larger than 0x2c (44 data bytes), all Output* settings are ignored and remaining optional data bytes are taken as the target long message. This can be used for SysEx or any other multi message mapping.
 ```
 
 ------
