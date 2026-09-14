@@ -10,7 +10,7 @@ On purpose, the player lags for a graphical user interface since everything shou
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img4.png width="100%">
 
-### example files
+## example files
 To get started quickly, few example midi files are attached. Some of them are converted from Yamaha style files to demonstrate the players capabilities. Therefore best results will be achieved with an XG compatible sound device. In order to get full realtime performance, it is strongly recommended to use either real midi equipment or softsynths with low latency settings (response lag time <= 10ms). For realtime accompaniement demonstration of course a real midi controller aka. keyboard is strongly recommended as a primary input device.
 
 In case you dont know your midi device IDs or names for the correct player setup, run MidiPorts.bat to list all input and output devices respective their IDs. Chose the right ones as primary input and output devices and adjust command line parameters #3 and #4 accordingly.
@@ -33,16 +33,16 @@ The style examples are typically setup with chord recognition left hand across 2
 [example video link](https://www.youtube.com/watch?v=5WDd0XAmTrY)
 [example video link](https://www.youtube.com/watch?v=3SKOt4oED8Y)
 
-### console output screen
+## console output screen
 Generally there is not much to display since the user should more focus on playing and listen rather than watching the screen. However in some situations it comes handy to track and follow requested sequence transitions. Therefore the console output displays one line for each transition request with additional information such as labels and song/sequence positions for playing and target sequences.
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img12.png width="100%">
 
-### output MIDI devices
+## output MIDI devices
 The player generally allows to play across multiple output devices simultaneously. Typically devices are chosen by SMF Meta-Event 0x20 (port ID select) at the very beginning of each individual track, but in addition the player also allows switching port IDs while playing at any song position. If port-select events are missing, the player uses the default midi output device provided by command line parameter #3.
 In addition SMF Meta-Text-Event 0x9 is supported as well for name based port selection, however it is recommented to use device IDs rather than port names for better across system portability.
 
-### midi smf recording
+## midi smf recording
 The player generally supports full live session recording and captures all data across all sources such as smf-, primary- and secondary inputs at once. This provides a merged smf output for either further offline processing or manual editing and inspection in any sequencer software. The output smf structure is organized in track groups and tracks for each individual data source and their functional data splits. This includes the following output tracks:
 
  - "conductor" track - contains general SMF setup data such as Tempo, Key-Signature, Time-Signature, etc. and Marker Labels for each individual Label transition. Together with the primary chord track, you can easily follow chord changes respective their triggered sequence transitions.
@@ -82,12 +82,12 @@ example argument settings (hex values):
 - 0x7fff06ff - external input + internal marker text events (record meta events)
 - 0xff80f0 - external input + internal sysex events (might be used for sysex data/dump requests)
 
-### supported midi event types (playing, recording)
+## supported midi event types (playing, recording)
 Basically all types of midi events including system common (sysex, time code, song select/position, etc.) and system realtime (start, stop, continue, active sensing) events are supported. Since system common (except sysex) and realtime events are not part of the smf specification, they are typically embedded in escape meta events (0xf7). The player generally supports such events and therfore  it is possible to include for instance time code, active sensing or start/stop/continue transport control events into the song sequence for playback.
 
 On the recording side, the player records everything including sysex, system common and system realtime events except midi timecode, timing clock and active sensing. Similar as on the player side, the recorder packs system common and realtime events (which are not part of the smf spec.) into escape meta events. This way you can also record something like start/stop/continue transport control data into the smf.
 
-### SMF text event support
+## SMF text event support
 SMF text events are typically ignored unless they are explicitly enabled using argument 0x5xxxx where bits [15:1] represent a mask filter for SMF text meta event types 1 to 15. If bit 0 is disbaled, text messages within the 1st bar measure are ignored, else everthing gets displayed on the console output including track names, device names, etc. Text messages are simply displayed as they are on the console output screen at the time when they appear in the sequence. This can be used either for simple lyric printing or in combination with style type pattern to display messages on certain timestamps or in combination with marker labels for style accompaniement tracking.
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img24.png width="100%">
@@ -98,7 +98,7 @@ Specifically on Windows10 and 11, the std. console text output supports VT100 te
 
 ------
 
-### MIDI-Thru and track-follow mode (primary input routing)
+## MIDI-Thru and track-follow mode (primary input routing)
 The player generally supports MIDI-Thru functionality with split and multi-layer modes for live sessions. However instead assigning fixed devices/channels to play on, you can assign layered zones to SMF tracks following their current device/channel combinations while playing. This enables dynamic MIDI-Thru (re)assignments and routing during a live session.
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img5.png width="100%">
@@ -117,9 +117,25 @@ Zones can be defined by arguments above entry/exit key definitions. Each zone is
 |    Von    | NoteOn velocity transformation offset +/-127 or set a fixed value if larger than 127 |
 |   Voff    | NoteOff velocity transformation offset +/-127 or set a fixed value if larger than 127 |
 
-#### non-key channel message routing
+> [!NOTE]
+>
+> All incoming messages across all received channels will typically get routed to assigend zones/layers. In case the primary midi controller sends across multiple channels simultaneously (like some controllers do for layered instruments), routing might be triggered unintentionally multiple times for each channel. To filter for a certain incoming channel, global argument #6 `<Channel>` can be used. By default it is set to -1 passing all channels, however any value 0..15 will pass only a single selected channel.
 
-Primary input routing and transformation mainly applies to channel messages while incoming sysex data get captured and recorded, but not routed to any output. Key messages (Note on/off) are mainly routed and transformed by given zonal arguments while all other channel messages such as controller, aftertouch, program change and pitchbend follow only zones/layers assigend to the last pressed key. This allows to pass non-key channel messages selectively to zones/layers associated to certain keys or ranges. For instance if you have 2 split zones left and right, a program change, controller or pitchbend message might only get applied to either left or right zone dependend on whatever zone was accessed last. At startup if no key was pressed yet, non-channel messages will not get routed anywhere.
+> [!TIP]
+>
+> If global argument #6 `<Channel>` is set to -2 or less, the attached track number is calclated by `<Track> + Abs(<Channel>)-2 + <InputChannel>`. This allows to change track assignments dynamically while changing the output channel on your instrument.
+
+### non-channel message routing
+
+Non-channel messages such as SysEx, System realtime, etc. get captured and recorded (except active sensing and clock messages), however not routed anywhere.
+
+### key message routing
+
+Incoming key (Note on/off) messages get routed and transformed according to zonal definitions to all assigned zones/layers simultaneously.
+
+### non-key channel message routing
+
+Other channel messages such as controller, aftertouch, program change and pitchbend follow only zones/layers assigend to the last pressed key. This allows to pass non-key channel messages selectively to zones/layers associated to certain keys or ranges. For instance if you have 2 split zones left and right, a program change, controller or pitchbend message might only get applied to either left or right zone dependend on whatever zone was accessed last. At startup if no key was pressed yet, non-channel messages will not get routed anywhere.
 
 One exception from selective non-key channel message routing are general foot controller such as damper,sustain and portamento switches. They get always routed to all zones simultaneously.
 
@@ -132,9 +148,9 @@ In addition to key routing and transformation by zone/layer, there is also realt
 Mapping table setup format (sequencer specific SMF meta event):
 
 ```
-<MapEvent> = {<meta-event>, <type>, <length>, <Man-ID>, <TargetMap>, <a>, <b>, <c>, <d>, <e>, [optional data bytes]*}
+<MapEvent> = {0xff, 0x7f, 0x2c+<length>, 0x00, 0x2b, 0x4d, <TargetMap>, <a>, <b>, <c>, <d>, <e>, [optional data bytes]*}
 
-<meta-event>: 0xff; <type>: 0x7f Sequencer-Specific; <length>: number of data bytes (>=44); <Man-ID>: 3 byte {0x00, 0x2b, 0x4d}
+<length>: number of optional data bytes
 <TargetMap>: target map (0x01:primary, 0x02:secondary, 0x03:both)
 
 <a>..<e>: five 64-bit arguments, each represented by eight consecutive data-bytes starting with MSB (big endian)
@@ -145,8 +161,8 @@ arguments:
 <a> : {TargetTrack, InputEventType[2:0], InputIntervalLo[13:0]}
 <b> : {             InputEventType[2:0], InputIntervalHi[13:0]}
 <c> : InputIncrementStep
-<d> : {OutputShortMsg[15:0], 2'0, OutputIntervalLo[13:0]}
-<e> : {                      2'0, OutputIntervalHi[13:0]}
+<d> : {OutputMsg[15:0], 2'0, OutputIntervalLo[13:0]}
+<e> : {                 2'0, OutputIntervalHi[13:0]}
 
 <TargetTrack>: only used if <MapEvent> is placed into the conductor (very 1st SMF) track, else taken from SMF track ID#.
 	- if placed into non-conductor tracks: always set this field to zero
@@ -163,27 +179,27 @@ InputIncrementStep: input interval increment stepping (depends on input event ty
 	4 or 5: InputInterval*[ 6:0] = Value[ 6:0]; IncrementStep typically 1
 	6     : InputInterval*[13:0] = Value[13:0]; IncrementStep typically 1
 
-OutputShortMsg[15:0]: fix part of target output message type (status/channel + optional 1st data byte)
-	- OutputShortMsg[7:0]: Status/channel (for channel messages, keep channel=zero since output track takes care)
-	- OutputShortMsg[15:8]: 1st data byte (typically zero since OutputInterval* takes care about data bytes)
+OutputMsg[15:0]: fix part of target output message type (status/channel + optional 1st data byte)
+	- OutputMsg[7:0]: Status/channel (for channel messages, keep channel=zero since output track takes typically care)
+	- OutputMsg[15:8]: 1st data byte (typically zero since OutputInterval* takes care about data bytes)
 OutputIntervalLo/Hi[13:0]: output value interval low and high limits
 	- provide range according to output message type (7 vs. 14 bit values) and target range values
 	- low<->high swap allowed for inversion
 	- for constant values or key and system messages, set OutputIntervalLo=OutputIntervalHi
+	- if all Output* settings are zero, the input event will not get routed anywhere (filter function)
 
+general note: If <length> is larger than 0x2c (44 data bytes), all Output* settings are ignored and remaining optional data bytes are taken as a long message. This can be used for SysEx or any other multi message mapping.
 ```
-
-
 
 ------
 
-### general system integration
+## general system integration
 
 The player runs as a standalone console application more or less in background and is mainly controlled by the primary midi input device/controller. In addition, the computer keyboard controls sequence restart (CTRL+C) and sequence exit (CTRL+PAUSE/BREAK) flow control jumps.
 
 For seamless system integration along with your faforite DAWs, software synthesizers, virtual midi controllers, etc. it is strongly recommented to install virtual midi routers/cables to connect playsmf with other applications. Especially since MIDI devices are typically blocked when opened by one client, it is possible to route additional (secondary slaved) input devices thru playsmf to all open output devices. This allows to hook real or virtual midi controllers (mixer applications, etc.) thru playsmf to all open outputs.
 
-### Labels
+## Labels
 Labels are basically address markers defining entry-points for either jumps or interrupts into the smf sequence. Internally they represent numerical addresses pointing to the next midi event within the smf data stream. Address labels can have any (positive) numerical value as long as they get only used in combination with intrinsic flow control using jumps. However in combination with external interrupts, they have to follow a certain structure with rules (see interrupt section). Numerical values can be presented in decimal or hexadecimal (0x) notation.
 
 Sequence entry-points can share multiple Labels simultaneously. For example different chord-inversions for the same chord-type and chord-key can get assigned to the same physical sequence unless you want to split them on purpose to build individual variations. Label auto-expansion makes use of this feature generating additional internal chord/variation Labels if they are not already defined.
@@ -196,13 +212,13 @@ One specific type of labels are Auto-Labels. Essentially they represent automati
 ### Label auto-expansion
 If the smf doesnt provide individual pattern with dedicated labels across all chord-scales/inversions and variations, the player expands existing base-labels automatically.
 
-### Immediate Labels ('i')
+## Immediate Labels ('i')
 Immediate labels define sequence sections which allow to interrupt immediately without waiting for the next sync point if an interrupt request is pending. Pending notes will be interrupted and the sequencer jumps immediately to the requested sequence entry point.
 
 ### Re-trigger Labels ('r')
 Typically looped sequences will not get retriggered on consecutive subsequent requests for the very same label unless the label is marked as re-trigger type.
 
-### Jumps
+## Jumps
 Jumps are basically branches jumping immediately to target address labels. The target label can either be a (positive) absolute address or a (negative) relative number of labels for relative backward jumps or looping. Numerical values can be presented in decimal or hexadecimal (0x) notation.
 
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img7.png width="100%">
@@ -283,20 +299,20 @@ This is a regular Jump, however the sequence doesnt branch if a **retrigger** in
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img8.png width="100%">
 <img src=https://raw.githubusercontent.com/MrBMueller/playsmf/master/img/Img9.png width="100%">
 
-### Variations
+## Variations
 A set of Labels in the range from 0x000-0xfff is called a variation. To include multiple variations, the player takes the most significant Label digits as a variation number. So for instance Labels between 0x0000-0x0fff belong to variation 0 while Labels between 0x1000-0x1fff belong to variation 1.
 Variations can get switched by the keys right below the Mute-zone.  If you switch from a non-return (looping) sequence to a return (one-shot) sequence variation, the variation will return back once finished, else you'll stay in the new variation. This allows to implement variations with fills or breaks in contrast to regular main (looping) variations.
 
 ------
 
-### Mute sets (groups)
+## Mute sets (groups)
 Mute sets are basically binary vectors allowing to mute or unmute multiple tracks simultaneously while playing. To guarantee smooth, syncronous mute/unmute transitions, they are only taken at interrupt sync edges similar to sequence transitions. All tracks in combination with defined mute sets spawn a matrix, which can be filled by individual "`Mute<vector>`" and "`Solo<vector>`" trackname keywords, where each `<vector>` represents the numerical binary mute/unmute row information for the given track.
 
-#### Solo sets
+### Solo sets
 
 The `Solo` keyword acts similar to `Mute`, however takes additionally the inversion vector into account. The inversion vector is basically an or'd version across all `Solo` vectors.
 
-#### notes about `<vector>` settings
+### notes about `<vector>` settings
 
 - numerical settings can be given in either decimal or hexadecimal '0x' representation
 - the max. vector size is either limited to 32 elements for x86 or 64 elements for x64 platforms
@@ -307,11 +323,11 @@ The `Solo` keyword acts similar to `Mute`, however takes additionally the invers
 - Mute0 (zero) will apply the inversion vector (can be used to reenable unintetionally muted tracks, e.g. muted by Solo vectors)
 - Solo0 (zero) will apply the inverse inversion vector
 
-#### Return type mute-sets:
+### Return type mute-sets:
 
 In addition to regular non-return mute-sets, mute-sets can get flagged as 'return' types by having a trailing 'r' after the numeric vector value. Return-type mute-sets will automatically return to the previous Mute-sets on the next sequence transition event (Jump or interrupt). This allows to build fill or intro variations using mutes or solos in addition to regular sequence variations.
 
-#### Default mute-set
+### Default mute-set
 
 If there are no user defined mute sets available, the default set is 'all-on', else it will default to the 1st user defined set (0).
 
@@ -321,42 +337,18 @@ If there are no user defined mute sets available, the default set is 'all-on', e
 
 ------
 
-### single track mute
+## single track mute
 In addition to mute-sets, it is possible to toggle individual mutes per track while playing. Single mutes are accessed with the keys below the mute-set zone. However this feature is currently limited to the first track only since there is not much use of single mutes/unmutes.
 
-### Midi thru and track follow mode
-For live performance, midi thru functionality with multi-zone (split) and multi-layer functionality is implemented. However instead of specifying fixed target output port/channel combinations, midi thru gets hooked to tracks and follows their port/channel combination while playing. This provides the flexibility to change the midi thru output with the individual pattern played. For instance one can assign all major chords to one output while all minor chords get routed to another one.
-
-### Typical "style" smf structure
+## Typical "style" smf structure
 A style-like smf structure starts typically with an initialization sequence at the very beginning. This part contains all events (sysex, controller, local control off, etc.) to setup the midi equipment. Once finished, it can immediately transition into a "silent-loop" just waiting for input. In order to hear if the player is alive, you can additionally put a quiet metronome click into the silent-loop. After that, the data section starts containing all data for the various chord types (major, minor, sus2, etc.). At the very end, you can have an exit-sequence which gets only transmitted when the player finishes (e.g. turn local control on, etc).
 
-### exit codes
-The player exits with different return codes based on the exit scenario.
-
-* 0 regular exit: the player normally reached the sequence end
-* 1 error: e.g. file not found or argument error
-* 2 timeout: the player stopped due to midi timeout (lost midi equipment connection)
-* 3 CTRL+PAUSE/BREAK: player was forced to exit from computer keyboard
-* 4 exit: the player was forced to exit from primary midi input (exit label key)
-* 5 last: the player stopped normally after reaching the last sequence label
-
-The player comes with specific features such as:
-
-- intrinsic realtime player flow control using jump/branch commands in combination with target address labels (primarily used for loops)
-- realtime midi controlled jumps (interrupts) in combination with target address labels
-- chord recognition for midi realtime interrupt/break/jump control
-- multiport capability controlled by SMF Port metaevents per track
-- SysEx in/out support
-- multi-layer/multi-zone midi thru functionality based on "track follow mode" (thru port/channel follows selected tracks)
-- realtime midi controlled mutes/unmutes based on "mute-sets" (mute/unmute multiple tracks simultaneously at interrupt break points)
-- record/save all incoming midi and sysex events into standard midi files
-
-### usage:
+## usage:
 
 `playsmf.exe <MidiFile> <TimerPeriod> <DefaultMidiOutputDevice> <DefaultMidiInputDevice> <TimeOut> <Channel> <Ofs> <REC> <INT> <KeyStart> <KeyExit>`
 
 *  0 `playsmf.exe` - application
-*  1 `<MidiFile>` - inputfile *.mid
+*  1 `<MidiFile>` - input SMF file *.mid
 *  2 `<TimerPeriod>` - windows timer resolution in ms or -1 if not used
 *  3 `<DefaultMidiOutputDevice>` - default midi output device ID or device name if quoted
 *  4 `<DefaultMidiInputDevice>`  - default primary midi input device ID or device name if quoted
@@ -368,29 +360,9 @@ The player comes with specific features such as:
 * 10 `<KeyStart>` - start key (EntryLabel)
 * 11 `<KeyExit>` - exit key (ExitLabel)
 
-#### additional options beyond argument address >= 12:
+### additional options beyond argument address >= 12:
 
 * `ThruZone ::= (<LowKey> <HighKey> <Track> <Delay> <KeyOffset> <Von> <Voff>)`
-
-Defines a midi-thru zone with the following mantadory attributes/parameters:
-
-* `<LowKey>`    lowest  key in zone [0:127] (if <=-2 use <LowKey> from previous zone; if -1 use <HighKey>+1 from previous zone)
-* `<HighKey>`   highest key in zone [0:127] or <range> if negative
-* `<Track>`     assigned track [-1,0:n] (-1: no assignment)
-* `<Delay>`     delay im ms [0:n] (experimental feature - use in rare cases with only small delay values to achive flanger-type effects)
-* `<KeyOffset>` transpose [-127:0:127] or fixed key [128:255]
-* `<Von>`       note-on  velocity modulator <0xssoo>: <ss> 0=1,([1:5:255]-1)*.25 -> [1,0:1:63.5] scale factor; <oo> [-127:0:127] offset
-* `<Voff>`      note-off velocity modulator <0xssoo>: <ss> 0=1,([1:5:255]-1)*.25 -> [1,0:1:63.5] scale factor; <oo> [-127:0:127] offset
-
-#### notes/comments/terminologies:
- - multiple zones can be defined consecutively
- - chord recognizion key range is always derrived from the 1st defined zone in argument list (mandatory zone - even though chord recognition is not used)
- - midi-thru works generally in 'track-follow-mode' with the primary midi input attached to individual tracks following their output device/channel combinations while playing
- - each individual key allows having up to 8 zones/tracks (layers) attached
- - 'active' zones/tracks are all zones (tracks) belonging to the latest pressed key
- - incoming channel messages including controller, pitch-bend, program-change, etc. are generally routed to active zones/tracks only. this allows to change selectively patches, volumes, pannings, etc. for active zones only while playing
- - exceptions are foot/pedal controller such as soft, sostenuto and sustain which are generally sent across all defined zones/tracks simultaneously
- - tracks can get dynamically re-assigned while playing by changing the incoming midi channel. to enable this option, `<Channel>` needs to be <= -2. in this case, the received channel is added to the target tracks.
 
 #### port/device mapping
 If the smf contains port-select meta-events where port numbers doesnt match to target device-IDs, you can apply additional port->device mappings.
@@ -409,7 +381,20 @@ In order to reset midi equipment upon player start and/or exit, you can optional
 - `<0x03mmmmm0>` start/exit midi message (play given message across all channels before and after smf sequence starts/stops)
 
 
-#### smf intrinsic arguments
-In order to store command line arguments with the smf, the player supports sequencer specific meta messages to set and/or override command line arguments. Argument data is stored in 32-bit integer values `<DD>` starting from argument address `<AA>` followed by one or more arguments.
+### smf intrinsic arguments
+In order to store command line arguments with the smf, the player supports sequencer specific meta messages to set and/or override command line arguments. Argument data is stored in 64-bit integer values `<D>` starting from argument address `<A>` followed by one or more arguments.
 
-- `<0xff> <length> <0x7f> <0x00> <0xab> <0xcd> <0x00> <AA[31:24]> <AA[23:16]> <AA[15:8]> <AA[7:0]> (<DD[31:24]> <DD[23:16]> <DD[15:8]> <DD[7:0]>)*`
+- `<0xff> <0x7f> <length> <0x00> <0x2b> <0x4d> <0x00> <A[63:56]> <A[55:48]> <A[47:40]> <A[39:32]> <A[31:24]> <A[23:16]> <A[15:8]> <A[7:0]> (<D[63:56]> <D[55:48]> <D[47:40]> <D[39:32]> <D[31:24]> <D[23:16]> <D[15:8]> <D[7:0]>)*`
+
+### exit codes
+
+The player exits with different return codes based on the exit scenario.
+
+* 0 regular exit: the player normally reached the sequence end
+* 1 error (e.g. file not found)
+* 2 timeout: the player stopped due to midi timeout (lost midi equipment connection)
+* 3 player was forced to exit by closed window
+* 4 player was forced to exit by CTRL+PAUSE/BREAK
+* 5 player was forced to exit by primary midi input exit label request
+* 6 player was forced to exit by primary midi input last label request
+* 7 other label request
