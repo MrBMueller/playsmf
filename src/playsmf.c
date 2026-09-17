@@ -301,7 +301,7 @@ while (Thrus && (Thru->Trk = Thrus[Ch][++i]) || Key && (Thru = &Key->Thrus[++i])
 
  if (Thru == &ThruO) { signed long z = -1, k;
   for (k=12; k+6<_msize(args)/sizeof(void*); k+=args[k]>>16?1:7) { if (!(args[k]>>16)) { signed long T = args[k+2]; z++; if (T < 0) { T = TrkNum-abs(T); }
-   if (args[k+3] >= 0 && T >= 0 && T < TrkNum && (C < 0 || Ch == C)) { if (C < -1) { if (args[k+2] < 0) { T -= Ch+abs(C+2); if (T < 0) { T = TrkNum - 1 - abs(T+1) % TrkNum; }} else { T += Ch+abs(C+2); T %= TrkNum; }} if (TrkID == T) { Thru->z = z; break; }}
+   if (args[k+3] >= 0 && T >= 0 && T < TrkNum && (C < 0 || C>>Ch&1)) { if (C < -1) { if (args[k+2] < 0) { T -= Ch+abs(C+2); if (T < 0) { T = TrkNum - 1 - abs(T+1) % TrkNum; }} else { T += Ch+abs(C+2); T %= TrkNum; }} if (TrkID == T) { Thru->z = z; break; }}
    }}
   }
 
@@ -634,13 +634,13 @@ for (j=0; j<sizeof(Crds)/sizeof(unsigned short); j+=2) { unsigned long c = Crds[
 for (i=0; i<(sizeof(Port2Port)/sizeof(unsigned char)); i++) { Port2Port[i] = i; } PrintTxt = 0; for (i=12; i<_msize(args)/sizeof(void*); i++) { if ((args[i]>>16) == 5) { PrintTxt = args[i] & 0xffff; }}
 
 imap = NULL; i = 0;
-for (k=12; k<_msize(args)/sizeof(void*); k++) { if (args[k]>>24 == 4) { i = k; } if (args[k]>>24 == 5 && i) { signed long t = args[i], s = args[k], c = args[6]>=0?args[6]:-1, c0 = c<0?0:c, c1 = c0;
+for (k=12; k<_msize(args)/sizeof(void*); k++) { if (args[k]>>24 == 4) { i = k; } if (args[k]>>24 == 5 && i) { signed long t = args[i], s = args[k], c = args[6]>=0?args[6]:0xffff;
  if (!imap) { imap = malloc(0x1fc001*sizeof(unsigned long)); for (j=0; j<=0x1fc000; j++) { imap[j] = j << 16 & 0x7f0000 | j << 1 & 0x7f00 | 0x80 | j>>14 & 0x7f; }}
- t = t<<1 & 0x1000000 | t & 0x7f7fff; if ((t & 0xe0) == 0x80) { t = t & ~0x7f00 | ((t>>8 & 0x7f)-InOfs & 0x7f) << 8; } if ((s & 0xf0) == 0xf0 || s & 0xf) { c0 = c1 = 0; } else if (c < 0) { c0 = 0; c1 = 15; }
- for (j=c0; j<=c1; j++) { imap[s >> 16 & 0x7f | s >> 1 & 0x3f80 | (s | j)<<14 & 0x1fc000] = t | ((t & 0xf0) == 0xf0 || t & 0xf ? 0 : j); }
+ t = t<<1 & 0x1000000 | t & 0x7f7fff; if ((t & 0xe0) == 0x80) { t = t & ~0x7f00 | ((t>>8 & 0x7f)-InOfs & 0x7f) << 8; } if ((s & 0xf0) == 0xf0 || s & 0xf) { c = 0x0001; }
+ for (j=0; j<=15; j++) { if (c>>j&1) { imap[s >> 16 & 0x7f | s >> 1 & 0x3f80 | (s | j)<<14 & 0x1fc000] = t | ((t & 0xf0) == 0xf0 || t & 0xf ? 0 : j); }}
  }}
 
-if (imap) { for (i=0; i<=0x6f; i++) { j = 0; for (k=0; k<=0x3fff; k++) { if (imap[i<<14 | k] != (k << 16 & 0x7f0000 | k << 1 & 0x7f00 | 0x80 | i)) { j++; }} if (args[6] >= 0 && (i & 0xf) != args[6]) { j++; }
+if (imap) { for (i=0; i<=0x6f; i++) { j = 0; for (k=0; k<=0x3fff; k++) { if (imap[i<<14 | k] != (k << 16 & 0x7f0000 | k << 1 & 0x7f00 | 0x80 | i)) { j++; }} if (args[6] >= 0 && !(args[6]>>(i&0xf)&1)) { j++; }
  if (j) { for (k=0; k<=0x3fff; k++) { if (imap[i<<14 | k] == (k << 16 & 0x7f0000 | k << 1 & 0x7f00 | 0x80 | i)) { imap[i<<14 | k] = 0xfe; }}}
  }}
 
@@ -685,7 +685,7 @@ for (i=0; i<=15; i++) { signed long z = -1;
    signed long K0 = args[k+0], K1 = args[k+1], T = args[k+2], Delay = args[k+3], K = args[k+4], V1 = args[k+5], V0 = args[k+6];
    signed char v0o = V0&0xff, v1o = V1&0xff; float v0s = 1.0, v1s = 1.0; if (V0 > 255) { v0s = ((V0>>8)-1)*.25; } if (V1 > 255) { v1s = ((V1>>8)-1)*.25; }
    if (K0 <= -2) { K0 = Ck; } if (K0 == -1) { K0 = Mk; } if (K1 < 0) { K1 = K0+abs(K1)-1; } if (K1 > KSz-1) { K1 = KSz-1; } Ck = K0; Mk = K1+1; if (T < 0) { T = TrkNum-abs(T); }
-   if (Delay >= 0 && T >= 0 && T < TrkNum && (C < 0 || i == C)) { if (C < -1) { if (args[k+2] < 0) { T -= i+abs(C+2); if (T < 0) { T = TrkNum - 1 - abs(T+1) % TrkNum; }} else { T += i+abs(C+2); T %= TrkNum; }}
+   if (Delay >= 0 && T >= 0 && T < TrkNum && (C < 0 || C>>i&1)) { if (C < -1) { if (args[k+2] < 0) { T -= i+abs(C+2); if (T < 0) { T = TrkNum - 1 - abs(T+1) % TrkNum; }} else { T += i+abs(C+2); T %= TrkNum; }}
     for (j = K0; j <= K1; j++) { signed long L = -1, a = j+K, t; while (L < ((int)(sizeof(Keys[i][j].Thrus)/sizeof(struct Thru))-2) && Keys[i][j].Thrus[++L].Trk) {} if (K > 0x7f) { a = K & 0x7f; } if ((a > 127) || (a < 0)) { a = j; }
      Keys[i][j].Thrus[L].Trk = &TrkInfo[T]; Keys[i][j].Thrus[L].Delay = Delay; Keys[i][j].Thrus[L].k = a; Keys[i][j].Thrus[L].z = z;
      Keys[i][j].Thrus[L].m = 1; for (t=0; t<L; t++) { if (Keys[i][j].Thrus[L].Trk == Keys[i][j].Thrus[t].Trk) { Keys[i][j].Thrus[L].m = 0; }}
