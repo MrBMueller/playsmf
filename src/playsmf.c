@@ -640,8 +640,15 @@ for (k=12; k<_msize(args)/sizeof(void*); k++) { if (args[k]>>24 == 4) { i = k; }
  for (j=0; j<=15; j++) { if (c>>j&1) { imap[s >> 16 & 0x7f | s >> 1 & 0x3f80 | (s | j)<<14 & 0x1fc000] = t | ((t & 0xf0) == 0xf0 || t & 0xf ? 0 : j); }}
  }}
 
-if (imap) { for (i=0; i<=0x6f; i++) { j = 0; for (k=0; k<=0x3fff; k++) { if (imap[i<<14 | k] != (k << 16 & 0x7f0000 | k << 1 & 0x7f00 | 0x80 | i)) { j++; }} if (args[6] >= 0 && !(args[6]>>(i&0xf)&1)) { j++; }
- if (j) { for (k=0; k<=0x3fff; k++) { if (imap[i<<14 | k] == (k << 16 & 0x7f0000 | k << 1 & 0x7f00 | 0x80 | i)) { imap[i<<14 | k] = 0xfe; }}}
+if (imap) { for (i=0; i<=0x6f; i++) {
+ if (i <= 0x3f) { unsigned long a; for (a=0; a<=0x7f; a++) {
+  j = 0; for (k=0; k<=0x7f; k++) { if (imap[i<<14 | a<<7 | k] != (k << 16 | a << 8 | 0x80 | i)) { j++; }}
+  if (args[6] >= 0 && !(args[6]>>(i&0xf)&1) || j) { for (k=0; k<=0x7f; k++) { if (imap[i<<14 | a<<7 | k] == (k << 16 | a << 8 | 0x80 | i)) { imap[i<<14 | a<<7 | k] = 0xfe; } } }
+  }}
+ else {
+  j = 0; for (k=0; k<=0x3fff; k++) { if (imap[i<<14 | k] != (k << 16 & 0x7f0000 | k << 1 & 0x7f00 | 0x80 | i)) { j++; }}
+  if (args[6] >= 0 && !(args[6]>>(i&0xf)&1) || j) { for (k=0; k<=0x3fff; k++) { if (imap[i<<14 | k] == (k << 16 & 0x7f0000 | k << 1 & 0x7f00 | 0x80 | i)) { imap[i<<14 | k] = 0xfe; }}}
+  }
  }}
 
 start: timeGetDevCaps(&time_caps, sizeof(TIMECAPS));
