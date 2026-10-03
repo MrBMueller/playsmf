@@ -307,7 +307,7 @@ while (Thrus && (Thru->Trk = Thrus[Ch][++i]) || Key && (Thru = &Key->Thrus[++i])
 
  track = MidiFile_getTrackByNumber(midi_file, 1+TrkNum+6+Thru->z, 0);
 
- if ((m || Thru->m) && ThruE && ThruE->Ch < 17) { signed long ID, IDt = -1; MidiFileEvent_t midi_file_event; if (midiOutGetId(ThruE->midi_out, &ID, Port2Out)) { ID = -2; } else { ID++; } d += Thru->Delay;
+ if ((m || Thru->m) && ThruE) { signed long ID, IDt = -1; MidiFileEvent_t midi_file_event; if (midiOutGetId(ThruE->midi_out, &ID, Port2Out)) { ID = -2; } else { ID++; } d += Thru->Delay;
 
   for (midi_file_event = MidiFileTrack_getFirstEvent(track); midi_file_event; midi_file_event = MidiFileEvent_getNextEventInTrack(midi_file_event)) {
    if (MidiFileEvent_getType(midi_file_event) == MIDI_FILE_EVENT_TYPE_META && MidiFileMetaEvent_getNumber(midi_file_event) == 0x21 && MidiFileMetaEvent_getDataLength(midi_file_event)) {
