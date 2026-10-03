@@ -320,7 +320,7 @@ while (Thrus && (Thru->Trk = Thrus[Ch][++i]) || Key && (Thru = &Key->Thrus[++i])
   switch (EventData & 0xf0) {
    case 0x80: if (ThruE->Ch < 16) { MidiFileTrack_createShortMsg(track, (t+d)*c, Thru->v0[V1]<<16 | Thru->k<<8 | 0x80 | ThruE->Ch); Thru->Pending = NULL;  } break;
    case 0x90: if (ThruE->Ch < 16) { MidiFileTrack_createShortMsg(track, (t+d)*c, Thru->v1[V1]<<16 | Thru->k<<8 | 0x90 | ThruE->Ch); Thru->Pending = ThruE; } break;
-   default: { unsigned long v, i; if (v = cmap[TrkID][i = EventData>>16 | EventData>>1&0x3f80 | EventData<<10&0x1c000].v) { if (cmap[TrkID][i].s) { MidiFileTrack_createSysExEvent(track, t*c, cmap[TrkID][i].s, (void*)cmap[TrkID][i].v); } else if (ThruE->Ch < 16) { MidiFileTrack_createShortMsg(track, t*c, v ^ ThruE->Ch); }}}}
+   default: { unsigned long v, i; if (v = cmap[TrkID][i = EventData>>16 | EventData>>1&0x3f80 | EventData<<10&0x1c000].v) { if (cmap[TrkID][i].s) { if (ThruE->Ch < 17) { MidiFileTrack_createSysExEvent(track, t*c, cmap[TrkID][i].s, (void*)cmap[TrkID][i].v); }} else if (ThruE->Ch < 16) { MidiFileTrack_createShortMsg(track, t*c, v ^ ThruE->Ch); }}}}
   }
  }
 
